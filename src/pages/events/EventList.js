@@ -473,7 +473,7 @@ const EventList = () => {
                   variant="contained"
                   color="primary"
                   startIcon={<AddIcon />}
-                  onClick={() => navigate('/events/new')}
+                  onClick={() => navigate('/events/create')}
                   sx={{ 
                     mt: 2,
                     borderRadius: 10,
