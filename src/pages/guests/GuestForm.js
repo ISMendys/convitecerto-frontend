@@ -226,11 +226,11 @@ const GuestForm = () => {
   // Salvar convidado
   const handleSave = async () => {
     try {
-      const guestData = {
+      let guestData = {
         ...formData,
-        eventId
+        eventId: currentEvent.id,
       };
-      
+
       // Se tiver arquivo de imagem, precisaria fazer upload para um servidor
       // e obter a URL. Aqui estamos apenas simulando isso.
       if (formData.imageFile) {
