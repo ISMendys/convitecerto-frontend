@@ -367,7 +367,7 @@ const ImageUploadField = ({
           </Paper>
         )}
       </FormControl>
-            
+
       {/* Snackbar para feedback */}
       <Snackbar
         open={snackbarOpen}
