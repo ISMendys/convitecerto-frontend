@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme, alpha } from '@mui/material/styles';
@@ -12,24 +12,13 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Divider,
   Snackbar,
   Alert,
   CircularProgress,
   useMediaQuery,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Switch,
   FormControlLabel,
   Avatar,
-  Zoom,
-  Tab,
-  Tabs,
-  IconButton,
-  FormHelperText
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -39,17 +28,14 @@ import {
   Phone as PhoneIcon,
   Person as PersonIcon,
   ArrowBack as ArrowBackIcon,
-  Add as AddIcon,
   Notes as NotesIcon,
-  Group as GroupIcon,
   Image as ImageIcon,
-  Link as LinkIcon,
-  Upload as UploadIcon,
   Close as CloseIcon,
   EventNote as EventNoteIcon
 } from '@mui/icons-material';
 import { createGuest, updateGuest, fetchGuest, deleteGuest, fetchGuestRsvpHistory } from '../../store/actions/guestActions';
 import { clearCurrentGuest } from '../../store/slices/guestSlice';
+import ImageUploadFieldBase64 from '../../components/ImageUploadField';
 
 // Componentes estilizados
 import StyledButton from '../../components/StyledButton';
@@ -62,7 +48,6 @@ const GuestForm = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
   
   const { currentGuest, loading, error } = useSelector(state => state.guests);
   const { currentEvent } = useSelector(state => state.events);
@@ -77,12 +62,9 @@ const GuestForm = () => {
     plusOneName: '',
     notes: '',
     group: 'default',
-    imageUrl: '',
-    imageFile: null
+    imageUrl: { type: 'url', url: '', base64: '' },
   });
-  
-  const [imageTab, setImageTab] = useState(0);
-  const [imagePreview, setImagePreview] = useState('');
+
   const [imageError, setImageError] = useState('');
   
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -106,6 +88,39 @@ const GuestForm = () => {
   // Preencher formulário com dados do convidado se estiver editando
   useEffect(() => {
     if (guestId && currentGuest) {
+      // Processar a imagem para o novo formato
+      let imageData = { type: 'url', url: '', base64: '' };
+      
+      if (currentEvent.image) {
+        if (typeof currentEvent.image === 'string') {
+          // Se for uma URL ou base64
+          if (currentEvent.image.startsWith('data:image')) {
+            imageData = { type: 'file', base64: currentEvent.image, url: '' };
+          } else {
+            imageData = { type: 'url', url: currentEvent.image, base64: '' };
+          }
+        } else if (typeof currentEvent.image === 'object') {
+          if (currentEvent.image.imageUrl) {
+            if (currentEvent.image.imageUrl.startsWith('data:image') || 
+                currentEvent.image.imageUrl.startsWith('blob:')) {
+              imageData = { 
+                type: 'file', 
+                base64: currentEvent.image.imageUrl,
+                url: '' 
+              };
+            } else {
+              imageData = { 
+                type: 'url', 
+                url: currentEvent.image.imageUrl,
+                base64: '' 
+              };
+            }
+          } else if (currentEvent.image.base64) {
+            imageData = currentEvent.image;
+          }
+        }
+      }
+
       setFormData({
         name: currentGuest.name || '',
         email: currentGuest.email || '',
@@ -117,13 +132,7 @@ const GuestForm = () => {
         notes: currentGuest.notes || '',
         group: currentGuest.group || 'default',
         imageUrl: currentGuest.imageUrl || '',
-        imageFile: null
       });
-      
-      if (currentGuest.imageUrl) {
-        setImagePreview(currentGuest.imageUrl);
-        setImageTab(0); // URL tab
-      }
     }
   }, [guestId, currentGuest]);
   
@@ -144,105 +153,30 @@ const GuestForm = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
   };
-  
-  // Manipular mudança de aba de imagem
-  const handleImageTabChange = (event, newValue) => {
-    setImageTab(newValue);
-    // Limpar campos ao trocar de aba
-    if (newValue === 0) {
-      // URL tab
-      setFormData(prev => ({
-        ...prev,
-        imageFile: null
-      }));
-    } else {
-      // Upload tab
-      setFormData(prev => ({
-        ...prev,
-        imageUrl: ''
-      }));
-      setImagePreview('');
-    }
-    setImageError('');
-  };
-  
-  // Manipular mudança de URL da imagem
-  const handleImageUrlChange = (e) => {
-    const url = e.target.value;
+
+  // Manipular mudança na imagem
+  const handleImageChange = (imageData) => {
     setFormData(prev => ({
       ...prev,
-      imageUrl: url
+      imageUrl: imageData
     }));
-    
-    if (url) {
-      setImagePreview(url);
-      setImageError('');
-    } else {
-      setImagePreview('');
-    }
   };
-  
-  // Manipular upload de arquivo de imagem
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (!file.type.match('image.*')) {
-        setImageError('O arquivo deve ser uma imagem (JPEG, PNG, etc.)');
-        return;
-      }
-      
-      if (file.size > 5 * 1024 * 1024) {
-        setImageError('A imagem deve ter no máximo 5MB');
-        return;
-      }
-      
-      setFormData(prev => ({
-        ...prev,
-        imageFile: file
-      }));
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
-      setImageError('');
-    }
-  };
-  
-  // Limpar imagem
-  const handleClearImage = () => {
-    setFormData(prev => ({
-      ...prev,
-      imageUrl: '',
-      imageFile: null
-    }));
-    setImagePreview('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-  
+
   // Salvar convidado
   const handleSave = async () => {
+    let imageData = null;
+    
+    if (formData.imageUrl.type === 'url' && formData.imageUrl.url) {
+      imageData = formData.imageUrl.url;
+    } else if (formData.imageUrl.type === 'file' && formData.imageUrl.base64) {
+      imageData = formData.imageUrl.base64;
+    }
     try {
       let guestData = {
         ...formData,
+        imageUrl: imageData,
         eventId: currentEvent.id,
       };
-
-      // Se tiver arquivo de imagem, precisaria fazer upload para um servidor
-      // e obter a URL. Aqui estamos apenas simulando isso.
-      if (formData.imageFile) {
-        // Em uma implementação real, você faria upload do arquivo e obteria a URL
-        // guestData.imageUrl = await uploadImage(formData.imageFile);
-        
-        // Simulação: usar o preview como URL (apenas para demonstração)
-        guestData.imageUrl = imagePreview;
-      }
-      
-      // Remover o arquivo da requisição, pois não é necessário após o upload
-      delete guestData.imageFile;
       
       if (guestId) {
         await dispatch(updateGuest({ id: guestId, ...guestData })).unwrap();
@@ -670,27 +604,31 @@ const GuestForm = () => {
                 />
               )}
             </Box>
-            
             <TextField
               label="Observações"
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              multiline
-              rows={3}
               fullWidth
+              required
               variant="outlined"
-              placeholder="Informações adicionais sobre o convidado"
               InputProps={{
                 startAdornment: (
-                  <Box sx={{ mr: 1, mt: 1, color: theme.palette.text.secondary }}>
+                  <Box sx={{ mr: 1, color: theme.palette.primary.main }}>
                     <NotesIcon />
                   </Box>
                 ),
               }}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: 2
+                  borderRadius: 2,
+                  '&.Mui-focused fieldset': {
+                    borderColor: theme.palette.primary.main,
+                    borderWidth: 2
+                  },
+                  '&:hover fieldset': {
+                    borderColor: theme.palette.primary.light
+                  }
                 }
               }}
             />
@@ -734,121 +672,18 @@ const GuestForm = () => {
               Imagem do Convidado
             </Typography>
           </Box>
-          
           <Box>
-            <Tabs 
-              value={imageTab} 
-              onChange={handleImageTabChange} 
-              aria-label="image tabs"
-              sx={{ mb: 2 }}
-            >
-              <Tab 
-                icon={<LinkIcon />} 
-                label="URL" 
-                id="image-tab-0" 
-                aria-controls="image-tabpanel-0" 
+              {/* Campo de upload de imagem com base64 */}
+              <ImageUploadFieldBase64
+                value={formData.imageUrl}
+                onChange={handleImageChange}
+                helperText={"Insira uma url ou faça upload de uma imagem"}
               />
-              <Tab 
-                icon={<UploadIcon />} 
-                label="Upload" 
-                id="image-tab-1" 
-                aria-controls="image-tabpanel-1" 
-              />
-            </Tabs>
-            
-            <Box
-              role="tabpanel"
-              hidden={imageTab !== 0}
-              id="image-tabpanel-0"
-              aria-labelledby="image-tab-0"
-            >
-              {imageTab === 0 && (
-                <TextField
-                  label="URL da Imagem"
-                  name="imageUrl"
-                  value={formData.imageUrl}
-                  onChange={handleImageUrlChange}
-                  fullWidth
-                  variant="outlined"
-                  placeholder="https://exemplo.com/imagem.jpg"
-                  sx={{
-                    mb: 2,
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2
-                    }
-                  }}
-                />
-              )}
-            </Box>
-            
-            <Box
-              role="tabpanel"
-              hidden={imageTab !== 1}
-              id="image-tabpanel-1"
-              aria-labelledby="image-tab-1"
-            >
-              {imageTab === 1 && (
-                <Box sx={{ mb: 2 }}>
-                  <input
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    id="image-upload"
-                    type="file"
-                    onChange={handleImageUpload}
-                    ref={fileInputRef}
-                  />
-                  <label htmlFor="image-upload">
-                    <StyledButton
-                      variant="outlined"
-                      component="span"
-                      startIcon={<UploadIcon />}
-                      fullWidth
-                    >
-                      Selecionar Imagem
-                    </StyledButton>
-                  </label>
-                </Box>
-              )}
-            </Box>
-            
+
             {imageError && (
               <Typography color="error" variant="body2" sx={{ mt: 1 }}>
                 {imageError}
               </Typography>
-            )}
-            
-            {imagePreview && (
-              <Box sx={{ 
-                mt: 2, 
-                position: 'relative',
-                width: 'fit-content'
-              }}>
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  style={{ 
-                    maxWidth: '100%', 
-                    maxHeight: '200px',
-                    borderRadius: '8px'
-                  }}
-                />
-                <IconButton
-                  size="small"
-                  onClick={handleClearImage}
-                  sx={{
-                    position: 'absolute',
-                    top: -8,
-                    right: -8,
-                    bgcolor: 'background.paper',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                    '&:hover': {
-                      bgcolor: 'background.paper',
-                    }
-                  }}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Box>
             )}
           </Box>
         </Paper>
