@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { guestService, whatsappService } from '../../services/api';
+import { guestService } from '../../services/api';
 
 // Ação assíncrona para buscar todos os convidados de um evento
 export const fetchGuests = createAsyncThunk(
@@ -36,10 +36,11 @@ export const createGuest = createAsyncThunk(
   'guests/createGuest',
   async (guestData, { rejectWithValue }) => {
     try {
-      const response = await guestService.addGuest(guestData);
+      const response = await guestService.createGuest(guestData);
       return response;
     } catch (error) {
       return rejectWithValue(
+        console.log(error),
         error.response?.data?.error || 'Erro ao adicionar convidado'
       );
     }
@@ -110,6 +111,7 @@ export const importGuests = createAsyncThunk(
 export const sendInviteWhatsApp = createAsyncThunk(
   'guests/sendInviteWhatsApp',
   async ({ guestId, message, inviteLink }, { rejectWithValue }) => {
+    const whatsappService = {}
     try {
       const response = await whatsappService.sendInvite(guestId, message, inviteLink);
       return { guestId, response };
@@ -125,6 +127,8 @@ export const sendInviteWhatsApp = createAsyncThunk(
 export const sendReminderWhatsApp = createAsyncThunk(
   'guests/sendReminderWhatsApp',
   async ({ guestId, message }, { rejectWithValue }) => {
+    const whatsappService = {}
+
     try {
       const response = await whatsappService.sendReminder(guestId, message);
       return { guestId, response };
@@ -140,6 +144,8 @@ export const sendReminderWhatsApp = createAsyncThunk(
 export const sendBulkWhatsApp = createAsyncThunk(
   'guests/sendBulkWhatsApp',
   async ({ eventId, message, filter }, { rejectWithValue }) => {
+    const whatsappService = {}
+
     try {
       const response = await whatsappService.sendBulk(eventId, message, filter);
       return response;

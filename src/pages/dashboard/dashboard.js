@@ -5,7 +5,6 @@ import { useTheme, alpha } from '@mui/material/styles';
 import {
   Box,
   Container,
-  Grid,
   Paper,
   Typography,
   Divider,
@@ -15,8 +14,6 @@ import {
   useMediaQuery,
   Chip,
   Avatar,
-  Tooltip,
-  IconButton,
   Tab,
   Tabs,
   Pagination,
@@ -28,20 +25,11 @@ import {
   LinearProgress
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon,
   Search as SearchIcon,
-  FilterList as FilterListIcon,
-  Sort as SortIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  WhatsApp as WhatsAppIcon,
   Mail as MailIcon,
   Phone as PhoneIcon,
   Person as PersonIcon,
   ArrowBack as ArrowBackIcon,
-  MoreVert as MoreVertIcon,
-  FileDownload as FileDownloadIcon,
-  FileUpload as FileUploadIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   HelpOutline as HelpOutlineIcon,
@@ -52,29 +40,22 @@ import {
   Visibility as VisibilityIcon,
   PieChart as PieChartIcon,
   BarChart as BarChartIcon,
-  DonutLarge as DonutLargeIcon,
   FilterAlt as FilterAltIcon,
   SortByAlpha as SortByAlphaIcon,
   Refresh as RefreshIcon,
-  Today as TodayIcon,
   History as HistoryIcon,
   AccessTime as AccessTimeIcon,
-  Alarm as AlarmIcon,
   EventAvailable as EventAvailableIcon,
   EventBusy as EventBusyIcon,
   Update as UpdateIcon
 } from '@mui/icons-material';
 import { fetchAllGuests, fetchAllEvents } from '../../store/actions/dashboardActions';
+import { LoadingIndicator } from '../../components/LoadingIndicator';
 
 // Componentes reutilizáveis
 import PageTitle from '../../components/PageTitle';
 import StatCard from '../../components/StatCard';
 import StyledButton from '../../components/StyledButton';
-import ConfirmDialog from '../../components/ConfirmDialog';
-import SearchFilterBar from '../../components/SearchFilterBar';
-import GuestCard from '../../components/GuestCard';
-import ActionMenu from '../../components/ActionMenu';
-import ActionButton from '../../components/ActionButton';
 import EmptyState from '../../components/EmptyState';
 
 // Componentes de gráficos
@@ -129,14 +110,9 @@ const CountdownTimer = ({ targetDate }) => {
       };
     };
 
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
     // Inicializar
     setTimeLeft(calculateTimeLeft());
 
-    return () => clearInterval(timer);
   }, [targetDate]);
 
   // Determinar cor com base no tempo restante
@@ -238,26 +214,23 @@ const Dashboard = () => {
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState(null);
   const [viewMenuAnchorEl, setViewMenuAnchorEl] = useState(null);
   const [page, setPage] = useState(1);
-  const [eventTabValue, setEventTabValue] = useState(0); // 0 = eventos futuros, 1 = eventos passados
-  const [refreshInterval, setRefreshInterval] = useState(null);
+  const [eventTabValue, setEventTabValue] = useState(0);
   const itemsPerPage = 20;
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Carregar todos os convidados e eventos
   useEffect(() => {
-    dispatch(fetchAllGuests());
-    dispatch(fetchAllEvents());
-    
-    // Configurar atualização automática a cada 5 minutos
-    const interval = setInterval(() => {
-      dispatch(fetchAllGuests());
-      dispatch(fetchAllEvents());
-    }, 5 * 60 * 1000);
-    
-    setRefreshInterval(interval);
-    
-    return () => {
-      if (refreshInterval) clearInterval(refreshInterval);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          dispatch(fetchAllGuests()),
+          dispatch(fetchAllEvents())
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
     };
+    fetchData()
   }, [dispatch]);
   
   // Exibir erro se houver
@@ -381,13 +354,28 @@ const Dashboard = () => {
   };
 
   // Atualizar dados manualmente
-  const handleRefreshData = () => {
+  const handleRefreshData = async () => {
     setSnackbarMessage('Atualizando dados...');
     setSnackbarSeverity('info');
     setSnackbarOpen(true);
     
-    dispatch(fetchAllGuests());
-    dispatch(fetchAllEvents());
+    setIsLoading(true);
+    try {
+      await Promise.all([
+        dispatch(fetchAllGuests()),
+        dispatch(fetchAllEvents())
+      ]);
+      
+      setSnackbarMessage('Dados atualizados com sucesso!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      setSnackbarMessage('Erro ao atualizar dados');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   // Filtrar convidados
@@ -1347,6 +1335,7 @@ const Dashboard = () => {
                         {/* avatar e nome */}
                         <Box sx={{ mb: 2 }}>
                             <Avatar
+                                src={guest.imageUrl || ''}
                                 sx={{
                                     width: 64,
                                     height: 64,
@@ -1599,7 +1588,12 @@ const Dashboard = () => {
           </Paper>
         )}
       </Container>
-      
+      {/* Loading Indicator */}
+      <LoadingIndicator 
+        open={isLoading} 
+        type="overlay" 
+        message="Carregando dados..."
+      />
       {/* Snackbar de feedback */}
       <Snackbar
         open={snackbarOpen}

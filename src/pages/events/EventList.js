@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme, alpha } from '@mui/material/styles';
-import { useMediaQuery, Menu, MenuItem, Snackbar, Alert, Zoom } from '@mui/material';
+import { useMediaQuery, Menu, MenuItem, Snackbar, Alert, Zoom, CircularProgress } from '@mui/material';
 import {
   DialogActions,
   Dialog,
@@ -44,6 +44,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchEvents, deleteEvent} from '../../store/actions/eventActions';
 import { StyledTabs, TabPanel } from '../../components/StyledTabs';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import { LoadingIndicator } from '../../components/LoadingIndicator';
 
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -65,6 +66,9 @@ const EventList = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // Adicionar estado para controlar o loading e evitar múltiplas chamadas
+  const [isLoading, setIsLoading] = useState(false);
+  const [navigating, setNavigating] = useState(false);
 
   // Fechar snackbar
   const handleCloseSnackbar = () => setSnackbarOpen(false);
@@ -89,8 +93,17 @@ const EventList = () => {
 
   // Buscar do backend ao montar
   useEffect(() => {
-    dispatch(fetchEvents());
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        await dispatch(fetchEvents());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
   }, [dispatch]);
+  
   // Separar próximos e passados
   const now = new Date();
   const upcomingEvents = allEvents.filter(e => new Date(e.date) >= now);
@@ -132,7 +145,9 @@ const EventList = () => {
 
   // Confirmar exclusão
   const handleDeleteEvent = async () => {
+    setDeleteDialogOpen(false)
     try {
+      setIsLoading(true);
       await dispatch(deleteEvent(selectedEvent)).unwrap();
       setSnackbarMessage('Evento excluído com sucesso!');
       setSnackbarSeverity('success');
@@ -143,9 +158,20 @@ const EventList = () => {
       setSnackbarMessage(msg);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
+    } finally {
+      setIsLoading(false);
+      setDeleteDialogOpen(false);
+      setSelectedEvent(null);
     }
-    setDeleteDialogOpen(false);
-    setSelectedEvent(null);
+  };
+
+  // Função para navegar para a página de detalhes do evento com controle para evitar múltiplas chamadas
+  const handleNavigateToEvent = (eventId) => {
+    if (navigating) return; 
+
+    setNavigating(true);
+    setIsLoading(true);
+    navigate(`/events/${eventId}`);
   };
 
   // Formata hora de um raw para "HH:MM"
@@ -205,6 +231,9 @@ const EventList = () => {
         justifyContent: 'center'
       }}
     >
+      {/* Adicionar o componente de loading */}
+      <LoadingIndicator open={isLoading} />
+      
       <Container maxWidth="lg">
         {/* Cabeçalho */}
         <Box 
@@ -495,8 +524,8 @@ const EventList = () => {
             ) : (
               <Grid container spacing={3} sx={{ p: 3, justifyContent: 'center' }}>
                 {filteredUpcomingEvents.map(event => (
-                  <Grid key={event.id} item xs={12} sm={6} md={4}>
-                    <Card
+                  <Grid item xs={12} sm={6} md={4} key={event.id}>
+                    <Card 
                       sx={{ 
                         height: '100%', 
                         display: 'flex', 
@@ -512,7 +541,8 @@ const EventList = () => {
                           boxShadow: '0 12px 30px rgba(94, 53, 177, 0.15)'
                         } 
                       }}
-                      onClick={() => navigate(`/events/${event.id}`)}
+                      // Substituir o onClick direto por nossa função que evita múltiplas chamadas
+                      onClick={() => handleNavigateToEvent(event.id)}
                     >
                       <Box sx={{ position: 'relative' }}>
                         <CardMedia
@@ -709,7 +739,7 @@ const EventList = () => {
                         },
                         cursor: 'pointer'
                       }}
-                      onClick={() => navigate(`/events/${event.id}`)}
+                      onClick={() => handleNavigateToEvent(event.id)}
                     >
                       <Box sx={{ position: 'relative' }}>
                         <CardMedia
@@ -876,67 +906,85 @@ const EventList = () => {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
-        PaperProps={{
-          sx: {
+        sx={{
+          '& .MuiPaper-root': {
             borderRadius: 2,
             boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-            overflow: 'hidden',
-            minWidth: 180
+            border: '1px solid #e0e0e0',
+            mt: 1
           }
         }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         <MenuItem 
           onClick={() => {
             handleMenuClose();
-            navigate(`/events/edit/${selectedEvent}`);
+            navigate(`/events/${selectedEvent}/edit`);
           }}
-          sx={{
+          sx={{ 
             py: 1.5,
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: alpha(theme.palette.primary.main, 0.1)
+              bgcolor: alpha(theme.palette.primary.main, 0.1)
             }
           }}
         >
           <ListItemIcon>
             <EditIcon fontSize="small" color="primary" />
           </ListItemIcon>
-          <Typography variant="body2" fontWeight={500}>Editar</Typography>
+          <Typography variant="body2">Editar Evento</Typography>
         </MenuItem>
         <MenuItem 
-          onClick={openDeleteDialog}
-          sx={{
+          onClick={() => {
+            handleMenuClose();
+            navigate(`/events/${selectedEvent}/guests`);
+          }}
+          sx={{ 
             py: 1.5,
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: alpha(theme.palette.error.main, 0.1)
+              bgcolor: alpha(theme.palette.primary.main, 0.1)
+            }
+          }}
+        >
+          <ListItemIcon>
+            <PeopleIcon fontSize="small" color="primary" />
+          </ListItemIcon>
+          <Typography variant="body2">Gerenciar Convidados</Typography>
+        </MenuItem>
+        <Divider />
+        <MenuItem 
+          onClick={openDeleteDialog}
+          sx={{ 
+            py: 1.5,
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              bgcolor: alpha(theme.palette.error.main, 0.1)
             }
           }}
         >
           <ListItemIcon>
             <DeleteIcon fontSize="small" color="error" />
           </ListItemIcon>
-          <Typography variant="body2" fontWeight={500} color="error">Excluir</Typography>
+          <Typography variant="body2" color="error">Excluir Evento</Typography>
         </MenuItem>
       </Menu>
       
-       <ConfirmDialog
-         open={deleteDialogOpen}
-         onClose={() => setDeleteDialogOpen(false)}
-         onConfirm={handleDeleteEvent}
-         title="Excluir evento"
-         message="Esta ação não pode ser desfeita. Deseja realmente excluir este evento?"
-         cancelText="Cancelar"
-         confirmText="Sim, excluir"
-         confirmColor="primary"
+      {/* Diálogo de confirmação de exclusão */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onClose={closeDeleteDialog}
+        onConfirm={handleDeleteEvent}
+        title="Excluir Evento"
+        content="Tem certeza que deseja excluir este evento? Esta ação não poderá ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        confirmColor="error"
       />
-
+      
       {/* Snackbar para mensagens */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
+      <Snackbar 
+        open={snackbarOpen} 
+        autoHideDuration={6000} 
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         TransitionComponent={Zoom}
@@ -948,8 +996,7 @@ const EventList = () => {
           sx={{ 
             width: '100%',
             boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-            borderRadius: 2,
-            color: theme => theme.palette[snackbarSeverity].contrastText,
+            borderRadius: 2
           }}
         >
           {snackbarMessage}

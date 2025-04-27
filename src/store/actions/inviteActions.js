@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { inviteService } from '../../services/api';
+import { fetchGuest, updateGuest } from '../../store/actions/guestActions';
 
 // Ação assíncrona para buscar todos os convites de um evento
 export const fetchInvites = createAsyncThunk(
@@ -81,25 +82,27 @@ export const deleteInvite = createAsyncThunk(
 // Ação assíncrona para buscar um convite público (para convidados)
 export const fetchPublicInvite = createAsyncThunk(
   'invites/fetchPublicInvite',
-  async (id, { rejectWithValue }) => {
+  async (id, { rejectWithValue, dispatch }) => {
     try {
       console.log('Fetching public invite for guest ID:', id);
-      // Primeiro, buscar o convidado para obter o ID do convite
-      const guestResponse = await fetch(`http://localhost:5000/api/guests/${id}`);
-      
-      if (!guestResponse.ok) {
+
+      const guestResponse = await dispatch(fetchGuest(id));
+      console.log('Guest response:', guestResponse);
+      if (!guestResponse.payload) {
         throw new Error('Convidado não encontrado');
       }
       
-      const guestData = await guestResponse.json();
-      console.log('Guest data:', guestData);
-      
-      if (!guestData.inviteId) {
-        throw new Error('Este convidado não possui um convite associado');
+      if (!guestResponse.payload.inviteId) {
+        return {
+          noInvite: true,
+          guestId: id,
+          guestName: guestResponse.name,
+          message: 'Este convidado ainda não possui um convite associado. Por favor, entre em contato com o organizador do evento.'
+        };
       }
       
       // Agora, buscar o convite usando o ID do convite
-      const response = await inviteService.getPublicInvite(guestData.inviteId);
+      const response = await inviteService.getPublicInvite(guestResponse.payload.inviteId);
       console.log('Invite response:', response);
       return response;
     } catch (error) {
@@ -147,6 +150,64 @@ export const fetchTemplates = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.error || 'Erro ao buscar templates'
+      );
+    }
+  }
+);
+
+// Nova ação assíncrona para vincular múltiplos convidados a um convite
+export const linkGuestsToInvite = createAsyncThunk(
+  'invites/linkGuestsToInvite',
+  async ({ inviteId, guestIds }, { rejectWithValue, dispatch }) => {
+    try {
+      const results = [];
+      
+      // Atualizar cada convidado com o ID do convite
+      for (const guestId of guestIds) {
+        let guestData = {
+          inviteId: inviteId
+        };
+        const response = await dispatch(updateGuest({ id: guestId, ...guestData })).unwrap();
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Erro ao vincular convidado ${guestId}`);
+        }
+
+        const result = await response.json();
+        results.push(result);
+      }
+      
+      return {
+        inviteId,
+        guestIds,
+        results
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.message || 'Erro ao vincular convidados ao convite'
+      );
+    }
+  }
+);
+
+// Nova ação assíncrona para obter o convite padrão de um evento
+export const fetchDefaultInvite = createAsyncThunk(
+  'invites/fetchDefaultInvite',
+  async (eventId, { rejectWithValue }) => {
+    try {
+      const response = await inviteService.getInvites(eventId);
+      
+      // Se não houver convites, retornar null
+      if (!response || response.length === 0) {
+        return null;
+      }
+      
+      // Retornar o primeiro convite como padrão
+      return response[0];
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error || 'Erro ao buscar convite padrão'
       );
     }
   }
