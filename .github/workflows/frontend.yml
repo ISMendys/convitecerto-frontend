@@ -22,7 +22,8 @@ jobs:
         working-directory: ./
         run: |
           yarn install
-          CI='' yarn build
+          REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} CI='' yarn build
+
 
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@v0.5.1
