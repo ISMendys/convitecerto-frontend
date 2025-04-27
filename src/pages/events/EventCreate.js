@@ -41,6 +41,7 @@ import FormSection from '../../components/FormSection';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import ImageUploadFieldBase64 from '../../components/ImageUploadField';
 import LocationSelector from '../../components/LocationSelector';
+import { LoadingIndicator } from '../../components/LoadingIndicator';
 
 const EventCreate = () => {
   const { eventId, inviteId } = useParams()
@@ -62,7 +63,9 @@ const EventCreate = () => {
     notes: '',
     image: { type: 'url', url: '', base64: '' }
   });
-  
+  const [messageLoading, setMessageLoading] = useState('Carregando dados...');
+  const [isLoading, setIsLoading] = useState(false);
+
   const [formErrors, setFormErrors] = useState({});
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -72,9 +75,21 @@ const EventCreate = () => {
   
   // Carregar dados do evento se estiver editando
   useEffect(() => {
-    if (eventId) {
-      dispatch(fetchEvent(eventId));
-    }
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const promises = [];
+        if (eventId) {
+          promises.push(dispatch(fetchEvent(eventId)));
+        }
+        await Promise.all(promises);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+
   }, [dispatch, eventId]);
   
   // Preencher formulário com dados do evento se estiver editando
@@ -285,7 +300,10 @@ const EventCreate = () => {
   
   // Salvar evento
   const handleSave = async () => {
+    setMessageLoading('Salvando evento...');
+    setIsLoading(true);
     if (!validateForm()) {
+      setIsLoading(false);
       setSnackbarMessage('Por favor, corrija os erros no formulário');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -309,33 +327,33 @@ const EventCreate = () => {
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       
-      // Redirecionar após um breve delay
-      setTimeout(() => {
-        navigate('/events');
-      }, 500);
+      navigate('/events');
     } catch (err) {
       setSnackbarMessage(err || 'Erro ao salvar evento');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
+    } finally {
+      setIsLoading(false);
     }
   };
   
   // Excluir evento
   const handleDelete = async () => {
+    setMessageLoading('Excluindo evento...');
+    setIsLoading(false);
     try {
       // await dispatch(deleteEvent(eventId)).unwrap();
       setSnackbarMessage('Evento excluído com sucesso!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       
-      // Redirecionar após um breve delay
-      setTimeout(() => {
-        navigate('/');
-      }, 500);
+      navigate('/');
     } catch (err) {
       setSnackbarMessage(err || 'Erro ao excluir evento');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
+    } finally {
+      setIsLoading(false);
     }
     setDeleteDialogOpen(false);
   };
@@ -634,6 +652,12 @@ const EventCreate = () => {
         </Alert>
       </Snackbar>
       
+      <LoadingIndicator 
+        open={isLoading} 
+        type="overlay" 
+        message={messageLoading}
+      />
+
       {/* Diálogo de confirmação de cancelamento */}
       <ConfirmDialog
         open={confirmDialogOpen}

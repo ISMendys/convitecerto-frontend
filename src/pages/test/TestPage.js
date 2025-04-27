@@ -161,7 +161,7 @@ const TestPage = () => {
         <TabPanel value={tabValue} index={0}>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
+               <LoadingIndicator />
             </Box>
           ) : testResults.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>

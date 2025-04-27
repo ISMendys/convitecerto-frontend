@@ -5,7 +5,6 @@ import {
   Box,
   Container,
   Typography,
-  Grid,
   FormControl,
   InputLabel,
   Select,
@@ -24,7 +23,6 @@ import {
   Image as ImageIcon,
   TextFields as TextFieldsIcon,
   Preview as PreviewIcon,
-  ArrowBack as ArrowBackIcon,
   WhatsApp as WhatsAppIcon,
   FormatColorFill as FormatColorFillIcon,
   FormatColorText as FormatColorTextIcon,
@@ -32,17 +30,16 @@ import {
   Title as TitleIcon,
   Description as DescriptionIcon,
   Message as MessageIcon,
-  Link as LinkIcon
 } from '@mui/icons-material';
 import { createInvite, updateInvite, fetchInvite } from '../../store/actions/inviteActions';
 
 // Componentes personalizados
+import { LoadingIndicator } from '../../components/LoadingIndicator';
 import ColorPicker from './components/ColorPicker';
 import { StyledTabs, TabPanel } from '../../components/StyledTabs';
 import StyledButton from '../../components/StyledButton';
 import StyledTextField from '../../components/StyledTextField';
 import ConfirmDialog from '../../components/ConfirmDialog';
-import FormSection from '../../components/FormSection';
 import PageTitle from '../../components/PageTitle';
 import ImageUploadFieldBase64 from '../../components/ImageUploadField';
 
@@ -67,7 +64,10 @@ const InviteCreate = () => {
     imageUrl: '',
     customText: ''
   });
-  
+
+  const [messageLoading, setMessageLoading] = useState('Carregando dados...');
+  const [isLoading, setIsLoading] = useState(false);
+
   const [tabValue, setTabValue] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -76,9 +76,20 @@ const InviteCreate = () => {
   
   // Carregar dados do convite se estiver editando
   useEffect(() => {
-    if (inviteId) {
-      dispatch(fetchInvite(inviteId));
-    }
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const promises = [];
+        if (inviteId) {
+          promises.push(dispatch(fetchInvite(inviteId)));
+        }
+        await Promise.all(promises);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+    
   }, [dispatch, inviteId]);
   
   // Preencher formulário com dados do convite se estiver editando
@@ -158,6 +169,7 @@ const InviteCreate = () => {
   
   // Salvar convite
   const handleSave = async () => {
+    setIsLoading(true);
     try {
       const inviteData = prepareFormData();
 
@@ -172,14 +184,13 @@ const InviteCreate = () => {
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
       
-      // Redirecionar após um breve delay
-      setTimeout(() => {
-        navigate(`/events/${eventId}`);
-      }, 500);
+      navigate(`/events/${eventId}`);
     } catch (err) {
       setSnackbarMessage(err || 'Erro ao salvar convite');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -231,7 +242,7 @@ const InviteCreate = () => {
         alignItems: 'center', 
         minHeight: '50vh'
       }}>
-        <CircularProgress />
+        <LoadingIndicator />
       </Box>
     );
   }
@@ -581,7 +592,13 @@ const InviteCreate = () => {
           </StyledButton>
         </Box>
       </Container>
-      
+
+      <LoadingIndicator 
+        open={isLoading} 
+        type="overlay" 
+        message={messageLoading}
+      />
+
       {/* Diálogo de confirmação para cancelamento */}
       <ConfirmDialog
         open={confirmDialogOpen}
