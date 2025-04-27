@@ -6,15 +6,20 @@ import {
   updateInvite, 
   deleteInvite,
   fetchPublicInvite,
-  fetchTemplates
+  fetchTemplates,
+  linkGuestsToInvite,
+  fetchDefaultInvite
 } from '../actions/inviteActions';
 
 const initialState = {
   invites: [],
   currentInvite: null,
   publicInvite: null,
+  defaultInvite: null,
   templates: [],
   loading: false,
+  linkingGuests: false,
+  linkingSuccess: false,
   error: null
 };
 
@@ -30,6 +35,9 @@ const inviteSlice = createSlice({
     },
     clearPublicInvite: (state) => {
       state.publicInvite = null;
+    },
+    resetLinkingStatus: (state) => {
+      state.linkingSuccess = false;
     }
   },
   extraReducers: (builder) => {
@@ -137,9 +145,39 @@ const inviteSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     });
+    
+    // Vincular múltiplos convidados a um convite
+    builder.addCase(linkGuestsToInvite.pending, (state) => {
+      state.linkingGuests = true;
+      state.linkingSuccess = false;
+      state.error = null;
+    });
+    builder.addCase(linkGuestsToInvite.fulfilled, (state, action) => {
+      state.linkingGuests = false;
+      state.linkingSuccess = true;
+    });
+    builder.addCase(linkGuestsToInvite.rejected, (state, action) => {
+      state.linkingGuests = false;
+      state.linkingSuccess = false;
+      state.error = action.payload;
+    });
+    
+    // Buscar convite padrão de um evento
+    builder.addCase(fetchDefaultInvite.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchDefaultInvite.fulfilled, (state, action) => {
+      state.loading = false;
+      state.defaultInvite = action.payload;
+    });
+    builder.addCase(fetchDefaultInvite.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    });
   }
 });
 
-export const { clearInviteError, clearCurrentInvite, clearPublicInvite } = inviteSlice.actions;
+export const { clearInviteError, clearCurrentInvite, clearPublicInvite, resetLinkingStatus } = inviteSlice.actions;
 
 export default inviteSlice.reducer;

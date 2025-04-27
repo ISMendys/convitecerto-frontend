@@ -1,15 +1,10 @@
 .
-├── build
-│   ├── asset-manifest.json
-│   ├── index.html
-│   ├── index.js
-│   └── static
-│       └── js
 ├── estrutura_front.txt
 ├── package.json
 ├── public
 │   ├── index.html
 │   └── index.js
+├── README.md
 ├── src
 │   ├── App.js
 │   ├── components
@@ -23,6 +18,7 @@
 │   │   ├── guests
 │   │   ├── ImageUploadField.js
 │   │   ├── layout
+│   │   ├── LoadingIndicator.js
 │   │   ├── LocationSelector.js
 │   │   ├── PageTitle.js
 │   │   ├── SearchFilterBar.js
@@ -58,4 +54,4 @@
 │   └── theme.js
 └── yarn.lock
 
-25 directories, 33 files
+22 directories, 32 files

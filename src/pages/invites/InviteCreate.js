@@ -175,7 +175,7 @@ const InviteCreate = () => {
       // Redirecionar após um breve delay
       setTimeout(() => {
         navigate(`/events/${eventId}`);
-      }, 1500);
+      }, 500);
     } catch (err) {
       setSnackbarMessage(err || 'Erro ao salvar convite');
       setSnackbarSeverity('error');

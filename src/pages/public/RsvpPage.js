@@ -1,259 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
-import { useTheme, alpha } from '@mui/material/styles';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
   Typography,
   Paper,
   Grid,
+  CircularProgress,
+  Divider,
+  Alert,
+  AlertTitle,
   Card,
   CardContent,
-  Button,
-  TextField,
-  CircularProgress,
+  CardMedia,
+  CardActions,
   Snackbar,
-  Alert,
-  Divider,
-  Checkbox,
-  FormControlLabel,
-  useMediaQuery,
-  Fade,
-  Zoom,
-  IconButton,
-  Avatar
+  useTheme,
+  alpha
 } from '@mui/material';
-import { 
-  WhatsApp as WhatsAppIcon, 
-  Check as CheckIcon,
-  Close as CloseIcon,
-  CalendarMonth as CalendarIcon,
-  LocationOn as LocationIcon,
-  AccessTime as TimeIcon,
-  Info as InfoIcon,
-  Person as PersonIcon,
-  Celebration as CelebrationIcon,
-  Share as ShareIcon
+import {
+  ArrowBack as ArrowBackIcon,
+  Refresh as RefreshIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  HelpOutline as HelpOutlineIcon,
+  WhatsApp as WhatsAppIcon
 } from '@mui/icons-material';
-import { submitRsvp } from '../../store/actions/guestActions';
 import { fetchPublicInvite } from '../../store/actions/inviteActions';
+import { updateGuestStatus } from '../../store/actions/guestActions';
+import StyledButton from '../../components/StyledButton';
 
-// Componente para exibir um contador regressivo
-const CountdownTimer = ({ targetDate }) => {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
-
-  useEffect(() => {
-    if (!targetDate) return;
-
-    const calculateTimeLeft = () => {
-      const difference = new Date(targetDate) - new Date();
-      
-      if (difference > 0) {
-        return {
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60)
-        };
-      }
-      
-      return {
-        days: 0,
-        hours: 0,
-        minutes: 0,
-        seconds: 0
-      };
-    };
-
-    // Atualizar o contador a cada segundo
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    // Calcular o tempo restante inicialmente
-    setTimeLeft(calculateTimeLeft());
-
-    // Limpar o intervalo quando o componente for desmontado
-    return () => clearInterval(timer);
-  }, [targetDate]);
-
-  const timeUnits = [
-    { label: 'Dias', value: timeLeft.days },
-    { label: 'Horas', value: timeLeft.hours },
-    { label: 'Minutos', value: timeLeft.minutes },
-    { label: 'Segundos', value: timeLeft.seconds }
-  ];
-
-  return (
-    <Box sx={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      flexWrap: 'wrap',
-      gap: { xs: 1, sm: 2 },
-      my: 3
-    }}>
-      {timeUnits.map((unit, index) => (
-        <Box 
-          key={index}
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            minWidth: { xs: '60px', sm: '80px' }
-          }}
-        >
-          <Box
-            sx={{
-              width: { xs: '60px', sm: '80px' },
-              height: { xs: '60px', sm: '80px' },
-              borderRadius: '50%',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              background: (theme) => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.8)}, ${alpha(theme.palette.primary.dark, 0.9)})`,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-              color: 'white',
-              mb: 1
-            }}
-          >
-            <Typography variant="h4" fontWeight="bold">
-              {unit.value}
-            </Typography>
-          </Box>
-          <Typography variant="caption" fontWeight="medium" color="text.secondary">
-            {unit.label}
-          </Typography>
-        </Box>
-      ))}
-    </Box>
-  );
-};
-
-// Componente para exibir informações do evento com ícones
-const EventInfoItem = ({ icon, label, value }) => {
-  const theme = useTheme();
-  
-  return (
-    <Box sx={{ 
-      display: 'flex', 
-      alignItems: 'flex-start', 
-      mb: 2,
-      gap: 2
-    }}>
-      <Avatar
-        sx={{
-          bgcolor: alpha(theme.palette.primary.main, 0.1),
-          color: theme.palette.primary.main,
-          width: 40,
-          height: 40
-        }}
-      >
-        {icon}
-      </Avatar>
-      <Box>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-          {label}
-        </Typography>
-        <Typography variant="body1" fontWeight="medium">
-          {value}
-        </Typography>
-      </Box>
-    </Box>
-  );
-};
-
-// Componente principal da página RSVP
 const RsvpPage = () => {
   const { guestId } = useParams();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dispatch = useDispatch();
   
-  const { publicInvite, loading: inviteLoading } = useSelector(state => state.invites);
-  const { loading: rsvpLoading, error } = useSelector(state => state.guests);
+  const { publicInvite, loading, error } = useSelector(state => state.invites);
   
-  const [formData, setFormData] = useState({
-    status: '',
-    plusOne: false,
-    plusOneName: '',
-    message: ''
-  });
-  
-  const [submitted, setSubmitted] = useState(false);
+  const [statusUpdated, setStatusUpdated] = useState(false);
+  const [message, setMessage] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   
-  // Carregar dados do convite
+  // Carregar convite público
   useEffect(() => {
     if (guestId) {
+      console.log('Fetching public invite for guest:', guestId);
       dispatch(fetchPublicInvite(guestId));
     }
   }, [dispatch, guestId]);
   
-  // Exibir erro se houver
-  useEffect(() => {
-    if (error) {
-      setSnackbarMessage(error);
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    }
-  }, [error]);
-  
-  // Manipular mudanças no formulário
-  const handleChange = (e) => {
-    const { name, value, checked, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-  
-  // Confirmar presença
-  const handleConfirm = async () => {
+  // Atualizar status do convidado
+  const handleUpdateStatus = async (status) => {
     try {
-      await dispatch(submitRsvp({
-        id: guestId,
-        rsvpData: {
-          ...formData,
-          status: 'confirmed'
-        }
+      console.log('Updating guest status:', status);
+      await dispatch(updateGuestStatus({ 
+        id: guestId, 
+        status, 
+        message 
       })).unwrap();
       
-      setSubmitted(true);
-      setSnackbarMessage('Presença confirmada com sucesso!');
+      setStatusUpdated(true);
+      setSnackbarMessage(
+        status === 'confirmed' 
+          ? 'Presença confirmada com sucesso!' 
+          : 'Resposta enviada com sucesso!'
+      );
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch (err) {
-      setSnackbarMessage(err || 'Erro ao confirmar presença');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    }
-  };
-  
-  // Recusar convite
-  const handleDecline = async () => {
-    try {
-      await dispatch(submitRsvp({
-        id: guestId,
-        rsvpData: {
-          ...formData,
-          status: 'declined'
-        }
-      })).unwrap();
-      
-      setSubmitted(true);
-      setSnackbarMessage('Resposta enviada com sucesso!');
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-    } catch (err) {
-      setSnackbarMessage(err || 'Erro ao enviar resposta');
+      console.error('Error updating status:', err);
+      setSnackbarMessage(err || 'Erro ao atualizar status');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
@@ -264,38 +83,14 @@ const RsvpPage = () => {
     setSnackbarOpen(false);
   };
   
-  // Formatar data
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-  
-  // Formatar hora
-  const formatTime = (dateString) => {
-    if (!dateString) return '';
-    
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-  
-  // Compartilhar via WhatsApp
-  const handleShare = () => {
-    const text = `Fui convidado para ${publicInvite?.event?.title} em ${formatDate(publicInvite?.event?.date)}. Espero te ver lá!`;
+  // Compartilhar no WhatsApp
+  const handleShareWhatsApp = () => {
+    const text = `Olá! Confirme sua presença no evento ${publicInvite?.event?.title || 'Evento'} através deste link: ${window.location.href}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
   
   // Renderizar tela de carregamento
-  if (inviteLoading) {
+  if (loading) {
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -303,602 +98,449 @@ const RsvpPage = () => {
         justifyContent: 'center', 
         alignItems: 'center', 
         minHeight: '100vh',
-        bgcolor: 'background.default'
+        bgcolor: theme.palette.background.default
       }}>
         <CircularProgress size={60} thickness={4} />
-        <Typography variant="h6" sx={{ mt: 3, fontWeight: 500 }}>
+        <Typography variant="h6" sx={{ mt: 3 }}>
           Carregando seu convite...
         </Typography>
       </Box>
     );
   }
   
-  // Renderizar mensagem de erro se o convite não for encontrado
-  if (!publicInvite && !inviteLoading) {
+  // Renderizar tela de erro
+  if (error) {
     return (
-      <Box sx={{ 
-        minHeight: '100vh',
-        bgcolor: 'background.default',
-        py: 8,
-        display: 'flex',
-        alignItems: 'center'
-      }}>
-        <Container maxWidth="sm">
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              p: 4, 
-              textAlign: 'center',
-              borderRadius: 4,
-              boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
-            }}
+      <Container maxWidth="sm" sx={{ py: 8 }}>
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4, 
+            borderRadius: 3,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            textAlign: 'center'
+          }}
+        >
+          <Alert 
+            severity="error" 
+            variant="filled"
+            sx={{ mb: 3 }}
           >
-            <Box sx={{ mb: 3 }}>
-              <CloseIcon sx={{ fontSize: 64, color: 'error.main' }} />
-            </Box>
-            
-            <Typography variant="h4" color="error" gutterBottom fontWeight="bold">
-              Convite não encontrado
-            </Typography>
-            
-            <Typography variant="body1" paragraph>
-              O link que você acessou não é válido ou expirou.
-            </Typography>
-            
-            <Button
-              variant="contained"
-              color="primary"
-              href="/"
-              sx={{ mt: 2 }}
-            >
-              Voltar para a página inicial
-            </Button>
-          </Paper>
-        </Container>
-      </Box>
+            <AlertTitle>Erro ao carregar convite</AlertTitle>
+            {error}
+          </Alert>
+          
+          <Typography variant="body1" paragraph>
+            Não foi possível carregar seu convite. Por favor, verifique o link ou entre em contato com o organizador do evento.
+          </Typography>
+          
+          <StyledButton
+            variant="contained"
+            color="primary"
+            startIcon={<RefreshIcon />}
+            onClick={() => dispatch(fetchPublicInvite(guestId))}
+            sx={{ mt: 2 }}
+          >
+            Tentar Novamente
+          </StyledButton>
+        </Paper>
+      </Container>
     );
   }
   
-  // Definir cores com base no convite
-  const bgColor = publicInvite?.bgColor || '#ffffff';
-  const textColor = publicInvite?.textColor || '#000000';
-  const accentColor = publicInvite?.accentColor || theme.palette.primary.main;
-  const fontFamily = publicInvite?.fontFamily || theme.typography.fontFamily;
-  
-  // Renderizar confirmação enviada
-  if (submitted) {
+  // Renderizar tela de convidado sem convite
+  if (publicInvite?.noInvite) {
     return (
-      <Box sx={{ 
+      <Container maxWidth="sm" sx={{ py: 8 }}>
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4, 
+            borderRadius: 3,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            textAlign: 'center'
+          }}
+        >
+          <Alert 
+            severity="warning" 
+            variant="filled"
+            sx={{ mb: 3 }}
+          >
+            <AlertTitle>Convite não encontrado</AlertTitle>
+            {publicInvite.message}
+          </Alert>
+          
+          <Typography variant="h5" gutterBottom>
+            Olá, {publicInvite.guestName}!
+          </Typography>
+          
+          <Typography variant="body1" paragraph>
+            Parece que você ainda não possui um convite associado. O organizador do evento precisa vincular um convite ao seu cadastro.
+          </Typography>
+          
+          <Typography variant="body1" paragraph>
+            Entre em contato com o organizador do evento para solicitar seu convite.
+          </Typography>
+          
+          <StyledButton
+            variant="contained"
+            color="primary"
+            startIcon={<WhatsAppIcon />}
+            onClick={handleShareWhatsApp}
+            sx={{ mt: 2 }}
+          >
+            Contatar Organizador
+          </StyledButton>
+        </Paper>
+      </Container>
+    );
+  }
+  
+  // Renderizar tela de convite não encontrado
+  if (!publicInvite) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 8 }}>
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4, 
+            borderRadius: 3,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            textAlign: 'center'
+          }}
+        >
+          <Alert 
+            severity="info" 
+            variant="filled"
+            sx={{ mb: 3 }}
+          >
+            <AlertTitle>Convite não encontrado</AlertTitle>
+            Não foi possível encontrar o convite solicitado
+          </Alert>
+          
+          <Typography variant="body1" paragraph>
+            O convite que você está procurando não foi encontrado. Por favor, verifique o link ou entre em contato com o organizador do evento.
+          </Typography>
+          
+          <StyledButton
+            variant="contained"
+            color="primary"
+            startIcon={<RefreshIcon />}
+            onClick={() => dispatch(fetchPublicInvite(guestId))}
+            sx={{ mt: 2 }}
+          >
+            Tentar Novamente
+          </StyledButton>
+        </Paper>
+      </Container>
+    );
+  }
+  
+  // Renderizar tela de RSVP
+  return (
+    <Box 
+      sx={{ 
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${alpha(bgColor, 0.97)}, ${alpha(bgColor, 0.95)})`,
-        color: textColor,
-        py: 4,
-        display: 'flex',
-        alignItems: 'center'
-      }}>
-        <Container maxWidth="sm">
-          <Zoom in={true} timeout={800}>
-            <Paper 
-              elevation={3} 
-              sx={{ 
-                p: 4, 
-                textAlign: 'center',
-                borderRadius: 4,
-                boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
-                overflow: 'hidden',
-                position: 'relative',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '6px',
-                  background: `linear-gradient(to right, ${accentColor}, ${alpha(accentColor, 0.7)})`
-                }
-              }}
-            >
-              <Box sx={{ mb: 3 }}>
-                <Avatar
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    bgcolor: 'success.main',
-                    margin: '0 auto',
-                    boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
-                  }}
-                >
-                  <CheckIcon sx={{ fontSize: 40 }} />
-                </Avatar>
-              </Box>
+        bgcolor: publicInvite.backgroundColor || theme.palette.background.default,
+        color: publicInvite.textColor || theme.palette.text.primary,
+        py: 4
+      }}
+    >
+      <Container maxWidth="md">
+        <Card 
+          elevation={0} 
+          sx={{ 
+            overflow: 'hidden',
+            borderRadius: 4,
+            boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+            bgcolor: 'white'
+          }}
+        >
+          {/* Cabeçalho do convite */}
+          <CardMedia
+            component="img"
+            height="300"
+            image={publicInvite.imageUrl || `https://source.unsplash.com/random/1200x600?event&sig=${publicInvite.id}`}
+            alt={publicInvite.title}
+          />
+          
+          <CardContent sx={{ p: 4 }}>
+            {/* Título e detalhes do evento */}
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Typography 
+                variant="h3" 
+                component="h1" 
+                gutterBottom
+                sx={{ 
+                  fontFamily: publicInvite.titleFont || 'inherit',
+                  color: publicInvite.titleColor || theme.palette.primary.main,
+                  fontWeight: 700,
+                  letterSpacing: '-0.5px'
+                }}
+              >
+                {publicInvite.title}
+              </Typography>
               
               <Typography 
-                variant="h4" 
-                gutterBottom 
+                variant="h6" 
                 sx={{ 
-                  fontWeight: 700,
-                  fontFamily,
+                  fontFamily: publicInvite.subtitleFont || 'inherit',
+                  color: publicInvite.subtitleColor || theme.palette.text.secondary,
                   mb: 2
                 }}
               >
-                Resposta Enviada!
+                {publicInvite.subtitle}
               </Typography>
+              
+              <Divider sx={{ 
+                width: '50%', 
+                mx: 'auto', 
+                my: 3,
+                borderColor: alpha(theme.palette.primary.main, 0.3)
+              }} />
               
               <Typography 
                 variant="body1" 
                 paragraph
                 sx={{ 
-                  fontFamily,
-                  fontSize: '1.1rem'
+                  fontFamily: publicInvite.textFont || 'inherit',
+                  fontSize: '1.1rem',
+                  lineHeight: 1.6
                 }}
               >
-                Obrigado por responder ao convite para:
+                {publicInvite.description}
               </Typography>
-              
-              <Typography 
-                variant="h5" 
-                sx={{ 
-                  mb: 3, 
-                  color: accentColor,
-                  fontWeight: 600,
-                  fontFamily
-                }}
-              >
-                {publicInvite?.event?.title}
-              </Typography>
-              
-              <Divider sx={{ my: 3 }} />
-              
-              <Box sx={{ my: 3, textAlign: 'center' }}>
-                <EventInfoItem 
-                  icon={<CalendarIcon />}
-                  label="Data"
-                  value={formatDate(publicInvite?.event?.date)}
-                />
-                
-                <EventInfoItem 
-                  icon={<TimeIcon />}
-                  label="Horário"
-                  value={formatTime(publicInvite?.event?.date)}
-                />
-                
-                {publicInvite?.event?.location && (
-                  <EventInfoItem 
-                    icon={<LocationIcon />}
-                    label="Local"
-                    value={publicInvite.event.location}
-                  />
-                )}
-              </Box>
-              
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  mt: 3, 
-                  color: 'text.secondary',
-                  fontStyle: 'italic'
-                }}
-              >
-                Você pode alterar sua resposta a qualquer momento acessando este link novamente.
-              </Typography>
-              
-              <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<WhatsAppIcon />}
-                  onClick={handleShare}
-                  sx={{
-                    borderRadius: 8,
-                    px: 3,
-                    py: 1.5,
-                    boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                    background: `linear-gradient(45deg, ${accentColor}, ${alpha(accentColor, 0.8)})`,
-                    '&:hover': {
-                      boxShadow: '0 12px 20px rgba(0,0,0,0.15)',
-                    }
+            </Box>
+            
+            {/* Detalhes do evento */}
+            <Grid container spacing={4} sx={{ mb: 4 }}>
+              <Grid item xs={12} md={6}>
+                <Paper 
+                  elevation={0} 
+                  sx={{ 
+                    p: 3, 
+                    height: '100%',
+                    borderRadius: 3,
+                    bgcolor: alpha(theme.palette.primary.main, 0.05),
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
                   }}
                 >
-                  Compartilhar via WhatsApp
-                </Button>
-              </Box>
-            </Paper>
-          </Zoom>
-        </Container>
-      </Box>
-    );
-  }
-  
-  return (
-    <Box sx={{ 
-      minHeight: '100vh',
-      background: `linear-gradient(135deg, ${alpha(bgColor, 0.97)}, ${alpha(bgColor, 0.95)})`,
-      color: textColor,
-      py: { xs: 2, md: 4 },
-      display: 'flex',
-      alignItems: 'center'
-    }}>
-      <Container maxWidth="lg">
-        <Grid container spacing={4} alignItems="stretch">
-          {/* Coluna do convite */}
-          <Grid item xs={12} md={6}>
-            <Fade in={true} timeout={1000}>
-              <Paper 
-                elevation={3} 
-                sx={{ 
-                  p: { xs: 3, md: 4 }, 
-                  height: '100%',
-                  borderRadius: 4,
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '6px',
-                    background: `linear-gradient(to right, ${accentColor}, ${alpha(accentColor, 0.7)})`
-                  }
-                }}
-              >
-                {/* Imagem do convite */}
-                {publicInvite?.imageUrl && (
-                  <Box 
-                    sx={{
-                      position: 'relative',
-                      mb: 3,
-                      borderRadius: 3,
-                      overflow: 'hidden',
-                      boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-                      maxHeight: '300px',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center'
+                  <Typography 
+                    variant="h6" 
+                    gutterBottom
+                    sx={{ 
+                      color: theme.palette.primary.main,
+                      fontWeight: 600
                     }}
                   >
-                    <Box 
-                      component="img"
-                      src={publicInvite.imageUrl}
-                      alt="Imagem do convite"
-                      sx={{ 
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.5s ease',
-                        '&:hover': {
-                          transform: 'scale(1.03)'
-                        }
-                      }}
-                    />
-                  </Box>
-                )}
-                
-                {/* Título do evento */}
-                <Typography 
-                  variant="h3" 
-                  gutterBottom 
+                    Data e Hora
+                  </Typography>
+                  
+                  <Typography variant="body1" paragraph>
+                    {publicInvite.event?.date 
+                      ? new Date(publicInvite.event.date).toLocaleDateString('pt-BR', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })
+                      : 'Data a confirmar'}
+                  </Typography>
+                  
+                  <Typography variant="body1">
+                    {publicInvite.event?.time || 'Horário a confirmar'}
+                  </Typography>
+                </Paper>
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <Paper 
+                  elevation={0} 
                   sx={{ 
-                    color: accentColor,
-                    fontFamily,
-                    fontWeight: 700,
-                    textAlign: 'center',
-                    mb: 3,
-                    lineHeight: 1.2
+                    p: 3, 
+                    height: '100%',
+                    borderRadius: 3,
+                    bgcolor: alpha(theme.palette.secondary.main, 0.05),
+                    border: `1px solid ${alpha(theme.palette.secondary.main, 0.1)}`
                   }}
                 >
-                  {publicInvite?.event?.title}
+                  <Typography 
+                    variant="h6" 
+                    gutterBottom
+                    sx={{ 
+                      color: theme.palette.secondary.main,
+                      fontWeight: 600
+                    }}
+                  >
+                    Local
+                  </Typography>
+                  
+                  <Typography variant="body1" paragraph>
+                    {publicInvite.event?.location || 'Local a confirmar'}
+                  </Typography>
+                  
+                  <Typography variant="body1">
+                    {publicInvite.event?.address || 'Endereço a confirmar'}
+                  </Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+            
+            {/* Seção de RSVP */}
+            {!statusUpdated ? (
+              <Box 
+                sx={{ 
+                  p: 4, 
+                  mb: 3,
+                  borderRadius: 3,
+                  bgcolor: alpha(theme.palette.info.main, 0.05),
+                  border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`
+                }}
+              >
+                <Typography 
+                  variant="h5" 
+                  gutterBottom
+                  sx={{ 
+                    textAlign: 'center',
+                    fontWeight: 600,
+                    color: theme.palette.info.main
+                  }}
+                >
+                  Confirme sua presença
                 </Typography>
                 
-                {/* Texto personalizado */}
                 <Typography 
                   variant="body1" 
                   paragraph
                   sx={{ 
-                    fontFamily,
-                    fontSize: '1.1rem',
                     textAlign: 'center',
-                    fontWeight: 500,
-                    mb: 4
+                    mb: 3
                   }}
                 >
-                  {publicInvite?.customText || 'Você está convidado para este evento especial!'}
+                  Por favor, confirme se você poderá comparecer ao evento.
                 </Typography>
                 
-                {/* Contador regressivo */}
-                {publicInvite?.event?.date && new Date(publicInvite.event.date) > new Date() && (
-                  <>
-                    <Typography 
-                      variant="subtitle1" 
+                <Grid container spacing={2} justifyContent="center">
+                  <Grid item xs={12} sm={6} md={4}>
+                    <StyledButton
+                      fullWidth
+                      variant="contained"
+                      color="success"
+                      size="large"
+                      startIcon={<CheckCircleIcon />}
+                      onClick={() => handleUpdateStatus('confirmed')}
                       sx={{ 
-                        textAlign: 'center',
+                        py: 1.5,
+                        borderRadius: 2,
                         fontWeight: 600,
-                        mb: 1
+                        boxShadow: '0 4px 12px rgba(76, 175, 80, 0.2)',
+                        '&:hover': {
+                          boxShadow: '0 6px 16px rgba(76, 175, 80, 0.3)',
+                        }
                       }}
                     >
-                      Contagem regressiva
-                    </Typography>
-                    <CountdownTimer targetDate={publicInvite.event.date} />
-                  </>
-                )}
-                
-                {/* Informações do evento */}
-                <Box sx={{ mt: 2 }}>
-                  <EventInfoItem 
-                    icon={<CalendarIcon />}
-                    label="Data"
-                    value={formatDate(publicInvite?.event?.date)}
-                  />
+                      Confirmar Presença
+                    </StyledButton>
+                  </Grid>
                   
-                  <EventInfoItem 
-                    icon={<TimeIcon />}
-                    label="Horário"
-                    value={formatTime(publicInvite?.event?.date)}
-                  />
-                  
-                  {publicInvite?.event?.location && (
-                    <EventInfoItem 
-                      icon={<LocationIcon />}
-                      label="Local"
-                      value={publicInvite.event.location}
-                    />
-                  )}
-                  
-                  {publicInvite?.event?.description && (
-                    <EventInfoItem 
-                      icon={<InfoIcon />}
-                      label="Detalhes"
-                      value={publicInvite.event.description}
-                    />
-                  )}
-                </Box>
-                
-                {/* Botão de compartilhar */}
-                <Box sx={{ mt: 'auto', pt: 3, display: 'flex', justifyContent: 'center' }}>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    startIcon={<ShareIcon />}
-                    onClick={handleShare}
-                    sx={{
-                      borderRadius: 8,
-                      borderColor: alpha(accentColor, 0.5),
-                      color: accentColor,
-                      '&:hover': {
-                        borderColor: accentColor,
-                        backgroundColor: alpha(accentColor, 0.05)
-                      }
-                    }}
-                  >
-                    Compartilhar convite
-                  </Button>
-                </Box>
-              </Paper>
-            </Fade>
-          </Grid>
-          
-          {/* Coluna de confirmação */}
-          <Grid item xs={12} md={6}>
-            <Fade in={true} timeout={1000} style={{ transitionDelay: '300ms' }}>
-              <Card 
-                elevation={3} 
+                  <Grid item xs={12} sm={6} md={4}>
+                    <StyledButton
+                      fullWidth
+                      variant="outlined"
+                      color="error"
+                      size="large"
+                      startIcon={<CancelIcon />}
+                      onClick={() => handleUpdateStatus('declined')}
+                      sx={{ 
+                        py: 1.5,
+                        borderRadius: 2,
+                        fontWeight: 600
+                      }}
+                    >
+                      Não Poderei Comparecer
+                    </StyledButton>
+                  </Grid>
+                </Grid>
+              </Box>
+            ) : (
+              <Box 
                 sx={{ 
-                  height: '100%',
-                  borderRadius: 4,
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '6px',
-                    background: `linear-gradient(to right, ${theme.palette.success.main}, ${theme.palette.success.light})`
-                  }
+                  p: 4, 
+                  mb: 3,
+                  borderRadius: 3,
+                  bgcolor: alpha(theme.palette.success.main, 0.05),
+                  border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
                 }}
               >
-                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                  <Box sx={{ textAlign: 'center', mb: 4 }}>
-                    <Avatar
-                      sx={{
-                        width: 70,
-                        height: 70,
-                        bgcolor: alpha(theme.palette.success.main, 0.1),
-                        color: theme.palette.success.main,
-                        margin: '0 auto',
-                        mb: 2
-                      }}
-                    >
-                      <CelebrationIcon sx={{ fontSize: 36 }} />
-                    </Avatar>
-                    
-                    <Typography 
-                      variant="h4" 
-                      gutterBottom
-                      sx={{ 
-                        fontWeight: 700,
-                        fontFamily
-                      }}
-                    >
-                      Confirme sua presença
-                    </Typography>
-                    
-                    <Typography 
-                      variant="body1" 
-                      sx={{ 
-                        fontFamily,
-                        color: 'text.secondary'
-                      }}
-                    >
-                      Por favor, responda se poderá comparecer ao evento.
-                    </Typography>
-                  </Box>
+                <Box sx={{ textAlign: 'center' }}>
+                  <CheckCircleIcon 
+                    color="success" 
+                    sx={{ 
+                      fontSize: 64,
+                      mb: 2
+                    }} 
+                  />
                   
-                  <Box sx={{ my: 4 }}>
-                    <Grid container spacing={3}>
-                      {/* Botões de confirmação */}
-                      <Grid item xs={12}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          flexDirection: { xs: 'column', sm: 'row' },
-                          gap: 2
-                        }}>
-                          <Button
-                            variant="contained"
-                            color="success"
-                            fullWidth
-                            size="large"
-                            onClick={handleConfirm}
-                            disabled={rsvpLoading}
-                            sx={{
-                              py: 2,
-                              borderRadius: 3,
-                              boxShadow: '0 8px 16px rgba(76, 175, 80, 0.2)',
-                              background: `linear-gradient(45deg, ${theme.palette.success.main}, ${theme.palette.success.light})`,
-                              '&:hover': {
-                                boxShadow: '0 12px 20px rgba(76, 175, 80, 0.25)',
-                              }
-                            }}
-                          >
-                            {rsvpLoading ? (
-                              <CircularProgress size={24} color="inherit" />
-                            ) : (
-                              <>
-                                <CheckIcon sx={{ mr: 1 }} />
-                                Confirmar Presença
-                              </>
-                            )}
-                          </Button>
-                          
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            fullWidth
-                            size="large"
-                            onClick={handleDecline}
-                            disabled={rsvpLoading}
-                            sx={{
-                              py: 2,
-                              borderRadius: 3,
-                              borderWidth: 2,
-                              '&:hover': {
-                                borderWidth: 2,
-                                backgroundColor: alpha(theme.palette.error.main, 0.05)
-                              }
-                            }}
-                          >
-                            {rsvpLoading ? (
-                              <CircularProgress size={24} color="inherit" />
-                            ) : (
-                              <>
-                                <CloseIcon sx={{ mr: 1 }} />
-                                Não Poderei Ir
-                              </>
-                            )}
-                          </Button>
-                        </Box>
-                      </Grid>
-                      
-                      {/* Opções adicionais */}
-                      <Grid item xs={12}>
-                        <Paper
-                          elevation={0}
-                          sx={{
-                            p: 3,
-                            mt: 2,
-                            borderRadius: 3,
-                            bgcolor: alpha(theme.palette.primary.main, 0.05),
-                            border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
-                          }}
-                        >
-                          <Typography 
-                            variant="subtitle1" 
-                            gutterBottom
-                            sx={{ 
-                              fontWeight: 600,
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                          >
-                            <PersonIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
-                            Opções adicionais
-                          </Typography>
-                          
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                name="plusOne"
-                                checked={formData.plusOne}
-                                onChange={handleChange}
-                                color="primary"
-                              />
-                            }
-                            label="Levarei acompanhante"
-                            sx={{ my: 1 }}
-                          />
-                          
-                          {formData.plusOne && (
-                            <Zoom in={formData.plusOne} timeout={300}>
-                              <TextField
-                                name="plusOneName"
-                                label="Nome do acompanhante"
-                                value={formData.plusOneName}
-                                onChange={handleChange}
-                                fullWidth
-                                variant="outlined"
-                                size="small"
-                                sx={{ 
-                                  mt: 1,
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2
-                                  }
-                                }}
-                              />
-                            </Zoom>
-                          )}
-                          
-                          <TextField
-                            name="message"
-                            label="Mensagem ou observação (opcional)"
-                            value={formData.message}
-                            onChange={handleChange}
-                            fullWidth
-                            multiline
-                            rows={3}
-                            variant="outlined"
-                            sx={{ 
-                              mt: 2,
-                              '& .MuiOutlinedInput-root': {
-                                borderRadius: 2
-                              }
-                            }}
-                          />
-                        </Paper>
-                      </Grid>
-                    </Grid>
-                  </Box>
+                  <Typography 
+                    variant="h5" 
+                    gutterBottom
+                    sx={{ 
+                      fontWeight: 600,
+                      color: theme.palette.success.main
+                    }}
+                  >
+                    Resposta registrada com sucesso!
+                  </Typography>
                   
-                  <Divider sx={{ my: 3 }} />
+                  <Typography variant="body1" paragraph>
+                    Obrigado por responder ao convite. Sua resposta foi registrada.
+                  </Typography>
                   
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <WhatsAppIcon sx={{ color: '#25D366', mr: 1 }} />
-                    <Typography variant="body2" color="text.secondary">
-                      Você também pode responder diretamente pelo WhatsApp enviando "sim" ou "não".
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Fade>
-          </Grid>
-        </Grid>
+                  <StyledButton
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<RefreshIcon />}
+                    onClick={() => setStatusUpdated(false)}
+                    sx={{ mt: 1 }}
+                  >
+                    Alterar Resposta
+                  </StyledButton>
+                </Box>
+              </Box>
+            )}
+            
+            {/* Informações adicionais */}
+            <Box sx={{ mb: 3 }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{ 
+                  fontWeight: 600,
+                  color: theme.palette.text.primary
+                }}
+              >
+                Informações Adicionais
+              </Typography>
+              
+              <Typography variant="body1" paragraph>
+                {publicInvite.additionalInfo || 'Não há informações adicionais para este evento.'}
+              </Typography>
+            </Box>
+          </CardContent>
+          
+          <CardActions sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.03) }}>
+            <StyledButton
+              startIcon={<WhatsAppIcon />}
+              onClick={handleShareWhatsApp}
+              sx={{ ml: 'auto' }}
+            >
+              Compartilhar
+            </StyledButton>
+          </CardActions>
+        </Card>
       </Container>
       
-      {/* Snackbar para feedback */}
+      {/* Snackbar para mensagens */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
@@ -909,10 +551,7 @@ const RsvpPage = () => {
           onClose={handleCloseSnackbar} 
           severity={snackbarSeverity}
           variant="filled"
-          sx={{ 
-            borderRadius: 2,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-          }}
+          sx={{ width: '100%' }}
         >
           {snackbarMessage}
         </Alert>

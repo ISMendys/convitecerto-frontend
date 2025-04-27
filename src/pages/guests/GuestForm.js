@@ -16,6 +16,11 @@ import {
   Alert,
   CircularProgress,
   useMediaQuery,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Switch,
   FormControlLabel,
   Avatar,
@@ -28,19 +33,24 @@ import {
   Phone as PhoneIcon,
   Person as PersonIcon,
   ArrowBack as ArrowBackIcon,
+  CheckCircle as CheckCircleIcon,
+  HelpOutline as HelpOutlineIcon,
+  Cancel as CancelIcon,
   Notes as NotesIcon,
+  Group as GroupIcon,
   Image as ImageIcon,
-  Close as CloseIcon,
   EventNote as EventNoteIcon
 } from '@mui/icons-material';
 import { createGuest, updateGuest, fetchGuest, deleteGuest, fetchGuestRsvpHistory } from '../../store/actions/guestActions';
+import { fetchInvites, fetchDefaultInvite } from '../../store/actions/inviteActions';
 import { clearCurrentGuest } from '../../store/slices/guestSlice';
 import ImageUploadFieldBase64 from '../../components/ImageUploadField';
-
 // Componentes estilizados
 import StyledButton from '../../components/StyledButton';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import RsvpDetailsCard from '../../components/guests/RsvpDetailsCard';
+import InviteSelector from '../../components/guests/InviteSelector';
+import { LoadingIndicator } from '../../components/LoadingIndicator';
 
 const GuestForm = () => {
   const { eventId, guestId } = useParams();
@@ -49,8 +59,9 @@ const GuestForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
-  const { currentGuest, loading, error } = useSelector(state => state.guests);
+  const { currentGuest, loading, error, rsvpHistory } = useSelector(state => state.guests);
   const { currentEvent } = useSelector(state => state.events);
+  const { invites, defaultInvite, loading: invitesLoading } = useSelector(state => state.invites);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -63,27 +74,47 @@ const GuestForm = () => {
     notes: '',
     group: 'default',
     imageUrl: { type: 'url', url: '', base64: '' },
+    inviteId: null
   });
 
   const [imageError, setImageError] = useState('');
+  const [inviteError, setInviteError] = useState(false);
+  const [autoLinkDialogOpen, setAutoLinkDialogOpen] = useState(false);
   
+  const [messageLoading, setMessageLoading] = useState('Carregando dados...');
+  const [isLoading, setIsLoading] = useState(false);
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
-  // Carregar dados do convidado se estiver editando
   useEffect(() => {
-    if (guestId) {
-      // Limpar o currentGuest antes de buscar um novo para evitar dados antigos
-      dispatch(clearCurrentGuest());
-      dispatch(fetchGuest(guestId));
-      
-      // Buscar histórico de RSVP se estiver editando
-      dispatch(fetchGuestRsvpHistory(guestId));
-    }
-  }, [dispatch, guestId]);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const promises = [];
+  
+        if (guestId) {
+          dispatch(clearCurrentGuest());
+          promises.push(dispatch(fetchGuest(guestId)));
+          promises.push(dispatch(fetchGuestRsvpHistory(guestId)));
+        }
+  
+        if (eventId) {
+          promises.push(dispatch(fetchInvites(eventId)));
+          promises.push(dispatch(fetchDefaultInvite(eventId)));
+        }
+  
+        await Promise.all(promises);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, [dispatch, guestId, eventId]);
   
   // Preencher formulário com dados do convidado se estiver editando
   useEffect(() => {
@@ -91,33 +122,16 @@ const GuestForm = () => {
       // Processar a imagem para o novo formato
       let imageData = { type: 'url', url: '', base64: '' };
       
-      if (currentEvent.image) {
-        if (typeof currentEvent.image === 'string') {
+      if (currentGuest.imageUrl) {
+        if (typeof currentGuest.imageUrl === 'string') {
           // Se for uma URL ou base64
-          if (currentEvent.image.startsWith('data:image')) {
-            imageData = { type: 'file', base64: currentEvent.image, url: '' };
+          if (currentGuest.imageUrl.startsWith('data:image')) {
+            imageData = { type: 'file', base64: currentGuest.imageUrl, url: '' };
           } else {
-            imageData = { type: 'url', url: currentEvent.image, base64: '' };
+            imageData = { type: 'url', url: currentGuest.imageUrl, base64: '' };
           }
-        } else if (typeof currentEvent.image === 'object') {
-          if (currentEvent.image.imageUrl) {
-            if (currentEvent.image.imageUrl.startsWith('data:image') || 
-                currentEvent.image.imageUrl.startsWith('blob:')) {
-              imageData = { 
-                type: 'file', 
-                base64: currentEvent.image.imageUrl,
-                url: '' 
-              };
-            } else {
-              imageData = { 
-                type: 'url', 
-                url: currentEvent.image.imageUrl,
-                base64: '' 
-              };
-            }
-          } else if (currentEvent.image.base64) {
-            imageData = currentEvent.image;
-          }
+        } else if (typeof currentGuest.imageUrl === 'object') {
+          imageData = currentGuest.imageUrl;
         }
       }
 
@@ -131,11 +145,34 @@ const GuestForm = () => {
         plusOneName: currentGuest.plusOneName || '',
         notes: currentGuest.notes || '',
         group: currentGuest.group || 'default',
-        imageUrl: currentGuest.imageUrl || '',
+        imageUrl: imageData,
+        inviteId: currentGuest.inviteId || null
       });
+    } else if (!guestId && defaultInvite && !formData.inviteId) {
+      // Se estiver criando um novo convidado e houver um convite padrão,
+      // perguntar ao usuário se deseja vincular automaticamente
+      setAutoLinkDialogOpen(true);
     }
-  }, [guestId, currentGuest]);
+  }, [guestId, currentGuest, defaultInvite]);
   
+  const validateGuestForm = (formData) => {
+    const errors = {};
+  
+    if (!formData.name || formData.name.trim() === '') {
+      errors.name = 'Nome é obrigatório';
+    }
+  
+    if (!formData.phone || formData.phone.trim() === '') {
+      errors.phone = 'Telefone é obrigatório';
+    }
+  
+    if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+      errors.email = 'E-mail inválido';
+    }
+
+    return errors;
+  };
+
   // Exibir erro se houver
   useEffect(() => {
     if (error) {
@@ -162,8 +199,39 @@ const GuestForm = () => {
     }));
   };
 
+  // Manipular mudança no convite selecionado
+  const handleInviteChange = (inviteId) => {
+    setFormData(prev => ({
+      ...prev,
+      inviteId
+    }));
+    setInviteError(false);
+  };
+
+  // Manipular vinculação automática ao convite padrão
+  const handleAutoLink = (confirm) => {
+    if (confirm && defaultInvite) {
+      setFormData(prev => ({
+        ...prev,
+        inviteId: defaultInvite.id
+      }));
+    }
+    setAutoLinkDialogOpen(false);
+  };
+
   // Salvar convidado
   const handleSave = async () => {
+    setIsLoading(true);
+    const errors = validateGuestForm(formData);
+
+    if (Object.keys(errors).length > 0) {
+      const firstErrorMessage = Object.values(errors)[0];
+      setSnackbarMessage(firstErrorMessage);
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+      setIsLoading(false);
+      return;
+    }
     let imageData = null;
     
     if (formData.imageUrl.type === 'url' && formData.imageUrl.url) {
@@ -171,6 +239,17 @@ const GuestForm = () => {
     } else if (formData.imageUrl.type === 'file' && formData.imageUrl.base64) {
       imageData = formData.imageUrl.base64;
     }
+
+    // Verificar se um convite foi selecionado
+    if (!formData.inviteId) {
+      setIsLoading(false);
+      setInviteError(true);
+      setSnackbarMessage('Por favor, selecione um convite para este convidado');
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+      return;
+    }
+    
     try {
       let guestData = {
         ...formData,
@@ -188,34 +267,34 @@ const GuestForm = () => {
       
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
-      
-      // Redirecionar após um breve delay
-      setTimeout(() => {
-        navigate(`/events/${eventId}/guests`);
-      }, 1500);
+      navigate(`/events/${eventId || currentEvent.id}/guests`);
     } catch (err) {
-      setSnackbarMessage(err || 'Erro ao salvar convidado');
+      const errorMessage = err?.message || err || 'Erro ao salvar convidado';
+      setSnackbarMessage(errorMessage);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
+    } finally {
+      setIsLoading(false);
     }
   };
   
   // Excluir convidado
   const handleDelete = async () => {
+    setIsLoading(false);
     try {
       await dispatch(deleteGuest(guestId)).unwrap();
       setSnackbarMessage('Convidado excluído com sucesso!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
-      
-      // Redirecionar após um breve delay
-      setTimeout(() => {
-        navigate(`/events/${eventId}/guests`);
-      }, 1500);
+
+      navigate(`/events/${eventId || currentEvent.id}/guests`);
+
     } catch (err) {
       setSnackbarMessage(err || 'Erro ao excluir convidado');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
+    }finally {
+      setIsLoading(false);
     }
     setDeleteDialogOpen(false);
   };
@@ -232,7 +311,7 @@ const GuestForm = () => {
   
   // Cancelar criação/edição
   const handleCancel = () => {
-    navigate(`/events/${eventId}/guests`);
+    navigate(`/events/${eventId || currentEvent.id}/guests`);
   };
   
   // Grupos disponíveis
@@ -298,7 +377,7 @@ const GuestForm = () => {
             variant="outlined"
             color="primary"
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate(`/events/${eventId}/guests`)}
+            onClick={() => navigate(`/events/${eventId || currentEvent.id}/guests`)}
             sx={{ 
               borderRadius: 10,
               px: 2,
@@ -487,32 +566,40 @@ const GuestForm = () => {
               />
             </Box>
             
-            <Box sx={{ 
-              p: 2,
-              bgcolor: alpha(theme.palette.success.main, 0.05),
-              borderRadius: 2,
-              border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
-            }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.whatsapp}
-                    onChange={handleChange}
-                    name="whatsapp"
-                    color="success"
-                  />
-                }
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <WhatsAppIcon sx={{ color: theme.palette.success.main, mr: 1 }} />
-                    <Typography>Este telefone é WhatsApp</Typography>
-                  </Box>
-                }
-              />
-            </Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.whatsapp}
+                  onChange={handleChange}
+                  name="whatsapp"
+                  color="success"
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <WhatsAppIcon sx={{ color: '#25D366', mr: 1 }} />
+                  <Typography>Este telefone é WhatsApp</Typography>
+                </Box>
+              }
+            />
             
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
-              <FormControl fullWidth variant="outlined">
+              <FormControl 
+                fullWidth
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: 2
+                    },
+                    '&:hover fieldset': {
+                      borderColor: theme.palette.primary.light
+                    }
+                  }
+                }}
+              >
                 <InputLabel id="status-label">Status</InputLabel>
                 <Select
                   labelId="status-label"
@@ -520,24 +607,29 @@ const GuestForm = () => {
                   value={formData.status}
                   onChange={handleChange}
                   label="Status"
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderRadius: 2
-                    }
-                  }}
+                  // startAdornment={
+                  //   <Box sx={{ 
+                  //     display: 'flex',
+                  //     alignItems: 'center',
+                  //     ml: -0.5,
+                  //     mr: 1
+                  //   }}>
+                  //     {formData.status === 'confirmed' && <CheckCircleIcon sx={{ color: theme.palette.success.main }} />}
+                  //     {formData.status === 'pending' && <HelpOutlineIcon sx={{ color: theme.palette.warning.main }} />}
+                  //     {formData.status === 'declined' && <CancelIcon sx={{ color: theme.palette.error.main }} />}
+                  //   </Box>
+                  // }
                 >
                   {statuses.map(status => (
                     <MenuItem key={status.id} value={status.id}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Box
-                          sx={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: '50%',
-                            bgcolor: status.color,
-                            mr: 1
-                          }}
-                        />
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        color: status.color
+                      }}>
+                        {status.id === 'confirmed' && <CheckCircleIcon sx={{ mr: 1 }} />}
+                        {status.id === 'pending' && <HelpOutlineIcon sx={{ mr: 1 }} />}
+                        {status.id === 'declined' && <CancelIcon sx={{ mr: 1 }} />}
                         {status.name}
                       </Box>
                     </MenuItem>
@@ -545,7 +637,22 @@ const GuestForm = () => {
                 </Select>
               </FormControl>
               
-              <FormControl fullWidth variant="outlined">
+              <FormControl 
+                fullWidth
+                variant="outlined"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: 2
+                    },
+                    '&:hover fieldset': {
+                      borderColor: theme.palette.primary.light
+                    }
+                  }
+                }}
+              >
                 <InputLabel id="group-label">Grupo</InputLabel>
                 <Select
                   labelId="group-label"
@@ -553,11 +660,11 @@ const GuestForm = () => {
                   value={formData.group}
                   onChange={handleChange}
                   label="Grupo"
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderRadius: 2
-                    }
-                  }}
+                  startAdornment={
+                    <Box sx={{ mr: 1, ml: -0.5, color: theme.palette.primary.main }}>
+                      <GroupIcon />
+                    </Box>
+                  }
                 >
                   {groups.map(group => (
                     <MenuItem key={group.id} value={group.id}>
@@ -568,53 +675,54 @@ const GuestForm = () => {
               </FormControl>
             </Box>
             
-            <Box sx={{ 
-              p: 2,
-              bgcolor: alpha(theme.palette.info.main, 0.05),
-              borderRadius: 2,
-              border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`
-            }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.plusOne}
-                    onChange={handleChange}
-                    name="plusOne"
-                    color="primary"
-                  />
-                }
-                label="Permitir acompanhante"
-              />
-              
-              {formData.plusOne && (
-                <TextField
-                  label="Nome do acompanhante (opcional)"
-                  name="plusOneName"
-                  value={formData.plusOneName}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.plusOne}
                   onChange={handleChange}
-                  fullWidth
-                  variant="outlined"
-                  placeholder="Deixe em branco se não souber"
-                  sx={{
-                    mt: 2,
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2
-                    }
-                  }}
+                  name="plusOne"
+                  color="primary"
                 />
-              )}
-            </Box>
+              }
+              label="Permitir acompanhante"
+            />
+            
+            {formData.plusOne && (
+              <TextField
+                label="Nome do Acompanhante (opcional)"
+                name="plusOneName"
+                value={formData.plusOneName}
+                onChange={handleChange}
+                fullWidth
+                variant="outlined"
+                placeholder="Deixe em branco para que o convidado preencha"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: 2
+                    },
+                    '&:hover fieldset': {
+                      borderColor: theme.palette.primary.light
+                    }
+                  }
+                }}
+              />
+            )}
+            
             <TextField
               label="Observações"
               name="notes"
               value={formData.notes}
               onChange={handleChange}
               fullWidth
-              required
+              multiline
+              rows={3}
               variant="outlined"
               InputProps={{
                 startAdornment: (
-                  <Box sx={{ mr: 1, color: theme.palette.primary.main }}>
+                  <Box sx={{ mr: 1, mt: 1, color: theme.palette.text.secondary }}>
                     <NotesIcon />
                   </Box>
                 ),
@@ -635,7 +743,7 @@ const GuestForm = () => {
           </Box>
         </Paper>
         
-        {/* Seção de Imagem do Convidado */}
+        {/* Seção de Convite */}
         <Paper 
           elevation={0} 
           sx={{ 
@@ -643,7 +751,35 @@ const GuestForm = () => {
             mb: 4, 
             borderRadius: 3,
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            border: '1px solid #e0e0e0'
+            border: inviteError ? `1px solid ${theme.palette.error.main}` : '1px solid #e0e0e0',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+            }
+          }}
+        >
+          <InviteSelector 
+            value={formData.inviteId} 
+            onChange={handleInviteChange} 
+            eventId={eventId}
+            error={inviteError}
+            helperText="É necessário vincular o convidado a um convite para que ele possa acessar a página de RSVP"
+          />
+        </Paper>
+        
+        {/* Seção de Imagem */}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4, 
+            mb: 4, 
+            borderRadius: 3,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            border: '1px solid #e0e0e0',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+            }
           }}
         >
           <Box sx={{ 
@@ -669,32 +805,49 @@ const GuestForm = () => {
                 color: theme.palette.secondary.main
               }}
             >
-              Imagem do Convidado
+              Imagem do Convidado (opcional)
             </Typography>
           </Box>
-          <Box>
-              {/* Campo de upload de imagem com base64 */}
-              <ImageUploadFieldBase64
-                value={formData.imageUrl}
-                onChange={handleImageChange}
-                helperText={"Insira uma url ou faça upload de uma imagem"}
-              />
-
-            {imageError && (
-              <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-                {imageError}
-              </Typography>
-            )}
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Adicione uma foto do convidado para personalizar a experiência
+            </Typography>
+            
+            <ImageUploadFieldBase64
+              value={formData.imageUrl}
+              onChange={handleImageChange}
+              error={imageError}
+              setError={setImageError}
+              aspectRatio={1}
+              maxWidth={800}
+              maxHeight={800}
+            />
           </Box>
         </Paper>
         
-        {/* Seção de RSVP (apenas para edição) */}
+        {/* Seção de RSVP (apenas na edição) */}
         {guestId && currentGuest && (
-          <Box sx={{ mb: 4 }}>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 4, 
+              mb: 4, 
+              borderRadius: 3,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid #e0e0e0',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+              }
+            }}
+          >
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
-              mb: 3
+              mb: 3,
+              pb: 2,
+              borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`
             }}>
               <Avatar
                 sx={{
@@ -716,17 +869,18 @@ const GuestForm = () => {
               </Typography>
             </Box>
             
-            <RsvpDetailsCard guest={currentGuest} />
-          </Box>
+            <RsvpDetailsCard 
+              guest={currentGuest} 
+              rsvpHistory={rsvpHistory || []} 
+            />
+          </Paper>
         )}
         
         {/* Botões de ação */}
         <Box sx={{ 
           display: 'flex', 
           justifyContent: 'space-between',
-          mt: 4,
-          pt: 3,
-          borderTop: `1px solid ${alpha(theme.palette.divider, 0.6)}`
+          mt: 4
         }}>
           <Box>
             {guestId && (
@@ -735,7 +889,10 @@ const GuestForm = () => {
                 color="error"
                 startIcon={<DeleteIcon />}
                 onClick={() => setDeleteDialogOpen(true)}
-                sx={{ mr: 2 }}
+                sx={{ 
+                  borderRadius: 2,
+                  mr: 2
+                }}
               >
                 Excluir
               </StyledButton>
@@ -745,6 +902,9 @@ const GuestForm = () => {
               variant="outlined"
               color="inherit"
               onClick={handleCancelConfirm}
+              sx={{ 
+                borderRadius: 2
+              }}
             >
               Cancelar
             </StyledButton>
@@ -755,48 +915,116 @@ const GuestForm = () => {
             color="primary"
             startIcon={<SaveIcon />}
             onClick={handleSave}
+            sx={{ 
+              borderRadius: 2,
+              px: 4,
+              py: 1.2,
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(94, 53, 177, 0.2)',
+              background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.light} 90%)`,
+              '&:hover': {
+                boxShadow: '0 6px 16px rgba(94, 53, 177, 0.3)',
+                transform: 'translateY(-2px)'
+              }
+            }}
           >
-            Salvar
+            {guestId ? 'Atualizar' : 'Adicionar'} Convidado
           </StyledButton>
         </Box>
-        
-        {/* Dialog de confirmação de cancelamento */}
-        <ConfirmDialog
-          open={confirmDialogOpen}
-          title="Cancelar edição"
-          content="Tem certeza que deseja cancelar? Todas as alterações não salvas serão perdidas."
-          onConfirm={handleCancel}
-          onCancel={() => setConfirmDialogOpen(false)}
-        />
-        
-        {/* Dialog de confirmação de exclusão */}
-        <ConfirmDialog
-          open={deleteDialogOpen}
-          title="Excluir convidado"
-          content="Tem certeza que deseja excluir este convidado? Esta ação não pode ser desfeita."
-          confirmText="Excluir"
-          confirmColor="error"
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteDialogOpen(false)}
-        />
-        
-        {/* Snackbar para mensagens */}
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert 
-            onClose={handleCloseSnackbar} 
-            severity={snackbarSeverity}
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
       </Container>
+      
+      {/* Diálogo de confirmação para cancelar */}
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        title="Cancelar edição"
+        content="Tem certeza que deseja cancelar? Todas as alterações serão perdidas."
+        onConfirm={handleCancel}
+        onCancel={() => setConfirmDialogOpen(false)}
+      />
+      
+      {/* Diálogo de confirmação para excluir */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Excluir convidado"
+        content="Tem certeza que deseja excluir este convidado? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        confirmColor="error"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialogOpen(false)}
+      />
+      
+      {/* Diálogo para vincular automaticamente ao convite padrão */}
+      <Dialog
+        open={autoLinkDialogOpen}
+        onClose={() => setAutoLinkDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+          pb: 2
+        }}>
+          <Typography variant="h6" fontWeight={600} color="primary.main">
+            Vincular ao Convite Padrão
+          </Typography>
+        </DialogTitle>
+        
+        <DialogContent sx={{ pt: 3, pb: 2 }}>
+          <DialogContentText>
+            Deseja vincular este convidado automaticamente ao convite padrão do evento?
+            <Box sx={{ mt: 2, p: 2, bgcolor: alpha(theme.palette.info.main, 0.05), borderRadius: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                O convidado precisa estar vinculado a um convite para poder acessar a página de RSVP.
+              </Typography>
+            </Box>
+          </DialogContentText>
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 2 }}>
+          <StyledButton 
+            variant="outlined" 
+            color="inherit" 
+            onClick={() => handleAutoLink(false)}
+          >
+            Não, escolherei manualmente
+          </StyledButton>
+          <StyledButton 
+            variant="contained" 
+            color="primary" 
+            onClick={() => handleAutoLink(true)}
+            disabled={!defaultInvite}
+          >
+            Sim, vincular
+          </StyledButton>
+        </DialogActions>
+      </Dialog>
+
+      <LoadingIndicator 
+        open={isLoading} 
+        type="overlay" 
+        message={messageLoading}
+      />
+
+      {/* Snackbar para mensagens */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbarSeverity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

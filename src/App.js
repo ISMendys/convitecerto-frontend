@@ -45,7 +45,7 @@ const App = () => {
   return (
     <Routes>
       {/* Rotas públicas */}
-      <Route path="/rsvp/:id" element={<RsvpPage />} />
+      <Route path="/rsvp/:guestId" element={<RsvpPage />} />
       
       {/* Rotas de autenticação */}
       <Route element={<AuthLayout />}>

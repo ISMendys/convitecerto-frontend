@@ -13,7 +13,6 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  ListItemAvatar,
   TextField,
   Dialog,
   DialogTitle,
@@ -22,8 +21,6 @@ import {
   DialogContentText,
   Collapse,
   IconButton,
-  Tooltip,
-  Badge,
   Paper
 } from '@mui/material';
 import {
@@ -49,8 +46,8 @@ import {
   ExpandLess as ExpandLessIcon,
   Send as SendIcon
 } from '@mui/icons-material';
-import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { format, isValid, parseISO } from 'date-fns';
 
 // Componentes estilizados
 import StyledButton from '../StyledButton';
@@ -98,16 +95,14 @@ const RsvpDetailsCard = ({ guest }) => {
   
   const statusInfo = getStatusInfo(guest.status);
   
-  // Formatar data
   const formatDate = (dateString) => {
     if (!dateString) return 'Data não disponível';
     
-    try {
-      const date = new Date(dateString);
-      return format(date, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR });
-    } catch (error) {
-      return 'Data inválida';
-    }
+    const date = parseISO(dateString);
+  
+    if (!isValid(date)) return 'Data inválida';
+  
+    return format(date, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR });
   };
   
   // Enviar lembrete via WhatsApp
@@ -152,7 +147,6 @@ const RsvpDetailsCard = ({ guest }) => {
           left: 0,
           right: 0,
           height: '4px',
-          background: `linear-gradient(to right, ${statusInfo.color}, ${alpha(statusInfo.color, 0.7)})`
         }
       }}
     >
@@ -341,7 +335,9 @@ const RsvpDetailsCard = ({ guest }) => {
                   <TimelineItem key={index}>
                     <TimelineOppositeContent sx={{ flex: 0.2 }}>
                       <Typography variant="caption" color="text.secondary">
-                        {format(new Date(message.createdAt), "dd/MM/yyyy HH:mm")}
+                      {message.createdAt && isValid(new Date(message.createdAt))
+                        ? format(new Date(message.createdAt), "dd/MM/yyyy HH:mm")
+                        : 'Data não disponível'}
                       </Typography>
                     </TimelineOppositeContent>
                     

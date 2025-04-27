@@ -13,16 +13,11 @@ import {
   CardMedia,
   Divider,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
   Snackbar,
   Alert,
-  DialogContentText,
   CircularProgress,
   useMediaQuery,
-  Avatar,
-  Zoom
+  Avatar
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -40,7 +35,7 @@ import {
   Description as DescriptionIcon,
   FormatListBulleted as ListIcon
 } from '@mui/icons-material';
-import { fetchEvent, updateEvent, deleteEvent } from '../../store/actions/eventActions';
+import { fetchEvent, deleteEvent } from '../../store/actions/eventActions';
 import { fetchGuests } from '../../store/actions/guestActions';
 import { fetchInvites } from '../../store/actions/inviteActions';
 

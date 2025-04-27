@@ -312,7 +312,7 @@ const EventCreate = () => {
       // Redirecionar após um breve delay
       setTimeout(() => {
         navigate('/events');
-      }, 1500);
+      }, 500);
     } catch (err) {
       setSnackbarMessage(err || 'Erro ao salvar evento');
       setSnackbarSeverity('error');
@@ -331,7 +331,7 @@ const EventCreate = () => {
       // Redirecionar após um breve delay
       setTimeout(() => {
         navigate('/');
-      }, 1500);
+      }, 500);
     } catch (err) {
       setSnackbarMessage(err || 'Erro ao excluir evento');
       setSnackbarSeverity('error');
