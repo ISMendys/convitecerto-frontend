@@ -221,6 +221,7 @@ const GuestForm = () => {
 
   // Salvar convidado
   const handleSave = async () => {
+    setMessageLoading('Salvando...');
     setIsLoading(true);
     const errors = validateGuestForm(formData);
 
@@ -280,6 +281,7 @@ const GuestForm = () => {
   
   // Excluir convidado
   const handleDelete = async () => {
+    setMessageLoading('Excluindo...');
     setIsLoading(false);
     try {
       await dispatch(deleteGuest(guestId)).unwrap();

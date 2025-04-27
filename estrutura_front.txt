@@ -26,7 +26,8 @@
 │   │   ├── StatusChip.js
 │   │   ├── StyledButton.js
 │   │   ├── StyledTabs.js
-│   │   └── StyledTextField.js
+│   │   ├── StyledTextField.js
+│   │   └── WhatsApp.js
 │   ├── index.js
 │   ├── layouts
 │   │   ├── AuthLayout.js
@@ -44,7 +45,8 @@
 │   │   ├── test
 │   │   └── whatsapp
 │   ├── services
-│   │   └── api.js
+│   │   ├── api.js
+│   │   └── evolutionApiService.js
 │   ├── store
 │   │   ├── actions
 │   │   ├── index.js
@@ -54,4 +56,4 @@
 │   └── theme.js
 └── yarn.lock
 
-22 directories, 32 files
+22 directories, 34 files
