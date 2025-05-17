@@ -1,563 +1,385 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Container,
   Typography,
   Paper,
-  Grid,
   CircularProgress,
-  Divider,
   Alert,
-  AlertTitle,
-  Card,
-  CardContent,
-  CardMedia,
-  CardActions,
   Snackbar,
-  useTheme,
-  alpha
+  ThemeProvider,
+  createTheme, // Import createTheme directly
+  Stack,
+  Button,
+  Icon,
 } from '@mui/material';
 import {
-  ArrowBack as ArrowBackIcon,
-  Refresh as RefreshIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
-  HelpOutline as HelpOutlineIcon,
-  WhatsApp as WhatsAppIcon
+  Event as EventIcon,
+  AccessTime as AccessTimeIcon,
+  LocationOn as LocationOnIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
-import { fetchPublicInvite } from '../../store/actions/inviteActions';
-import { updateGuestStatus } from '../../store/actions/guestActions';
-import StyledButton from '../../components/StyledButton';
+import { fetchPublicInvite } from '../../store/actions/inviteActions'; // Adjust path if needed
+import { updateGuestStatus } from '../../store/actions/guestActions'; // Adjust path if needed
+import { motion } from 'framer-motion';
+import Countdown from 'react-countdown';
 
+// Import the MINIMALIST theme generator and fallback
+import {
+    generateMinimalThemeConfig,
+    fallbackMinimalTheme
+} from './components/themes';
+// Removed ParticleBackground import
+import ElegantLoadingIndicator from './components/ElegantLoadingIndicator';
+import CountdownRenderer from './components/CountdownRenderer';
+import DetailCard from './components/DetailCard';
+import HostMessage from './components/HostMessage';
+import ThemedMap from './components/ThemedMap';
+
+// --- Configuration Flag --- //
+// Set to true to use dynamic theme based on invite colors.
+// Set to false to use the default fallbackMinimalTheme.
+const USE_DYNAMIC_THEME = true; // Defaulting to FALSE as requested
+
+// --- Framer Motion Variants (Subtle Fade-in) --- //
+const subtleFadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 1) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, delay: i * 0.1, ease: 'easeOut' }, // Slightly faster duration
+  }),
+};
+
+// Bounce animation for scroll arrow (kept subtle)
+const bounceAnimation = {
+  y: ["0%", "-15%", "0%"],
+  opacity: [0.6, 0.9, 0.6],
+  transition: {
+    duration: 1.8,
+    ease: "easeInOut",
+    repeat: Infinity,
+    repeatType: "loop",
+  },
+};
+
+// --- Main RsvpPage Component (Minimalist v2 with Theme Flag) --- //
 const RsvpPage = () => {
   const { guestId } = useParams();
-  const theme = useTheme();
   const dispatch = useDispatch();
-  
   const { publicInvite, loading, error } = useSelector(state => state.invites);
-  
-  const [statusUpdated, setStatusUpdated] = useState(false);
-  const [message, setMessage] = useState('');
+  const { loading: rsvpLoading, error: rsvpError, messageStatus } = useSelector(state => state.guests);
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  
-  // Carregar convite público
+  const [snackbarSeverity, setSnackbarSeverity] = useState('info');
+
+  // --- Theme Selection Logic with Flag --- //
+  const theme = useMemo(() => {
+    if (USE_DYNAMIC_THEME && publicInvite) {
+      // Use dynamic theme only if flag is true AND data is loaded
+      const personalization = {
+        bgColor: publicInvite.bgColor,
+        textColor: publicInvite.textColor,
+        accentColor: publicInvite.accentColor,
+        fontFamily: publicInvite.fontFamily,
+      };
+      const themeConfig = generateMinimalThemeConfig(personalization);
+      return createTheme(themeConfig);
+    } else {
+      // Use fallback minimal theme if flag is false OR data not loaded
+      return fallbackMinimalTheme;
+    }
+  }, [publicInvite]); // Dependency remains publicInvite to react to data loading
+
+  // State for map coordinates
+  const [mapCenter, setMapCenter] = useState(null);
+  const [mapZoom, setMapZoom] = useState(15);
+  const [mapMarkerPos, setMapMarkerPos] = useState(null);
+  const [mapMarkerText, setMapMarkerText] = useState('');
+
+  // Fetch invite data
   useEffect(() => {
     if (guestId) {
-      console.log('Fetching public invite for guest:', guestId);
       dispatch(fetchPublicInvite(guestId));
     }
   }, [dispatch, guestId]);
-  
-  // Atualizar status do convidado
-  const handleUpdateStatus = async (status) => {
-    try {
-      console.log('Updating guest status:', status);
-      await dispatch(updateGuestStatus({ 
-        id: guestId, 
-        status, 
-        message 
-      })).unwrap();
-      
-      setStatusUpdated(true);
-      setSnackbarMessage(
-        status === 'confirmed' 
-          ? 'Presença confirmada com sucesso!' 
-          : 'Resposta enviada com sucesso!'
-      );
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-    } catch (err) {
-      console.error('Error updating status:', err);
-      setSnackbarMessage(err || 'Erro ao atualizar status');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
+
+  // Geocoding Placeholder - TODO: Implement real geocoding
+  useEffect(() => {
+    if (publicInvite?.event?.location) {
+      const locationString = publicInvite.event.location;
+      setMapMarkerText(`${publicInvite.event.title || 'Local do Evento'}<br/>${locationString}`);
+
+      // --- Placeholder Geocoding Logic --- //
+      const geocodeLocation = async (location) => {
+        console.warn("Geocoding not implemented. Using placeholder coordinates.");
+        if (location.toLowerCase().includes("salvador")) return [-12.9777, -38.5016];
+        if (location.toLowerCase().includes("são paulo")) return [-23.5505, -46.6333];
+        return [-14.2350, -51.9253]; // Fallback
+      };
+      // --- End Placeholder --- //
+
+      geocodeLocation(locationString).then(coords => {
+        if (coords) {
+          setMapCenter(coords);
+          setMapMarkerPos(coords);
+          setMapZoom(16);
+        } else {
+          setMapCenter([-14.2350, -51.9253]);
+          setMapMarkerPos(null);
+          setMapZoom(4);
+        }
+      });
+    }
+  }, [publicInvite?.event?.location, publicInvite?.event?.title]);
+
+  // Handle RSVP
+  const handleRsvp = (status) => {
+    if (guestId) {
+      dispatch(updateGuestStatus(guestId, status));
     }
   };
-  
-  // Fechar snackbar
-  const handleCloseSnackbar = () => {
+
+  // Handle Snackbar
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   };
-  
-  // Compartilhar no WhatsApp
-  const handleShareWhatsApp = () => {
-    const text = `Olá! Confirme sua presença no evento ${publicInvite?.event?.title || 'Evento'} através deste link: ${window.location.href}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-  };
-  
-  // Renderizar tela de carregamento
+
+  const prevRsvpLoading = useRef(rsvpLoading);
+  useEffect(() => {
+    if (prevRsvpLoading.current && !rsvpLoading) {
+      if (rsvpError) {
+        setSnackbarMessage(`Erro ao registrar resposta: ${rsvpError}`);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      } else {
+        setSnackbarMessage(messageStatus || 'Sua resposta foi registrada com sucesso!');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+      }
+    }
+    prevRsvpLoading.current = rsvpLoading;
+  }, [rsvpLoading, rsvpError, messageStatus]);
+
+  // --- Render Logic --- //
+
+  // Use selected theme for loading indicator
   if (loading) {
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column',
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '100vh',
-        bgcolor: theme.palette.background.default
-      }}>
-        <CircularProgress size={60} thickness={4} />
-        <Typography variant="h6" sx={{ mt: 3 }}>
-          Carregando seu convite...
-        </Typography>
-      </Box>
-    );
+    return <ElegantLoadingIndicator theme={theme} />;
   }
-  
-  // Renderizar tela de erro
+
+  // Use selected theme for error/warning messages
   if (error) {
     return (
-      <Container maxWidth="sm" sx={{ py: 8 }}>
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            p: 4, 
-            borderRadius: 3,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            textAlign: 'center'
-          }}
-        >
-          <Alert 
-            severity="error" 
-            variant="filled"
-            sx={{ mb: 3 }}
-          >
-            <AlertTitle>Erro ao carregar convite</AlertTitle>
-            {error}
-          </Alert>
-          
-          <Typography variant="body1" paragraph>
-            Não foi possível carregar seu convite. Por favor, verifique o link ou entre em contato com o organizador do evento.
-          </Typography>
-          
-          <StyledButton
-            variant="contained"
-            color="primary"
-            startIcon={<RefreshIcon />}
-            onClick={() => dispatch(fetchPublicInvite(guestId))}
-            sx={{ mt: 2 }}
-          >
-            Tentar Novamente
-          </StyledButton>
-        </Paper>
-      </Container>
+      <ThemeProvider theme={theme}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: 'background.default', p: 3 }}>
+          <Alert severity="error" sx={{ width: '100%', maxWidth: 'sm' }}>Erro ao carregar os dados do convite: {error}</Alert>
+        </Box>
+      </ThemeProvider>
     );
   }
-  
-  // Renderizar tela de convidado sem convite
-  if (publicInvite?.noInvite) {
-    return (
-      <Container maxWidth="sm" sx={{ py: 8 }}>
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            p: 4, 
-            borderRadius: 3,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            textAlign: 'center'
-          }}
-        >
-          <Alert 
-            severity="warning" 
-            variant="filled"
-            sx={{ mb: 3 }}
-          >
-            <AlertTitle>Convite não encontrado</AlertTitle>
-            {publicInvite.message}
-          </Alert>
-          
-          <Typography variant="h5" gutterBottom>
-            Olá, {publicInvite.guestName}!
-          </Typography>
-          
-          <Typography variant="body1" paragraph>
-            Parece que você ainda não possui um convite associado. O organizador do evento precisa vincular um convite ao seu cadastro.
-          </Typography>
-          
-          <Typography variant="body1" paragraph>
-            Entre em contato com o organizador do evento para solicitar seu convite.
-          </Typography>
-          
-          <StyledButton
-            variant="contained"
-            color="primary"
-            startIcon={<WhatsAppIcon />}
-            onClick={handleShareWhatsApp}
-            sx={{ mt: 2 }}
-          >
-            Contatar Organizador
-          </StyledButton>
-        </Paper>
-      </Container>
-    );
-  }
-  
-  // Renderizar tela de convite não encontrado
+
   if (!publicInvite) {
     return (
-      <Container maxWidth="sm" sx={{ py: 8 }}>
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            p: 4, 
-            borderRadius: 3,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            textAlign: 'center'
-          }}
-        >
-          <Alert 
-            severity="info" 
-            variant="filled"
-            sx={{ mb: 3 }}
-          >
-            <AlertTitle>Convite não encontrado</AlertTitle>
-            Não foi possível encontrar o convite solicitado
-          </Alert>
-          
-          <Typography variant="body1" paragraph>
-            O convite que você está procurando não foi encontrado. Por favor, verifique o link ou entre em contato com o organizador do evento.
-          </Typography>
-          
-          <StyledButton
-            variant="contained"
-            color="primary"
-            startIcon={<RefreshIcon />}
-            onClick={() => dispatch(fetchPublicInvite(guestId))}
-            sx={{ mt: 2 }}
-          >
-            Tentar Novamente
-          </StyledButton>
-        </Paper>
-      </Container>
+      <ThemeProvider theme={theme}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: 'background.default', p: 3 }}>
+          <Alert severity="warning" sx={{ width: '100%', maxWidth: 'sm' }}>Convite não encontrado ou inválido.</Alert>
+        </Box>
+      </ThemeProvider>
     );
   }
-  
-  // Renderizar tela de RSVP
+
+  // Format event date and time
+  const eventDate = publicInvite.event?.date ? new Date(publicInvite.event.date) : null;
+  const formattedDate = eventDate ? eventDate.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Data a definir';
+  const formattedTime = eventDate ? eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+
+  // Determine Mapbox style based on theme mode (light/dark)
+  const mapStyle = theme.palette.mode === 'dark' ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11";
+
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh',
-        bgcolor: publicInvite.backgroundColor || theme.palette.background.default,
-        color: publicInvite.textColor || theme.palette.text.primary,
-        py: 4
-      }}
-    >
-      <Container maxWidth="md">
-        <Card 
-          elevation={0} 
-          sx={{ 
-            overflow: 'hidden',
-            borderRadius: 4,
-            boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-            bgcolor: 'white'
+    <ThemeProvider theme={theme}>
+      {/* Main container using selected theme background */}
+      <Box sx={{ bgcolor: 'background.default', color: 'text.primary', position: 'relative', overflowX: 'hidden', minHeight: '100vh' }}>
+        {/* Removed ParticleBackground */}
+
+        {/* Fullscreen Intro Section - Adjusted Padding */}
+        <Box
+          sx={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            textAlign: 'center',
+            position: 'relative',
+            zIndex: 1,
+            pt: { xs: 12, md: 16 }, // Increased top padding
+            pb: { xs: 20, md: 24 }, // Increased bottom padding
+            px: 3,
           }}
         >
-          {/* Cabeçalho do convite */}
-          <CardMedia
-            component="img"
-            height="300"
-            image={publicInvite.imageUrl || `https://source.unsplash.com/random/1200x600?event&sig=${publicInvite.id}`}
-            alt={publicInvite.title}
-          />
-          
-          <CardContent sx={{ p: 4 }}>
-            {/* Título e detalhes do evento */}
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Typography 
-                variant="h3" 
-                component="h1" 
-                gutterBottom
-                sx={{ 
-                  fontFamily: publicInvite.titleFont || 'inherit',
-                  color: publicInvite.titleColor || theme.palette.primary.main,
-                  fontWeight: 700,
-                  letterSpacing: '-0.5px'
-                }}
-              >
-                {publicInvite.title}
-              </Typography>
-              
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontFamily: publicInvite.subtitleFont || 'inherit',
-                  color: publicInvite.subtitleColor || theme.palette.text.secondary,
-                  mb: 2
-                }}
-              >
-                {publicInvite.subtitle}
-              </Typography>
-              
-              <Divider sx={{ 
-                width: '50%', 
-                mx: 'auto', 
-                my: 3,
-                borderColor: alpha(theme.palette.primary.main, 0.3)
-              }} />
-              
-              <Typography 
-                variant="body1" 
-                paragraph
-                sx={{ 
-                  fontFamily: publicInvite.textFont || 'inherit',
-                  fontSize: '1.1rem',
-                  lineHeight: 1.6
-                }}
-              >
-                {publicInvite.description}
-              </Typography>
-            </Box>
-            
-            {/* Detalhes do evento */}
-            <Grid container spacing={4} sx={{ mb: 4 }}>
-              <Grid item xs={12} md={6}>
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: 3, 
-                    height: '100%',
-                    borderRadius: 3,
-                    bgcolor: alpha(theme.palette.primary.main, 0.05),
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
-                  }}
-                >
-                  <Typography 
-                    variant="h6" 
-                    gutterBottom
-                    sx={{ 
-                      color: theme.palette.primary.main,
-                      fontWeight: 600
-                    }}
-                  >
-                    Data e Hora
-                  </Typography>
-                  
-                  <Typography variant="body1" paragraph>
-                    {publicInvite.event?.date 
-                      ? new Date(publicInvite.event.date).toLocaleDateString('pt-BR', { 
-                          weekday: 'long', 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })
-                      : 'Data a confirmar'}
-                  </Typography>
-                  
-                  <Typography variant="body1">
-                    {publicInvite.event?.time || 'Horário a confirmar'}
-                  </Typography>
-                </Paper>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: 3, 
-                    height: '100%',
-                    borderRadius: 3,
-                    bgcolor: alpha(theme.palette.secondary.main, 0.05),
-                    border: `1px solid ${alpha(theme.palette.secondary.main, 0.1)}`
-                  }}
-                >
-                  <Typography 
-                    variant="h6" 
-                    gutterBottom
-                    sx={{ 
-                      color: theme.palette.secondary.main,
-                      fontWeight: 600
-                    }}
-                  >
-                    Local
-                  </Typography>
-                  
-                  <Typography variant="body1" paragraph>
-                    {publicInvite.event?.location || 'Local a confirmar'}
-                  </Typography>
-                  
-                  <Typography variant="body1">
-                    {publicInvite.event?.address || 'Endereço a confirmar'}
-                  </Typography>
-                </Paper>
-              </Grid>
-            </Grid>
-            
-            {/* Seção de RSVP */}
-            {!statusUpdated ? (
-              <Box 
-                sx={{ 
-                  p: 4, 
-                  mb: 3,
-                  borderRadius: 3,
-                  bgcolor: alpha(theme.palette.info.main, 0.05),
-                  border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`
-                }}
-              >
-                <Typography 
-                  variant="h5" 
-                  gutterBottom
-                  sx={{ 
-                    textAlign: 'center',
-                    fontWeight: 600,
-                    color: theme.palette.info.main
-                  }}
-                >
-                  Confirme sua presença
-                </Typography>
-                
-                <Typography 
-                  variant="body1" 
-                  paragraph
-                  sx={{ 
-                    textAlign: 'center',
-                    mb: 3
-                  }}
-                >
-                  Por favor, confirme se você poderá comparecer ao evento.
-                </Typography>
-                
-                <Grid container spacing={2} justifyContent="center">
-                  <Grid item xs={12} sm={6} md={4}>
-                    <StyledButton
-                      fullWidth
-                      variant="contained"
-                      color="success"
-                      size="large"
-                      startIcon={<CheckCircleIcon />}
-                      onClick={() => handleUpdateStatus('confirmed')}
-                      sx={{ 
-                        py: 1.5,
-                        borderRadius: 2,
-                        fontWeight: 600,
-                        boxShadow: '0 4px 12px rgba(76, 175, 80, 0.2)',
-                        '&:hover': {
-                          boxShadow: '0 6px 16px rgba(76, 175, 80, 0.3)',
-                        }
-                      }}
-                    >
-                      Confirmar Presença
-                    </StyledButton>
-                  </Grid>
-                  
-                  <Grid item xs={12} sm={6} md={4}>
-                    <StyledButton
-                      fullWidth
-                      variant="outlined"
-                      color="error"
-                      size="large"
-                      startIcon={<CancelIcon />}
-                      onClick={() => handleUpdateStatus('declined')}
-                      sx={{ 
-                        py: 1.5,
-                        borderRadius: 2,
-                        fontWeight: 600
-                      }}
-                    >
-                      Não Poderei Comparecer
-                    </StyledButton>
-                  </Grid>
-                </Grid>
+          <motion.div variants={subtleFadeInUp} initial="hidden" animate="visible" custom={1}>
+            {/* Title uses accent color from theme */}
+            <Typography variant="h1" sx={{ mb: 2 }}>
+              {publicInvite.title || 'Você está convidado!'}
+            </Typography>
+          </motion.div>
+          <motion.div variants={subtleFadeInUp} initial="hidden" animate="visible" custom={2}>
+            <Typography variant="h4" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+              {publicInvite.event?.title || 'Para um evento especial'}
+            </Typography>
+          </motion.div>
+
+          {/* Scroll Down Arrow */}
+          <motion.div
+            style={{
+              position: 'absolute',
+              bottom: 60,
+              left: '50%',
+              translateX: '-50%',
+              cursor: 'pointer',
+            }}
+            animate={bounceAnimation}
+            onClick={() => {
+              const nextSection = document.getElementById('content-start');
+              if (nextSection) {
+                nextSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            <ExpandMoreIcon sx={{ fontSize: '3rem', color: 'text.secondary' }} />
+          </motion.div>
+        </Box>
+
+        {/* Content Container - Adjusted Padding */}
+        <Container id="content-start" maxWidth="md" sx={{ pt: { xs: 12, md: 20 }, pb: { xs: 12, md: 20 }, position: 'relative', zIndex: 1 }}>
+
+          {/* Countdown Section */}
+          {eventDate && eventDate > new Date() && (
+            <motion.div variants={subtleFadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={1}>
+              <Box sx={{ mb: { xs: 12, md: 18 } }}> {/* Increased margin bottom */}
+                <Typography variant="h3" align="center" sx={{ mb: { xs: 6, md: 8 } }}>Contagem Regressiva</Typography>
+                {/* Pass selected theme to CountdownRenderer */}
+                <Countdown
+                  date={eventDate}
+                  renderer={(props) => <CountdownRenderer {...props} theme={theme} />}
+                />
               </Box>
-            ) : (
-              <Box 
-                sx={{ 
-                  p: 4, 
-                  mb: 3,
-                  borderRadius: 3,
-                  bgcolor: alpha(theme.palette.success.main, 0.05),
-                  border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
-                }}
-              >
-                <Box sx={{ textAlign: 'center' }}>
-                  <CheckCircleIcon 
-                    color="success" 
-                    sx={{ 
-                      fontSize: 64,
-                      mb: 2
-                    }} 
-                  />
-                  
-                  <Typography 
-                    variant="h5" 
-                    gutterBottom
-                    sx={{ 
-                      fontWeight: 600,
-                      color: theme.palette.success.main
-                    }}
-                  >
-                    Resposta registrada com sucesso!
-                  </Typography>
-                  
-                  <Typography variant="body1" paragraph>
-                    Obrigado por responder ao convite. Sua resposta foi registrada.
-                  </Typography>
-                  
-                  <StyledButton
-                    variant="outlined"
-                    color="primary"
-                    startIcon={<RefreshIcon />}
-                    onClick={() => setStatusUpdated(false)}
-                    sx={{ mt: 1 }}
-                  >
-                    Alterar Resposta
-                  </StyledButton>
+            </motion.div>
+          )}
+
+          {/* Host Message Section */}
+          {publicInvite.customText && (
+             <motion.div variants={subtleFadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={2}>
+                <Box sx={{ mb: { xs: 12, md: 18 }, display: 'flex', justifyContent: 'center' }}>
+                    <Box sx={{ width: '100%', maxWidth: '750px' }}>
+                        {/* Pass selected theme to HostMessage */}
+                        <HostMessage message={publicInvite.customText} theme={theme} index={2} />
+                    </Box>
                 </Box>
-              </Box>
-            )}
-            
-            {/* Informações adicionais */}
-            <Box sx={{ mb: 3 }}>
-              <Typography 
-                variant="h6" 
-                gutterBottom
-                sx={{ 
-                  fontWeight: 600,
-                  color: theme.palette.text.primary
-                }}
-              >
-                Informações Adicionais
-              </Typography>
-              
-              <Typography variant="body1" paragraph>
-                {publicInvite.additionalInfo || 'Não há informações adicionais para este evento.'}
-              </Typography>
+             </motion.div>
+          )}
+
+          {/* Details Section - Adjusted Grid Layout and Card Style */}
+          <motion.div variants={subtleFadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={3}>
+            {/* Ensure 3 columns on sm screens and up */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: { xs: 4, md: 5 }, mb: { xs: 12, md: 18 } }}>
+              {/* Pass selected theme and index to DetailCard */}
+              <DetailCard icon={EventIcon} title="Data" value={formattedDate} theme={theme} index={3.1} />
+              <DetailCard icon={AccessTimeIcon} title="Horário" value={formattedTime || 'A definir'} theme={theme} index={3.2} />
+              <DetailCard icon={LocationOnIcon} title="Local" value={publicInvite.event?.location || 'A definir'} theme={theme} index={3.3} />
             </Box>
-          </CardContent>
-          
-          <CardActions sx={{ p: 3, bgcolor: alpha(theme.palette.primary.main, 0.03) }}>
-            <StyledButton
-              startIcon={<WhatsAppIcon />}
-              onClick={handleShareWhatsApp}
-              sx={{ ml: 'auto' }}
-            >
-              Compartilhar
-            </StyledButton>
-          </CardActions>
-        </Card>
-      </Container>
-      
-      {/* Snackbar para mensagens */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbarSeverity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-    </Box>
+          </motion.div>
+
+          {/* Map Section - Minimal Styling */}
+          {publicInvite.event?.location && mapCenter && (
+            <motion.div variants={subtleFadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={4}>
+              <Typography variant="h3" align="center" sx={{ mb: { xs: 6, md: 8 } }}>Como Chegar</Typography>
+              <Box sx={{
+                  height: { xs: 350, sm: 450, md: 500 }, // Adjusted height
+                  mb: { xs: 12, md: 18 },
+                  borderRadius: theme.shape.borderRadius, // Use theme radius
+                  overflow: 'hidden',
+                  border: `1px solid ${theme.palette.divider}`, // Use theme divider for subtle border
+                  // Removed explicit shadow
+              }}>
+                {/* Pass selected theme and mapStyle to ThemedMap */}
+                <ThemedMap
+                  center={mapCenter}
+                  zoom={mapZoom}
+                  markerPosition={mapMarkerPos}
+                  markerPopupText={mapMarkerText}
+                  theme={theme}
+                  mapStyle={mapStyle}
+                />
+              </Box>
+            </motion.div>
+          )}
+
+          {/* RSVP Action Section - Minimal Styling */}
+          <motion.div variants={subtleFadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={5}>
+            {/* Paper uses selected theme styles via ThemeProvider */}
+            <Paper sx={{ p: { xs: 4, sm: 6 }, textAlign: 'center' }}> {/* Adjusted padding */}
+              <Typography variant="h3" sx={{ mb: 3 }}>Confirmar Presença</Typography>
+              <Typography variant="body1" sx={{ mb: 5, color: 'text.secondary', maxWidth: 600, mx: 'auto' }}>
+                Sua resposta é muito importante para nós! Por favor, confirme se poderemos contar com sua presença neste dia especial.
+              </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5} justifyContent="center"> {/* Reduced spacing */}
+                {/* Confirm Button: Use 'contained' variant */}
+                <Button
+                  variant="contained"
+                  // color="primary" // Let the theme handle the color via MuiButton overrides
+                  size="large"
+                  startIcon={<CheckCircleIcon />}
+                  onClick={() => handleRsvp('confirmed')}
+                  disabled={rsvpLoading}
+                  sx={{ minWidth: 200 }} // Adjusted minWidth
+                >
+                  {rsvpLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirmar Presença'}
+                </Button>
+                {/* Decline Button: Use 'outlined' variant */}
+                <Button
+                  variant="outlined"
+                  // color="inherit" // Let the theme handle the color via MuiButton overrides
+                  size="large"
+                  startIcon={<CancelIcon />}
+                  onClick={() => handleRsvp('declined')}
+                  disabled={rsvpLoading}
+                  sx={{ minWidth: 200 }} // Adjusted minWidth
+                >
+                  {rsvpLoading ? <CircularProgress size={24} color="inherit" /> : 'Não Poderei Comparecer'}
+                </Button>
+              </Stack>
+              {/* Display current RSVP status using selected theme colors */}
+              {publicInvite.guest?.status && (
+                <Typography variant="body2" sx={{ mt: 4 }}>
+                  Sua resposta atual: <strong style={{ color: publicInvite.guest.status === 'confirmed' ? theme.palette.button.confirmBg : theme.palette.button.declineText }}>
+                    {publicInvite.guest.status === 'confirmed' ? 'Presença Confirmada' : 'Não Comparecerá'}
+                  </strong>
+                </Typography>
+              )}
+            </Paper>
+          </motion.div>
+
+        </Container>
+
+        {/* Snackbar - Uses selected theme via ThemeProvider */}
+        <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }} variant="filled">
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </ThemeProvider>
   );
 };
 
 export default RsvpPage;
+

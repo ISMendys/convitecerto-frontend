@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux'; // Adicionar useDispatch
+import { sendWhatsappReminder } from '../store/actions/whatsappActions'; // Adicionar action
 
 import { useTheme, alpha } from '@mui/material/styles';
-import { Box, Typography, Paper, Avatar, Chip, IconButton, Badge, Divider, Checkbox, Tooltip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
+import { Box, Typography, Paper, Avatar, Chip, IconButton, Badge, Divider, Checkbox, Tooltip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, CircularProgress } from '@mui/material'; // Adicionar CircularProgress
 import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
@@ -12,6 +14,7 @@ import {
   Phone as PhoneIcon,
   Link as LinkIcon,
   Delete as DeleteIcon,
+  Send as SendIcon
 } from '@mui/icons-material';
 
 // Utility function for generating colors
@@ -46,10 +49,14 @@ const GuestCard = ({
     onDelete,
     groups,
     eventId,
-    navigate
+    navigate,
+    // Adicionar props para feedback (snackbar)
+    showSnackbar // Ex: (message, severity) => void
   }) => {
     const theme = useTheme();
+    const dispatch = useDispatch(); // Adicionar dispatch
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [isSending, setIsSending] = useState(false); // Adicionar estado de envio
     
     // Obter texto do status
     const getStatusText = (status) => {
@@ -93,6 +100,47 @@ const GuestCard = ({
     const handleConfirmDelete = () => {
       setDeleteConfirmOpen(false);
       onDelete(guest);
+    };
+    
+    // Adicionar função para enviar mensagem individual
+    const handleSendIndividualMessage = async (e) => {
+      e.preventDefault();
+      e.stopPropagation(); // Evitar que o clique selecione/desselecione o card
+      
+      if (!guest || !guest.id || !guest.phone) {
+        if (showSnackbar) {
+          showSnackbar("Convidado inválido ou sem número de telefone para envio.", "warning");
+        } else {
+          console.error("Convidado inválido ou sem número de telefone para envio.");
+        }
+        return;
+      }
+      
+      setIsSending(true);
+      try {
+        // Mensagem padrão - pode ser personalizada ou vir de um diálogo/prop no futuro
+        const message = `Olá ${guest.name}, apenas um lembrete sobre nosso evento!`; 
+        const payload = {
+          guestId: guest.id,
+          message: message
+        };
+        await dispatch(sendWhatsappReminder(payload)).unwrap();
+        
+        if (showSnackbar) {
+          showSnackbar(`Mensagem enviada com sucesso para ${guest.name}!`, "success");
+        } else {
+          console.log(`Mensagem enviada com sucesso para ${guest.name}!`);
+        }
+        
+      } catch (err) {
+        if (showSnackbar) {
+          showSnackbar(`Erro ao enviar mensagem para ${guest.name}: ${err}`, "error");
+        } else {
+          console.error(`Erro ao enviar mensagem para ${guest.name}:`, err);
+        }
+      } finally {
+        setIsSending(false);
+      }
     };
     
     return (
@@ -260,20 +308,44 @@ const GuestCard = ({
             color="primary"
           />
           
-          <Tooltip title="Excluir convidado">
-            <IconButton 
-              size="small" 
-              color="error"
-              onClick={handleDeleteClick}
-              sx={{
-                '&:hover': {
-                  bgcolor: alpha(theme.palette.error.main, 0.1),
-                }
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          {/* Adicionar grupo de botões de ação */}
+          <Box>
+            <Tooltip title="Enviar Mensagem WhatsApp">
+              {/* Envolver o botão com span para o tooltip funcionar quando desabilitado */}
+              <span> 
+                <IconButton 
+                  size="small" 
+                  color="primary"
+                  onClick={handleSendIndividualMessage}
+                  disabled={isSending || !guest.phone} // Desabilitar se enviando ou sem telefone
+                  sx={{
+                    mr: 1, // Adicionar margem à direita
+                    bgcolor: isSending ? alpha(theme.palette.action.disabledBackground, 0.5) : alpha(theme.palette.primary.main, 0.1),
+                    '&:hover': {
+                      bgcolor: !isSending ? alpha(theme.palette.primary.main, 0.2) : undefined,
+                    },
+                  }}
+                >
+                  {isSending ? <CircularProgress size={16} /> : <SendIcon fontSize="small" sx={{color: theme.palette.success.main}}/>}
+                </IconButton>
+              </span>
+            </Tooltip>
+            
+            <Tooltip title="Excluir convidado">
+              <IconButton 
+                size="small" 
+                color="error"
+                onClick={handleDeleteClick}
+                sx={{
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.error.main, 0.1),
+                  }
+                }}
+              >
+                <DeleteIcon fontSize="small" sx={{color: theme.palette.error.main}}/>
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
         
         {/* Diálogo de confirmação de exclusão */}

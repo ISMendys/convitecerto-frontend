@@ -13,15 +13,25 @@
     "@mui/system": "^7.0.2",
     "@mui/x-date-pickers": "^8.0.0",
     "@reduxjs/toolkit": "^1.9.5",
+    "@tsparticles/engine": "^3.8.1",
+    "@tsparticles/react": "^3.0.0",
+    "@vis.gl/react-google-maps": "^1.5.2",
     "axios": "^1.4.0",
     "date-fns": "^4.1.0",
     "formik": "^2.2.9",
+    "framer-motion": "^12.9.4",
+    "leaflet": "^1.9.4",
+    "mapbox-gl": "2",
     "react": "^18.2.0",
+    "react-countdown": "^2.3.6",
     "react-dom": "^18.2.0",
+    "react-leaflet": "^5.0.0",
+    "react-map-gl": "7",
     "react-redux": "^8.0.5",
     "react-router-dom": "^6.11.1",
     "recharts": "^2.15.3",
     "styled-components": "^5.3.10",
+    "tsparticles": "^3.8.1",
     "yup": "^1.1.1"
   },
   "scripts": {
@@ -50,5 +60,6 @@
   },
   "devDependencies": {
     "react-scripts": "5.0.1"
-  }
+  },
+  "packageManager": "yarn@4.1.1+sha512.ec40d0639bb307441b945d9467139cbb88d14394baac760b52eca038b330d16542d66fef61574271534ace5a200518dabf3b53a85f1f9e4bfa37141b538a9590"
 }

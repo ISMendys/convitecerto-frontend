@@ -70,6 +70,7 @@ import {
 } from '@mui/icons-material';
 import { fetchGuests, deleteGuest, updateGuestStatus } from '../../store/actions/guestActions';
 import { fetchInvites, linkGuestsToInvite } from '../../store/actions/inviteActions';
+import { sendWhatsappBulk, sendWhatsappReminder } from '../../store/actions/whatsappActions';
 import GuestCard from '../../components/GuestCard';
 
 // Componentes reutilizáveis
@@ -327,20 +328,90 @@ const GuestList = () => {
     setSpeedDialOpen(false);
   };
   
-  // Enviar mensagens para os convidados selecionados
-  const handleSendMessage = () => {
-    // Aqui você implementaria a lógica para enviar as mensagens
-    // Por exemplo, chamar uma API para enviar WhatsApp ou email
+  // Enviar mensagens para os convidados selecionados (individual ou em massa)
+  const handleSendMessage = async () => {
+    if (!messageText || selectedGuests.length === 0) {
+      setSnackbarMessage("Erro: Mensagem ou convidados não definidos.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+
     setIsLoading(true);
-    
-    setTimeout(() => {
-      setSnackbarMessage(`Mensagem enviada com sucesso para ${selectedGuests.length} convidados!`);
-      setSnackbarSeverity('success');
+    let successCount = 0;
+    let errorCount = 0;
+    const errors = [];
+
+    try {
+      // Iterar sobre os convidados selecionados e enviar mensagem individualmente
+      // Usamos sendWhatsappReminder que aceita guestId e message
+      const sendPromises = selectedGuests.map(guestId => {
+        // Encontrar o objeto convidado completo para obter o ID
+        const guest = guests.find(g => g.id === guestId);
+        if (!guest) {
+          console.error(`Convidado com ID ${guestId} não encontrado na lista.`);
+          // Retorna uma promessa rejeitada para que seja contada como erro
+          return Promise.reject(`Convidado ${guestId} não encontrado.`);
+        }
+        
+        // Construir a URL RSVP
+        // Usar window.location.origin para obter a base da URL atual
+        const rsvpUrl = `${window.location.origin}/rsvp/${guest.id}`;
+        
+        // Montar a mensagem final com o link RSVP
+        const finalMessage = `${messageText}\n\nResponda aqui: ${rsvpUrl}`;
+        
+        const payload = {
+          guestId: guest.id, // Usar guest.id que já temos
+          message: finalMessage // Usar a mensagem com o link
+        };
+        return dispatch(sendWhatsappReminder(payload)).unwrap();
+      });
+
+      // Aguardar todas as promessas de envio
+      const results = await Promise.allSettled(sendPromises);
+
+      // Processar resultados
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          successCount++;
+        } else {
+          errorCount++;
+          const guestInfo = guests.find(g => g.id === selectedGuests[index]);
+          errors.push(`Falha ao enviar para ${guestInfo?.name || selectedGuests[index]}: ${result.reason}`);
+          console.error(`Erro ao enviar para ${selectedGuests[index]}:`, result.reason);
+        }
+      });
+
+      // Lidar com o resultado geral
+      if (errorCount === 0) {
+        setSnackbarMessage(`Mensagem enviada com sucesso para ${successCount} convidado(s)!`);
+        setSnackbarSeverity("success");
+      } else if (successCount > 0) {
+        setSnackbarMessage(`Mensagem enviada para ${successCount} convidado(s), mas falhou para ${errorCount}. Verifique o console para detalhes.`);
+        setSnackbarSeverity("warning");
+      } else {
+        setSnackbarMessage(`Falha ao enviar mensagem para todos os ${errorCount} convidado(s) selecionados. Verifique o console para detalhes.`);
+        setSnackbarSeverity("error");
+      }
+
       setSnackbarOpen(true);
       setSendMessageDialogOpen(false);
-      setMessageText('');
+      setMessageText("");
+      // Limpar seleção apenas se todos os envios foram bem-sucedidos
+      if (errorCount === 0) {
+         setSelectedGuests([]);
+      }
+
+    } catch (err) {
+      // Erro inesperado (não deveria acontecer com Promise.allSettled)
+      console.error("Erro inesperado no handleSendMessage:", err);
+      setSnackbarMessage(err?.message || "Erro inesperado ao processar envio de mensagens.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
   
   // Executar ação em massa

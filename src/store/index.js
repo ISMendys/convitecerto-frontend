@@ -4,6 +4,7 @@ import eventReducer from './slices/eventSlice';
 import inviteReducer from './slices/inviteSlice';
 import guestReducer from './slices/guestSlice';
 import dashboardReducer from './actions/dashboardActions';
+import whatsappReducer from './slices/whatsappSlice';
 
 const store = configureStore({
   reducer: {
@@ -11,7 +12,8 @@ const store = configureStore({
     events: eventReducer,
     invites: inviteReducer,
     guests: guestReducer,
-    dashboard: dashboardReducer
+    dashboard: dashboardReducer,
+    whatsapp: whatsappReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
