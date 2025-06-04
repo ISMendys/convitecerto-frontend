@@ -16,18 +16,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18' # Mantenha a versão do Node usada no seu projeto
+          node-version: '18'
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Install Dependencies
-        # Assumindo que o frontend está na raiz do repositório
-        # Se estiver em uma subpasta, adicione 'working-directory: ./sua-pasta-frontend'
         run: yarn install --frozen-lockfile
 
       - name: Build React App
-        # Garanta que REACT_APP_API_URL aponte para a URL do seu backend na Contabo
         run: REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} CI='' yarn build
         env:
-          # Defina esta variável de ambiente se o build precisar dela
           NODE_ENV: production
 
       - name: Setup SSH for Contabo VM
