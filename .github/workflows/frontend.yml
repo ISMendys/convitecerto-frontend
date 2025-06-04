@@ -36,11 +36,11 @@ jobs:
 
       - name: Deploy Frontend Files to Contabo VM
         run: |
-          # Defina o diretório de destino na VM (ex: /var/www/html/frontend)
+          # Defina o diretório de destino na VM
           VM_FRONTEND_DIR="/var/www/html/frontend"
-          # Garanta que o diretório exista na VM
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.CONTABO_SSH_PORT || 22 }} admin@${{ secrets.CONTABO_HOST }} "mkdir -p $VM_FRONTEND_DIR"
-          # Copie os arquivos da pasta build para o diretório na VM
+          # Use sudo para criar o diretório e depois mude o proprietário para o usuário admin
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.CONTABO_SSH_PORT || 22 }} admin@${{ secrets.CONTABO_HOST }} "sudo mkdir -p $VM_FRONTEND_DIR && sudo chown admin:admin $VM_FRONTEND_DIR"
+          # Copie os arquivos da pasta build para o diretório na VM (agora o admin tem permissão)
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -p ${{ secrets.CONTABO_SSH_PORT || 22 }}" \
             ./build/ admin@${{ secrets.CONTABO_HOST }}:$VM_FRONTEND_DIR/
 
