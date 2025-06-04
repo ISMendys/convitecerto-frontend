@@ -37,78 +37,9 @@ jobs:
       - name: Deploy Frontend Files to Contabo VM
         run: |
           # Defina o diretório de destino na VM
-          VM_FRONTEND_DIR="/var/www/html/frontend"
+          VM_FRONTEND_DIR="/home/admin/frontend"
           # Use sudo para criar o diretório e depois mude o proprietário para o usuário admin
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.CONTABO_SSH_PORT || 22 }} admin@${{ secrets.CONTABO_HOST }} "sudo mkdir -p $VM_FRONTEND_DIR && sudo chown admin:admin $VM_FRONTEND_DIR"
           # Copie os arquivos da pasta build para o diretório na VM (agora o admin tem permissão)
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -p ${{ secrets.CONTABO_SSH_PORT || 22 }}" \
             ./build/ admin@${{ secrets.CONTABO_HOST }}:$VM_FRONTEND_DIR/
-
-      - name: Setup Nginx on Contabo VM
-        run: |
-          # Usar aspas no delimitador EOF para prevenir expansão local de variáveis
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.CONTABO_SSH_PORT || 22 }} admin@${{ secrets.CONTABO_HOST }} << 'EOF'
-            set -e # Sair se algum comando falhar
-            echo '--- Installing/Updating Nginx ---
-            sudo apt-get update
-            sudo apt-get install -y nginx
-
-            echo '--- Configuring Nginx Site for Frontend ---
-            # Caminho para o arquivo de configuração do Nginx
-            NGINX_CONF_PATH="/etc/nginx/sites-available/frontend"
-            # Diretório raiz dos arquivos do frontend na VM
-            VM_FRONTEND_DIR="/var/www/html/frontend"
-            # Domínio ou IP da sua VM (obtido do secret)
-            # Usamos aspas duplas aqui para permitir a expansão do secret pelo shell remoto
-            SERVER_NAME="${{ secrets.FRONTEND_DOMAIN_OR_IP }}"
-            # Define como '_' se o secret estiver vazio
-            if [ -z "$SERVER_NAME" ]; then
-              SERVER_NAME="_"
-            fi
-
-            # Criar/Sobrescrever o arquivo de configuração do Nginx
-            # Usar aspas no delimitador NGINX_EOF também para prevenir expansão local
-            # Escapar o $ em $uri para que o Nginx o interprete, não o shell
-            sudo bash -c "cat > $NGINX_CONF_PATH" << 'NGINX_EOF'
-            server {
-            listen 80;
-            # As variáveis $SERVER_NAME e $VM_FRONTEND_DIR serão expandidas pelo shell remoto aqui
-            server_name $SERVER_NAME;
-
-            root $VM_FRONTEND_DIR;
-            index index.html index.htm;
-
-            location / {
-                # Escapar $uri para Nginx
-                try_files \$uri \$uri/ /index.html;
-            }
-
-            access_log /var/log/nginx/frontend.access.log;
-            error_log /var/log/nginx/frontend.error.log;
-
-            gzip on;
-            gzip_vary on;
-            gzip_proxied any;
-            gzip_comp_level 6;
-            gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-            }
-            NGINX_EOF
-
-            echo '--- Enabling Nginx Site ---
-            # Criar link simbólico para habilitar o site
-            sudo ln -sf $NGINX_CONF_PATH /etc/nginx/sites-enabled/
-            # Remover o site padrão se ele existir e estiver habilitado
-            if [ -L /etc/nginx/sites-enabled/default ]; then
-                echo 'Removing default Nginx site link...
-                sudo rm -f /etc/nginx/sites-enabled/default
-            fi
-
-            echo '--- Testing Nginx Configuration ---
-            sudo nginx -t
-
-            echo '--- Reloading Nginx ---
-            sudo systemctl reload nginx
-
-            echo '--- Frontend Deployment to Nginx Complete ---
-          EOF
-
