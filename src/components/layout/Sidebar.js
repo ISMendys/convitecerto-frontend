@@ -16,6 +16,7 @@ import {
   Dashboard as DashboardIcon,
   Event as EventIcon,
   Mail as MailIcon,
+  Celebration as CelebrationIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material';
 
@@ -32,8 +33,13 @@ const items = [
   },
   {
     href: '/events/create',
-    icon: MailIcon,
+    icon: CelebrationIcon,
     title: 'Criar Evento'
+  },
+  {
+    href: '/invites/new',
+    icon: MailIcon,
+    title: 'Criar Convite'
   },
   {
     href: '/settings',

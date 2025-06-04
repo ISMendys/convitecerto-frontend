@@ -1,325 +1,327 @@
-import React from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  CardMedia,
-  Typography,
-  Divider,
-  Button,
-  useTheme,
-  alpha
+// Novo componente InvitePreview.js que reflete a página final de RSVP
+import React, { useState } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Button, 
+  Container,
+  Paper,
+  IconButton,
+  Tabs,
+  Tab,
+  Divider
 } from '@mui/material';
-import {
-  Image as ImageIcon,
-  WhatsApp as WhatsAppIcon
-} from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import EventIcon from '@mui/icons-material/Event';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import SmartphoneIcon from '@mui/icons-material/Smartphone';
+import TabletIcon from '@mui/icons-material/Tablet';
+import LaptopIcon from '@mui/icons-material/Laptop';
+
+// Importando componentes da página final para reutilização
+import DetailCard from '../public/components/DetailCard';
+import CountdownRenderer from '../public/components/CountdownRenderer';
+import { generateMinimalThemeConfig } from '../public/components/themes';
 
 const InvitePreview = ({ 
   title, 
   eventTitle, 
-  description, 
   customText, 
-  imageUrl, 
-  bgColor, 
-  textColor, 
-  fontFamily,
-  showActions = false,
+  bgColor = '#6a1b9a', 
+  accentColor = '#e91e63',
+  fontFamily = 'Roboto, sans-serif',
+  showActions = true,
   onWhatsAppTest
 }) => {
-  const theme = useTheme();
+  // Estado para controlar a visualização em diferentes dispositivos
+  const [deviceView, setDeviceView] = useState('mobile');
   
+  // Gerar tema baseado nas cores e fonte selecionadas
+  const themeConfig = generateMinimalThemeConfig({
+    bgColor,
+    accentColor,
+    fontFamily
+  });
+  
+  const theme = createTheme(themeConfig);
+  
+  // Data fictícia para o evento (30 dias a partir de hoje)
+  const eventDate = new Date();
+  eventDate.setDate(eventDate.getDate() + 30);
+  
+  // Formatar data e hora para exibição
+  const formattedDate = eventDate.toLocaleDateString('pt-BR', { 
+    day: '2-digit', 
+    month: 'long', 
+    year: 'numeric' 
+  });
+  
+  const formattedTime = eventDate.toLocaleTimeString('pt-BR', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+  
+  // Calcular tempo restante para o evento
+  const timeRemaining = eventDate.getTime() - new Date().getTime();
+  const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+  
+  // Configurações de escala e tamanho para diferentes dispositivos
+  const deviceSettings = {
+    mobile: {
+      width: '320px',
+      height: '580px',
+      scale: 0.8
+    },
+    tablet: {
+      width: '600px',
+      height: '800px',
+      scale: 0.5
+    },
+    desktop: {
+      width: '1024px',
+      height: '768px',
+      scale: 0.4
+    }
+  };
+  
+  const currentDevice = deviceSettings[deviceView];
+  
+  // Função para mudar a visualização do dispositivo
+  const handleDeviceChange = (event, newValue) => {
+    setDeviceView(newValue);
+  };
+
   return (
-    <Box 
-      sx={{ 
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
-      {/* Título removido para economizar espaço */}
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center',
+      width: '100%',
+      mb: 4
+    }}>
+      {/* Controles de visualização de dispositivo */}
+      <Paper sx={{ mb: 3, width: 'fit-content' }}>
+        <Tabs
+          value={deviceView}
+          onChange={handleDeviceChange}
+          aria-label="device view tabs"
+        >
+          <Tab icon={<SmartphoneIcon />} label="Mobile" value="mobile" />
+          <Tab icon={<TabletIcon />} label="Tablet" value="tablet" />
+          <Tab icon={<LaptopIcon />} label="Desktop" value="desktop" />
+        </Tabs>
+      </Paper>
       
-      <Box 
-        sx={{ 
-          flexGrow: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          p: 1.5, // Reduzido de p: 2 para p: 1.5
-          bgcolor: alpha('#f5f5f5', 0.7),
-          borderRadius: 2,
+      {/* Preview da página RSVP */}
+      <Box
+        sx={{
+          width: currentDevice.width,
+          height: currentDevice.height,
+          transform: `scale(${currentDevice.scale})`,
+          transformOrigin: 'top center',
+          border: '1px solid #ddd',
+          borderRadius: '8px',
           overflow: 'hidden',
-          perspective: '1500px',
-          boxShadow: 'inset 0 0 20px rgba(0,0,0,0.05)'
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          mb: 4,
+          position: 'relative',
+          bgcolor: '#fff'
         }}
       >
-        <Card 
-          sx={{ 
-            maxWidth: 350, // Reduzido de 400 para 350
+        <Box
+          sx={{
             width: '100%',
-            mx: 'auto',
-            boxShadow: '0 15px 35px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.1)',
-            fontFamily: fontFamily || 'Roboto',
-            transition: 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            transformStyle: 'preserve-3d',
-            transform: 'perspective(1500px) rotateY(0deg)',
-            '&:hover': {
-              transform: 'perspective(1500px) rotateY(180deg)',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25), 0 10px 20px rgba(0, 0, 0, 0.15)',
+            height: '100%',
+            overflow: 'auto',
+            '&::-webkit-scrollbar': {
+              width: '8px'
             },
-            position: 'relative',
-            height: '400px', // Reduzido de 450px para 400px
-            borderRadius: 2,
-            overflow: 'hidden'
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: alpha(bgColor, 0.3),
+              borderRadius: '4px'
+            }
           }}
         >
-          {/* Frente do card */}
-          <Box
-            sx={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              backfaceVisibility: 'hidden',
-              transformStyle: 'preserve-3d',
-              display: 'flex',
-              flexDirection: 'column',
-              transform: 'translateZ(1px)',
-            }}
-          >
-            {imageUrl ? (
-              <CardMedia
-                component="img"
-                height="180" // Reduzido de 200 para 180
-                image={imageUrl}
-                alt={title}
-                sx={{
-                  objectFit: 'cover',
-                  transition: 'transform 0.5s ease',
-                  '&:hover': {
-                    transform: 'scale(1.05)'
-                  }
-                }}
-              />
-            ) : (
-              <Box 
-                sx={{ 
-                  height: 180, // Reduzido de 200 para 180
-                  background: `linear-gradient(135deg, ${bgColor} 30%, ${alpha(bgColor, 0.8)} 90%)`,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  color: '#fff',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%)',
-                    pointerEvents: 'none'
-                  }
-                }}
-              >
-                <ImageIcon sx={{ 
-                  fontSize: 60, // Reduzido de 70 para 60
-                  opacity: 0.8,
-                  filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))'
-                }} />
-              </Box>
-            )}
-            
-            <CardContent sx={{ 
-              flexGrow: 1, 
-              p: 2, // Reduzido de p: 3 para p: 2
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              <Typography 
-                variant="h5" 
-                component="div" 
-                gutterBottom
-                sx={{ 
-                  color: bgColor,
-                  fontFamily: 'inherit',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  mb: 1.5, // Reduzido de mb: 2 para mb: 1.5
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                }}
-              >
-                {title || 'Título do Convite'}
-              </Typography>
-              
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  mb: 1.5, // Reduzido de mb: 2 para mb: 1.5
-                  fontFamily: 'inherit',
-                  textAlign: 'center',
-                  color: textColor,
-                  fontWeight: 500
-                }}
-              >
-                {eventTitle || 'Nome do Evento'}
-              </Typography>
-              
-              {description && (
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    mb: 1.5, // Reduzido de mb: 2 para mb: 1.5
-                    fontFamily: 'inherit',
-                    color: textColor,
-                    lineHeight: 1.6
-                  }}
-                >
-                  {description}
-                </Typography>
-              )}
-              
-              <Divider sx={{ 
-                mb: 1.5, // Reduzido de mb: 2 para mb: 1.5
-                borderColor: alpha(bgColor, 0.3),
-                width: '80%',
-                mx: 'auto'
-              }} />
-              
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  mb: 1.5, // Reduzido de mb: 2 para mb: 1.5
-                  fontFamily: 'inherit',
-                  color: textColor,
-                  lineHeight: 1.6,
-                  flexGrow: 1
-                }}
-              >
-                {customText || 'Mensagem personalizada do convite...'}
-              </Typography>
-              
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-                sx={{ 
-                  fontFamily: 'inherit',
-                  textAlign: 'center',
-                  fontStyle: 'italic',
-                  opacity: 0.8,
-                  mt: 'auto'
-                }}
-              >
-                Confirme sua presença respondendo este convite.
-              </Typography>
-            </CardContent>
-          </Box>
-          
-          {/* Verso do card */}
-          <Box
-            sx={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              backfaceVisibility: 'hidden',
-              transform: 'rotateY(180deg)',
-              background: `linear-gradient(135deg, ${bgColor} 30%, ${alpha(bgColor, 0.8)} 90%)`,
-              color: '#fff',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: 3,
-              textAlign: 'center',
-              position: 'relative',
-              overflow: 'hidden',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%)',
-                pointerEvents: 'none'
-              }
-            }}
-          >
-            <Typography 
-              variant="h4" 
-              component="div" 
-              gutterBottom
-              sx={{ 
-                fontFamily: 'inherit',
-                fontWeight: 'bold',
-                mb: 2, // Reduzido de mb: 3 para mb: 2
-                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }}
-            >
-              {title || 'Título do Convite'}
-            </Typography>
-            
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                mb: 3, // Reduzido de mb: 4 para mb: 3
-                fontFamily: 'inherit',
-                opacity: 0.9,
-                textShadow: '0 1px 2px rgba(0,0,0,0.2)'
-              }}
-            >
-              {eventTitle || 'Nome do Evento'}
-            </Typography>
-            
-            <Box 
-              sx={{ 
-                p: 2, // Reduzido de p: 3 para p: 2
-                bgcolor: 'rgba(255,255,255,0.15)', 
-                borderRadius: 2,
-                mb: 3, // Reduzido de mb: 4 para mb: 3
-                backdropFilter: 'blur(5px)',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                width: '80%',
-                maxWidth: '280px', // Reduzido de 300px para 280px
-                transform: 'translateZ(30px)',
-                transition: 'transform 0.3s ease',
-                '&:hover': {
-                  transform: 'translateZ(50px) scale(1.05)'
+          <ThemeProvider theme={theme}>
+            {/* Cabeçalho com fundo gradiente */}
+            <Box
+              sx={{
+                background: `linear-gradient(135deg, ${bgColor} 30%, ${alpha(accentColor, 0.8)} 90%)`,
+                color: '#fff',
+                py: 8,
+                textAlign: 'center',
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%)',
+                  pointerEvents: 'none'
                 }
               }}
             >
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  fontFamily: 'inherit',
-                  fontStyle: 'italic',
-                  lineHeight: 1.6
-                }}
-              >
-                "Esperamos você neste evento especial!"
-              </Typography>
+              <Container maxWidth="md">
+                <Typography 
+                  variant="h2" 
+                  component="h1"
+                  sx={{ 
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    mb: 2,
+                    textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  {title || 'Título do Convite'}
+                </Typography>
+                
+                <Typography 
+                  variant="h4" 
+                  sx={{ 
+                    mb: 4,
+                    fontFamily: 'inherit',
+                    opacity: 0.9,
+                    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  {eventTitle || 'Nome do Evento'}
+                </Typography>
+                
+                <Box 
+                  sx={{ 
+                    p: 3,
+                    bgcolor: 'rgba(255,255,255,0.15)', 
+                    borderRadius: 2,
+                    backdropFilter: 'blur(5px)',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    maxWidth: '600px',
+                    mx: 'auto'
+                  }}
+                >
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      fontFamily: 'inherit',
+                      fontStyle: 'italic',
+                      lineHeight: 1.6
+                    }}
+                  >
+                    {customText || 'Mensagem personalizada do convite...'}
+                  </Typography>
+                </Box>
+              </Container>
             </Box>
             
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                fontFamily: 'inherit',
-                opacity: 0.8,
-                position: 'absolute',
-                bottom: 20,
-                left: 0,
-                right: 0,
-                textAlign: 'center'
-              }}
-            >
-              Passe o mouse para ver os detalhes do convite
-            </Typography>
-          </Box>
-        </Card>
+            {/* Contagem regressiva */}
+            <Container maxWidth="md" sx={{ py: 6 }}>
+              <Typography variant="h3" align="center" sx={{ mb: 4 }}>Contagem Regressiva</Typography>
+              <Box sx={{ maxWidth: '600px', mx: 'auto' }}>
+                <CountdownRenderer 
+                  days={days}
+                  hours={hours}
+                  minutes={minutes}
+                  seconds={seconds}
+                  completed={timeRemaining <= 0}
+                  theme={theme}
+                />
+              </Box>
+              
+              <Divider sx={{ my: 6 }} />
+              
+              {/* Detalhes do evento */}
+              <Typography variant="h3" align="center" sx={{ mb: 4 }}>Detalhes do Evento</Typography>
+              <Box sx={{ 
+                display: 'grid', 
+                gridTemplateColumns: deviceView === 'mobile' ? '1fr' : 'repeat(3, 1fr)', 
+                gap: 4, 
+                mb: 6 
+              }}>
+                <DetailCard 
+                  icon={EventIcon} 
+                  title="Data" 
+                  value={formattedDate} 
+                  theme={theme} 
+                  index={1} 
+                />
+                <DetailCard 
+                  icon={AccessTimeIcon} 
+                  title="Horário" 
+                  value={formattedTime} 
+                  theme={theme} 
+                  index={2} 
+                />
+                <DetailCard 
+                  icon={LocationOnIcon} 
+                  title="Local" 
+                  value="Local do Evento" 
+                  theme={theme} 
+                  index={3} 
+                />
+              </Box>
+              
+              <Divider sx={{ my: 6 }} />
+              
+              {/* Mapa (simulado) */}
+              <Typography variant="h3" align="center" sx={{ mb: 4 }}>Como Chegar</Typography>
+              <Box sx={{
+                height: 300,
+                mb: 6,
+                borderRadius: theme.shape.borderRadius,
+                overflow: 'hidden',
+                border: `1px solid ${theme.palette.divider}`,
+                bgcolor: alpha(bgColor, 0.1),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                  Mapa será exibido aqui
+                </Typography>
+              </Box>
+              
+              <Divider sx={{ my: 6 }} />
+              
+              {/* Seção de RSVP */}
+              <Paper sx={{ p: { xs: 4, sm: 6 }, textAlign: 'center' }}>
+                <Typography variant="h3" sx={{ mb: 3 }}>Confirmar Presença</Typography>
+                <Typography variant="body1" sx={{ mb: 5, color: 'text.secondary', maxWidth: 600, mx: 'auto' }}>
+                  Sua resposta é muito importante para nós! Por favor, confirme se poderemos contar com sua presença neste dia especial.
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: deviceView === 'mobile' ? 'column' : 'row', gap: 2, justifyContent: 'center' }}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    sx={{ minWidth: 200 }}
+                    disabled
+                  >
+                    Confirmar Presença
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    sx={{ minWidth: 200 }}
+                    disabled
+                  >
+                    Não Poderei Comparecer
+                  </Button>
+                </Box>
+              </Paper>
+            </Container>
+          </ThemeProvider>
+        </Box>
       </Box>
       
+      {/* Botão de teste no WhatsApp */}
       {showActions && (
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <Button
@@ -330,7 +332,7 @@ const InvitePreview = ({
             sx={{ 
               borderRadius: 10,
               px: 3,
-              py: 0.8, // Reduzido de py: 1.2 para py: 0.8
+              py: 0.8,
               color: '#25D366',
               borderColor: '#25D366',
               fontWeight: 600,

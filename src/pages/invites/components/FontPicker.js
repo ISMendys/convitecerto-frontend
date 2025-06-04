@@ -129,7 +129,7 @@ const FontPicker = ({
                 slots: transitionComponent
               }}
             >
-              {fonts.map((font) => (
+              {/* {fonts.map((font) => (
                 <MenuItem
                   key={font.id}
                   value={font.id}
@@ -153,8 +153,8 @@ const FontPicker = ({
                       {font.name}
                     </Typography>
                   </Box>
-                </MenuItem>
-              ))}
+                </MenuItem> */}
+              {/* ))} */}
             </Select>
           </FormControl>
         </Box>

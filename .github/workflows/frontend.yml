@@ -1,46 +1,106 @@
-name: Deploy Frontend
+name: Deploy Frontend to Contabo VM
 
 on:
   push:
     branches:
-      - main
+      - main # Ou a branch que dispara o deploy do frontend
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout Repo
         uses: actions/checkout@v3
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '18' # Mantenha a versão do Node usada no seu projeto
 
-      - name: Install and Build
-        working-directory: ./
-        run: |
-          yarn install
-          REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} CI='' yarn build
+      - name: Install Dependencies
+        # Assumindo que o frontend está na raiz do repositório
+        # Se estiver em uma subpasta, adicione 'working-directory: ./sua-pasta-frontend'
+        run: yarn install --frozen-lockfile
 
+      - name: Build React App
+        # Garanta que REACT_APP_API_URL aponte para a URL do seu backend na Contabo
+        run: REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} CI='' yarn build
+        env:
+          # Defina esta variável de ambiente se o build precisar dela
+          NODE_ENV: production
 
-      - name: Deploy to S3
-        uses: jakejarvis/s3-sync-action@v0.5.1
+      - name: Setup SSH for Contabo VM
+        uses: webfactory/ssh-agent@v0.5.4
         with:
-          args: --delete
-        env:
-          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-east-1'
-          SOURCE_DIR: './build'
+          ssh-private-key: ${{ secrets.CONTABO_SSH_KEY }}
 
-      - name: Invalidate CloudFront cache
-        uses: chetan/invalidate-cloudfront-action@v2
-        env:
-          AWS_REGION: 'us-east-1'
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          DISTRIBUTION: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
-          PATHS: '/*'
+      - name: Deploy Frontend Files to Contabo VM
+        run: |
+          # Defina o diretório de destino na VM (ex: /var/www/html/frontend)
+          VM_FRONTEND_DIR="/var/www/html/frontend"
+          # Garanta que o diretório exista na VM
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.CONTABO_SSH_PORT || 22 }} admin@${{ secrets.CONTABO_HOST }} "mkdir -p $VM_FRONTEND_DIR"
+          # Copie os arquivos da pasta build para o diretório na VM
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -p ${{ secrets.CONTABO_SSH_PORT || 22 }}" \
+            ./build/ admin@${{ secrets.CONTABO_HOST }}:$VM_FRONTEND_DIR/
+
+      - name: Setup Nginx on Contabo VM
+        run: |
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.CONTABO_SSH_PORT || 22 }} admin@${{ secrets.CONTABO_HOST }} << EOF
+            set -e # Sair se algum comando falhar
+            echo '--- Installing/Updating Nginx ---'
+            sudo apt-get update
+            sudo apt-get install -y nginx
+
+            echo '--- Configuring Nginx Site for Frontend ---'
+            # Caminho para o arquivo de configuração do Nginx
+            NGINX_CONF_PATH="/etc/nginx/sites-available/frontend"
+            # Diretório raiz dos arquivos do frontend na VM
+            VM_FRONTEND_DIR="/var/www/html/frontend"
+            # Domínio ou IP da sua VM (use um secret ou defina diretamente)
+            SERVER_NAME="${{ secrets.FRONTEND_DOMAIN_OR_IP || '_' }}" # Use '_' para aceitar qualquer host se não tiver domínio
+
+            # Criar/Sobrescrever o arquivo de configuração do Nginx
+            sudo bash -c "cat > $NGINX_CONF_PATH" << NGINX_EOF
+            server {
+                listen 80;
+                server_name $SERVER_NAME;
+
+                root $VM_FRONTEND_DIR;
+                index index.html index.htm;
+
+                location / {
+                    try_files \$uri \$uri/ /index.html;
+                }
+
+                # Opcional: Configurações adicionais (logs, gzip, headers, etc.)
+                access_log /var/log/nginx/frontend.access.log;
+                error_log /var/log/nginx/frontend.error.log;
+
+                gzip on;
+                gzip_vary on;
+                gzip_proxied any;
+                gzip_comp_level 6;
+                gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+            }
+            NGINX_EOF
+
+            echo '--- Enabling Nginx Site ---'
+            # Criar link simbólico para habilitar o site
+            sudo ln -sf $NGINX_CONF_PATH /etc/nginx/sites-enabled/
+            # Remover o site padrão se ele existir e estiver habilitado (para evitar conflitos na porta 80)
+            if [ -L /etc/nginx/sites-enabled/default ]; then
+                echo 'Removing default Nginx site link...'
+                sudo rm -f /etc/nginx/sites-enabled/default
+            fi
+
+            echo '--- Testing Nginx Configuration ---'
+            sudo nginx -t
+
+            echo '--- Reloading Nginx ---'
+            sudo systemctl reload nginx
+
+            echo '--- Frontend Deployment to Nginx Complete ---'
+          EOF
+

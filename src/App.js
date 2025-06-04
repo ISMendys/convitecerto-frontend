@@ -70,6 +70,7 @@ const App = () => {
         <Route path="/events/:id/guests/import" element={<GuestImport />} />
         <Route path="/events/:id/invite/preview" element={<InvitePreview />} />
         <Route path="/events/:eventId/invites/new" element={<InviteCreate />} />
+        <Route path="/invites/new" element={<InviteCreate />} />
         <Route path="/events/:eventId/invites/edit/:inviteId" element={<InviteCreate />} />
       </Route>
       

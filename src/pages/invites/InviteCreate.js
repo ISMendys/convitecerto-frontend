@@ -1,634 +1,758 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Container,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  CardMedia,
-  Divider,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  useMediaQuery,
-  Paper
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import {
-  Save as SaveIcon,
-  Image as ImageIcon,
-  TextFields as TextFieldsIcon,
-  Preview as PreviewIcon,
-  WhatsApp as WhatsAppIcon,
-  FormatColorFill as FormatColorFillIcon,
-  FormatColorText as FormatColorTextIcon,
-  Palette as PaletteIcon,
-  Title as TitleIcon,
-  Description as DescriptionIcon,
-  Message as MessageIcon,
-} from '@mui/icons-material';
-import { createInvite, updateInvite, fetchInvite } from '../../store/actions/inviteActions';
+  // Arquivo InviteCreate.js com correções finais
+  import React, { useState, useEffect } from 'react';
+  import { useSelector, useDispatch } from 'react-redux';
+  import { useNavigate, useParams } from 'react-router-dom';
+  import { 
+    Box, 
+    Container, 
+    Grid, 
+    Paper, 
+    Typography, 
+    TextField, 
+    Button, 
+    Divider, 
+    Snackbar, 
+    Alert,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    useTheme,
+    Tabs,
+    Tab,
+    ButtonGroup
+  } from '@mui/material';
+  import { styled, alpha } from '@mui/material/styles';
+  import SaveIcon from '@mui/icons-material/Save';
+  import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+  import InfoIcon from '@mui/icons-material/Info';
+  import ColorLensIcon from '@mui/icons-material/ColorLens';
+  import SmartphoneIcon from '@mui/icons-material/Smartphone';
+  import TabletIcon from '@mui/icons-material/Tablet';
+  import LaptopIcon from '@mui/icons-material/Laptop';
 
-// Componentes personalizados
-import { LoadingIndicator } from '../../components/LoadingIndicator';
-import ColorPicker from './components/ColorPicker';
-import { StyledTabs, TabPanel } from '../../components/StyledTabs';
-import StyledButton from '../../components/StyledButton';
-import StyledTextField from '../../components/StyledTextField';
-import ConfirmDialog from '../../components/ConfirmDialog';
-import PageTitle from '../../components/PageTitle';
-import ImageUploadFieldBase64 from '../../components/ImageUploadField';
+  // Importando componentes
+  import LoadingIndicator from '../../components/LoadingIndicator';
+  import ConfirmDialog from '../../components/ConfirmDialog';
+  import ColorPicker from './components/ColorPicker';
+  import FontPicker from './components/FontPicker';
+  import InvitePreview from './components/InvitePreview';
 
-const InviteCreate = () => {
-  const { eventId, inviteId } = useParams();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  
-  const { currentInvite, loading, error } = useSelector(state => state.invites);
-  const { currentEvent } = useSelector(state => state.events);
-  
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    templateId: 'template1',
-    bgColor: '#5e35b1',
-    textColor: '#000000',
-    fontFamily: 'Roboto',
-    imageUrl: '',
-    customText: ''
-  });
+  // Importando actions do Redux
+  import { fetchEvents } from '../../store/actions/eventActions';
+  import { 
+    fetchInvite, 
+    createInvite, 
+    updateInvite 
+  } from '../../store/actions/inviteActions';
 
-  const [messageLoading, setMessageLoading] = useState('Carregando dados...');
-  const [isLoading, setIsLoading] = useState(false);
+  // Botão estilizado
+  const StyledButton = styled(Button)(({ theme }) => ({
+    borderRadius: 8,
+    padding: '8px 16px',
+    textTransform: 'none',
+    fontWeight: 600,
+    boxShadow: 'none',
+    '&:hover': {
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      transform: 'translateY(-1px)'
+    }
+  }));
 
-  const [tabValue, setTabValue] = useState(0);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  
-  // Carregar dados do convite se estiver editando
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const promises = [];
-        if (inviteId) {
-          promises.push(dispatch(fetchInvite(inviteId)));
+  // Estilização das abas
+  const StyledTabs = styled(Tabs)(({ theme }) => ({
+    '& .MuiTabs-indicator': {
+      backgroundColor: theme.palette.primary.main,
+      height: 3,
+      borderRadius: '3px 3px 0 0'
+    },
+    '& .MuiTab-root': {
+      textTransform: 'none',
+      fontWeight: 600,
+      fontSize: '0.9rem',
+      minHeight: 48,
+      padding: '12px 16px',
+      '&.Mui-selected': {
+        color: theme.palette.primary.main
+      }
+    }
+  }));
+
+  // Componente FontPicker otimizado
+  const OptimizedFontPicker = ({ value, onChange }) => {
+    const theme = useTheme();
+    
+    // Lista de fontes disponíveis
+    const fonts = [
+      { id: 'Roboto, sans-serif', name: 'Roboto' },
+      { id: 'Montserrat, sans-serif', name: 'Montserrat' },
+      { id: 'Open Sans, sans-serif', name: 'Open Sans' },
+      { id: 'Lato, sans-serif', name: 'Lato' },
+      { id: 'Poppins, sans-serif', name: 'Poppins' },
+      { id: 'Playfair Display, serif', name: 'Playfair Display' },
+      { id: 'Merriweather, serif', name: 'Merriweather' },
+      { id: 'Raleway, sans-serif', name: 'Raleway' },
+      { id: 'Ubuntu, sans-serif', name: 'Ubuntu' },
+      { id: 'Dancing Script, cursive', name: 'Dancing Script' }
+    ];
+    
+    const handleFontChange = (e) => {
+      onChange(e.target.value);
+    };
+    
+    return (
+      <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
+        <InputLabel id="font-select-label">Fonte</InputLabel>
+        <Select
+          labelId="font-select-label"
+          value={value || fonts[0].id}
+          onChange={handleFontChange}
+          label="Fonte"
+          inputProps={{ style: { fontFamily: value } }}
+          sx={{
+            '& .MuiSelect-select': {
+              fontFamily: value
+            }
+          }}
+        >
+          {fonts.map((font) => (
+            <MenuItem
+              key={font.id}
+              value={font.id}
+              sx={{
+                fontFamily: font.id
+              }}
+            >
+              {font.name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    );
+  };
+
+  const InviteCreate = () => {
+    const theme = useTheme();
+    const navigate = useNavigate();
+    const { inviteId } = useParams();
+    const dispatch = useDispatch();
+    
+    // Selecionando dados do Redux store
+    const { events } = useSelector(state => state.events);
+    const { currentInvite, loading: inviteLoading, error: inviteError } = useSelector(state => state.invites);
+    // Usando o estado de autenticação diretamente do Redux
+    const { currentUser } = useSelector(state => state.auth);
+    
+    // Estado para controlar as abas
+    const [tabValue, setTabValue] = useState(0);
+    
+    // Estado para controlar o tipo de dispositivo
+    const [deviceType, setDeviceType] = useState('mobile');
+    
+    // Configurações de tamanho para cada dispositivo - dimensões reais
+    const deviceSizes = {
+      mobile: {
+        width: 320,
+        height: 580,
+        icon: <SmartphoneIcon sx={{ fontSize: 20, mr: 1 }} />
+      },
+      tablet: {
+        width: 768,
+        height: 1024,
+        icon: <TabletIcon sx={{ fontSize: 20, mr: 1 }} />
+      },
+      desktop: {
+        width: 1280,
+        height: 800,
+        icon: <LaptopIcon sx={{ fontSize: 20, mr: 1 }} />
+      }
+    };
+    
+    // Estados locais
+    const [formData, setFormData] = useState({
+      title: '',
+      eventId: '',
+      description: '',
+      customText: '',
+      bgColor: '#6a1b9a',
+      accentColor: '#e91e63',
+      textColor: '#ffffff',
+      fontFamily: 'Roboto, sans-serif'
+    });
+    
+    const [isLoading, setIsLoading] = useState(false);
+    const [messageLoading, setMessageLoading] = useState('Carregando...');
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+    const [currentEvent, setCurrentEvent] = useState(null);
+    
+    // Manipulador para mudança de abas
+    const handleTabChange = (event, newValue) => {
+      setTabValue(newValue);
+    };
+    
+    // Função para mudar o tipo de dispositivo
+    const handleDeviceChange = (type) => {
+      setDeviceType(type);
+    };
+    
+    // Efeito para carregar eventos e convite (se estiver editando)
+    useEffect(() => {
+      const loadData = async () => {
+        setIsLoading(true);
+        setMessageLoading('Carregando dados...');
+        
+        try {
+          // Carregar eventos do usuário
+          if (!events.length) {
+            await dispatch(fetchEvents());
+          }
+          
+          // Se for edição, carregar dados do convite
+          if (inviteId) {
+            await dispatch(fetchInvite(inviteId));
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados:', error);
+          showSnackbar('Erro ao carregar dados. Tente novamente.', 'error');
+        } finally {
+          setIsLoading(false);
         }
-        await Promise.all(promises);
+      };
+      
+      loadData();
+    }, [dispatch, inviteId, events.length]);
+    
+    // Efeito para preencher o formulário quando o convite atual mudar
+    useEffect(() => {
+      if (currentInvite && inviteId) {
+        setFormData({
+          title: currentInvite.title || '',
+          eventId: currentInvite.eventId || '',
+          description: currentInvite.description || '',
+          customText: currentInvite.customText || '',
+          bgColor: currentInvite.bgColor || '#6a1b9a',
+          accentColor: currentInvite.accentColor || '#e91e63',
+          textColor: currentInvite.textColor || '#ffffff',
+          fontFamily: currentInvite.fontFamily || 'Roboto, sans-serif'
+        });
+        
+        // Encontrar o evento atual
+        const event = events.find(e => e.id === currentInvite.eventId);
+        if (event) {
+          setCurrentEvent(event);
+        }
+      }
+    }, [currentInvite, inviteId, events]);
+    
+    // Efeito para atualizar o evento atual quando o eventId mudar
+    useEffect(() => {
+      if (formData.eventId && events.length) {
+        const event = events.find(e => e.id === formData.eventId);
+        setCurrentEvent(event || null);
+      } else {
+        setCurrentEvent(null);
+      }
+    }, [formData.eventId, events]);
+    
+    // Efeito para mostrar erros do Redux
+    useEffect(() => {
+      if (inviteError) {
+        showSnackbar(inviteError, 'error');
+      }
+    }, [inviteError]);
+    
+    // Manipuladores de eventos
+    const handleChange = (e) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleColorChange = (color, type) => {
+      setFormData(prev => ({ ...prev, [type]: color }));
+    };
+    
+    const handleFontChange = (font) => {
+      setFormData(prev => ({ ...prev, fontFamily: font }));
+    };
+    
+    const handleSave = async () => {
+      if (!formData.title) {
+        showSnackbar('Por favor, informe um título para o convite.', 'warning');
+        return;
+      }
+      
+      if (!formData.eventId) {
+        showSnackbar('Por favor, selecione um evento para o convite.', 'warning');
+        return;
+      }
+      
+      setIsLoading(true);
+      setMessageLoading(inviteId ? 'Atualizando convite...' : 'Criando convite...');
+      
+      try {
+        if (inviteId) {
+          await dispatch(updateInvite({ id: inviteId, inviteData: formData }));
+          showSnackbar('Convite atualizado com sucesso!', 'success');
+        } else {
+          const result = await dispatch(createInvite(formData));
+          if (result.payload && result.payload.id) {
+            showSnackbar('Convite criado com sucesso!', 'success');
+            // Redirecionar para a página de edição após criar
+            navigate(`/invites/edit/${result.payload.id}`);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao salvar convite:', error);
+        showSnackbar('Erro ao salvar convite. Tente novamente.', 'error');
       } finally {
         setIsLoading(false);
       }
     };
-    fetchData();
     
-  }, [dispatch, inviteId]);
-  
-  // Preencher formulário com dados do convite se estiver editando
-  useEffect(() => {
-    if (inviteId && currentInvite) {
-      setFormData({
-        title: currentInvite.title || '',
-        description: currentInvite.description || '',
-        templateId: currentInvite.templateId || 'template1',
-        bgColor: currentInvite.bgColor || '#5e35b1',
-        textColor: currentInvite.textColor || '#f5f5f5',
-        fontFamily: currentInvite.fontFamily || 'Roboto',
-        imageUrl: currentInvite.imageUrl || '',
-        customText: currentInvite.customText || ''
-      });
-    }
-  }, [inviteId, currentInvite]);
-  
-    // Preparar dados para envio
-    const prepareFormData = () => {
-
-      // Preparar dados da imagem
-      let imageData = null;
-      
-      if (formData.imageUrl.type === 'url' && formData.imageUrl.url) {
-        imageData = formData.imageUrl.url;
-      } else if (formData.imageUrl.type === 'file' && formData.imageUrl.base64) {
-        imageData = formData.imageUrl.base64;
-      }
-      
-      return {
-        ...formData,
-        // Substituir objetos complexos por strings
-        imageUrl: imageData,
-        eventId: eventId
-      };
+    const handleCancelConfirm = () => {
+      setConfirmDialogOpen(true);
     };
-  
-  // Exibir erro se houver
-  useEffect(() => {
-    if (error) {
-      setSnackbarMessage(error);
-      setSnackbarSeverity('error');
+    
+    const handleCancel = () => {
+      setConfirmDialogOpen(false);
+      navigate('/invites');
+    };
+    
+    const handleWhatsAppTest = () => {
+      // Implementar lógica para testar no WhatsApp
+      showSnackbar('Função de teste no WhatsApp em desenvolvimento.', 'info');
+    };
+    
+    // Função para exibir snackbar
+    const showSnackbar = (message, severity) => {
+      setSnackbarMessage(message);
+      setSnackbarSeverity(severity);
       setSnackbarOpen(true);
-    }
-  }, [error]);
-  
-  // Manipular mudanças no formulário
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Manipular mudança na imagem
-  const handleImageChange = (imageData) => {
-    setFormData(prev => ({
-      ...prev,
-      imageUrl: imageData
-    }));
-  }
-
-  // Manipular mudança direta em um campo específico
-  const handleFieldChange = (field) => (value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-  
-  // Mudar aba
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
-  
-  // Salvar convite
-  const handleSave = async () => {
-    setIsLoading(true);
-    try {
-      const inviteData = prepareFormData();
-
-      if (inviteId) {
-        await dispatch(updateInvite({ id: inviteId, inviteData })).unwrap();
-        setSnackbarMessage('Convite atualizado com sucesso!');
-      } else {
-        await dispatch(createInvite(inviteData)).unwrap();
-        setSnackbarMessage('Convite criado com sucesso!');
-      }
+    };
+    
+    const handleCloseSnackbar = () => {
+      setSnackbarOpen(false);
+    };
+    
+    // Altura fixa para o conteúdo das abas - reduzida para ficar mais compacta
+    const tabContentHeight = 600;
+    
+    // Calcular escala para o dispositivo atual
+    const calculateScale = () => {
+      // Largura disponível para o preview (estimativa)
+      const availableWidth = 500; // Valor aproximado para o container
       
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-      
-      navigate(`/events/${eventId}`);
-    } catch (err) {
-      setSnackbarMessage(err || 'Erro ao salvar convite');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Fechar snackbar
-  const handleCloseSnackbar = () => {
-    setSnackbarOpen(false);
-  };
-  
-  // Confirmar cancelamento
-  const handleCancelConfirm = () => {
-    setConfirmDialogOpen(true);
-  };
-  
-  // Cancelar criação/edição
-  const handleCancel = () => {
-    navigate(`/events/${eventId}`);
-  };
-  
-  // Templates disponíveis
-  const templates = [
-    { id: 'template1', name: 'Elegante', description: 'Design minimalista e elegante' },
-    { id: 'template2', name: 'Festivo', description: 'Design colorido e festivo' },
-    { id: 'template3', name: 'Corporativo', description: 'Design profissional para eventos corporativos' },
-    { id: 'template4', name: 'Casamento', description: 'Design romântico para casamentos' },
-    { id: 'template5', name: 'Aniversário', description: 'Design divertido para aniversários' }
-  ];
-  
-  // Fontes disponíveis
-  const fonts = [
-    { id: 'Roboto', name: 'Roboto' },
-    { id: 'Montserrat', name: 'Montserrat' },
-    { id: 'Playfair Display', name: 'Playfair Display' },
-    { id: 'Dancing Script', name: 'Dancing Script' },
-    { id: 'Oswald', name: 'Oswald' }
-  ];
-  
-  // Configuração das abas
-  const tabsConfig = [
-    { label: 'Conteúdo', icon: <TextFieldsIcon />, iconPosition: 'start' },
-    { label: 'Aparência', icon: <PaletteIcon />, iconPosition: 'start' }
-  ];
-  
-  // Renderizar tela de carregamento
-  if (loading && inviteId) {
+      // Calcular escala baseada na largura do dispositivo
+      return Math.min(1, availableWidth / deviceSizes[deviceType].width);
+    };
+    
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '50vh'
-      }}>
-        <LoadingIndicator />
-      </Box>
-    );
-  }
-  
-  return (
-    <Box sx={{ 
-      bgcolor: theme.palette.background.default, 
-      minHeight: '100vh',
-      pb: 4
-    }}>
-      <Container maxWidth="lg">
-        {/* Título da página e botão voltar */}
-        <Box sx={{ mb: 4 }}>
-          <PageTitle 
-            title={inviteId ? 'Editar Convite' : 'Criar Novo Convite'}
-            subtitle="Personalize seu convite com cores, fontes e imagens"
-            backButton={{
-              label: 'Voltar para o Evento',
-              onClick: () => navigate(`/events/${eventId}`)
-            }}
-          />
-        </Box>
-        
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: isMobile ? 'column' : 'row', 
-          gap: 3, 
-          mb: 4
-        }}>
-          {/* Coluna de edição */}
-          <Paper 
-            elevation={0} 
+      <Box sx={{ py: 3, height: '100%' }}>
+        <Container maxWidth="lg">
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            gutterBottom
             sx={{ 
-              flex: '1 1 65%',
-              borderRadius: 1,
-              overflow: 'hidden',
-              border: `1px solid ${theme.palette.divider}`,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              fontWeight: 'bold',
+              mb: 3
             }}
           >
-            <StyledTabs
-              value={tabValue}
-              onChange={handleTabChange}
-              tabs={tabsConfig}
-              variant="fullWidth"
-            />
-            <TabPanel value={tabValue} index={0}>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 6 }}>
-                <Box sx={{ flex: '1 1 45%', minWidth: '250px' }}>
-                  <StyledTextField
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    label="Título do Convite"
-                    placeholder="Digite o título do convite"
-                    required
-                    startIcon={<TitleIcon />}
-                    fullWidth
-                  />
-                </Box>
-                
-                <Box sx={{ flex: '1 1 45%', minWidth: '250px' }}>
-                  <StyledTextField
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    label="Descrição"
-                    placeholder="Digite uma descrição breve"
-                    startIcon={<DescriptionIcon />}
-                    fullWidth
-                  />
-                </Box>
-              </Box>
-              
-              <Box sx={{ mb: 3 }}>
-                <StyledTextField
-                  name="customText"
-                  value={formData.customText}
-                  onChange={handleChange}
-                  label="Mensagem Personalizada"
-                  placeholder="Digite a mensagem que será exibida no convite"
-                  multiline
-                  rows={4}
-                  startIcon={<MessageIcon />}
-                  helperText="Esta mensagem será exibida no convite e enviada via WhatsApp"
-                  fullWidth
-                />
-              </Box>
-              
-
-                <Box sx={{ flex: '1 1 45%', minWidth: '250px' }}>
-                  <ImageUploadFieldBase64
-                    value={formData.imageUrl}
-                    onChange={handleImageChange}
-                    helperText={"Insira uma url ou faça upload de uma imagem"}
-                    required
-                  />
-                </Box>
-                
-                <Box sx={{ flex: '1 1 45%', minWidth: '250px' }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel id="template-label">Template</InputLabel>
-                    <Select
-                      labelId="template-label"
-                      id="templateId"
-                      name="templateId"
-                      value={formData.templateId}
-                      onChange={handleChange}
-                      label="Template"
-                    >
-                      {templates.map(template => (
-                        <MenuItem key={template.id} value={template.id}>
-                          {template.name} - {template.description}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-            </TabPanel>
-            
-            <TabPanel value={tabValue} index={1}>
-              <Box sx={{ mb: 6, mt: 6 }}>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="font-label">Fonte</InputLabel>
-                  <Select
-                    labelId="font-label"
-                    id="fontFamily"
-                    name="fontFamily"
-                    value={formData.fontFamily}
-                    onChange={handleChange}
-                    label="Fonte"
-                  >
-                    {fonts.map(font => (
-                      <MenuItem key={font.id} value={font.id} style={{ fontFamily: font.id }}>
-                        {font.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                <Box sx={{ flex: '1 1 45%', minWidth: '250px' }}>
-                  <ColorPicker
-                    value={formData.bgColor}
-                    onChange={handleFieldChange('bgColor')}
-                    label="Cor Principal"
-                    icon={<FormatColorFillIcon />}
-                  />
-                </Box>
-                
-                <Box sx={{ flex: '1 1 45%', minWidth: '250px' }}>
-                  <ColorPicker
-                    value={formData.textColor}
-                    onChange={handleFieldChange('textColor')}
-                    label="Cor do Texto"
-                    icon={<FormatColorTextIcon />}
-                  />
-                </Box>
-              </Box>
-            </TabPanel>
-          </Paper>
+            {inviteId ? 'Editar Convite' : 'Criar Novo Convite'}
+          </Typography>
           
-          {/* Coluna de visualização */}
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              flex: '1 1 35%',
-              borderRadius: 1,
-              overflow: 'hidden',
-              border: `1px solid ${theme.palette.divider}`,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              p: 2,
-              borderBottom: `1px solid ${theme.palette.divider}`,
-              bgcolor: theme.palette.background.default
-            }}>
-              <PreviewIcon sx={{ mr: 1, color: theme.palette.text.secondary }} />
-              <Typography variant="subtitle1" fontWeight="500">
-                Pré-visualização
-              </Typography>
-            </Box>
-            
-            <Box 
-              sx={{ 
-                flexGrow: 1,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                p: 3,
-                bgcolor: theme.palette.background.default
-              }}
-            >
-              <Box 
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 3}}>
+            {/* Lado esquerdo - Formulário com abas */}
+            <Box>
+              <Paper 
+                elevation={0}
                 sx={{ 
-                  maxWidth: 320,
-                  width: '100%',
-                  mx: 'auto',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  borderRadius: 1,
+                  borderRadius: 2,
+                  border: `1px solid ${theme.palette.divider}`,
                   overflow: 'hidden',
-                  fontFamily: formData.fontFamily,
-                  bgcolor: theme.palette.background.paper
+                  height: '100%',
+                  width: 400,
+                  display: 'flex',
+                  flexDirection: 'column'
                 }}
               >
-                {formData.imageUrl ? (
-                  <CardMedia
-                    component="img"
-                    height="180"
-                    image={formData.imageUrl && formData.imageUrl.type === 'url' ? formData.imageUrl.url : formData.imageUrl.base64}
-                    alt={formData.title}
-                  />
-                ) : (
+                {/* Abas com altura fixa */}
+                <Box sx={{ 
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                  bgcolor: alpha(theme.palette.background.paper, 0.8),
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <StyledTabs 
+                    value={tabValue} 
+                    onChange={handleTabChange}
+                    variant="fullWidth"
+                    sx={{ width: '100%' }}
+                  >
+                    <Tab 
+                      icon={<InfoIcon />} 
+                      label="Informações" 
+                      iconPosition="start"
+                    />
+                    <Tab 
+                      icon={<ColorLensIcon />} 
+                      label="Personalização" 
+                      iconPosition="start"
+                    />
+                  </StyledTabs>
+                </Box>
+                
+                {/* Conteúdo das abas com altura fixa */}
+                <Box sx={{ 
+                  height: tabContentHeight,
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  {/* Aba de Informações */}
                   <Box 
                     sx={{ 
-                      height: 180, 
-                      bgcolor: formData.bgColor,
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      color: '#fff'
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      p: 3,
+                      overflow: 'auto',
+                      display: tabValue === 0 ? 'block' : 'none'
                     }}
                   >
-                    <ImageIcon sx={{ fontSize: 48, opacity: 0.7 }} />
+                    <TextField
+                      fullWidth
+                      label="Título do Convite"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                      helperText="Ex: Aniversário de 30 anos"
+                    />
+                    
+                    <FormControl fullWidth margin="normal" required>
+                      <InputLabel>Evento</InputLabel>
+                      <Select
+                        name="eventId"
+                        value={formData.eventId}
+                        onChange={handleChange}
+                        label="Evento"
+                      >
+                        <MenuItem value="">Selecione um evento</MenuItem>
+                        {events.map(event => (
+                          <MenuItem key={event.id} value={event.id}>
+                            {event.title}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    
+                    <TextField
+                      fullWidth
+                      label="Descrição (opcional)"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      margin="normal"
+                      helperText="Uma breve descrição do convite"
+                    />
+                    
+                    <TextField
+                      fullWidth
+                      label="Mensagem Personalizada"
+                      name="customText"
+                      value={formData.customText}
+                      onChange={handleChange}
+                      margin="normal"
+                      multiline
+                      helperText="Mensagem que será exibida no convite"
+                    />
                   </Box>
-                )}
-                
-                <Box sx={{ p: 2 }}>
-                  <Typography 
-                    variant="h6" 
-                    component="div" 
-                    gutterBottom
+                  
+                  {/* Aba de Personalização */}
+                  <Box 
                     sx={{ 
-                      color: formData.bgColor,
-                      fontFamily: 'inherit',
-                      fontWeight: 'bold',
-                      textAlign: 'center'
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      p: 3,
+                      overflow: 'auto',
+                      display: tabValue === 1 ? 'block' : 'none'
                     }}
                   >
-                    {formData.title || 'Título do Convite'}
-                  </Typography>
-                  
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      mb: 1.5,
-                      fontFamily: 'inherit',
-                      textAlign: 'center',
-                      color: formData.textColor
-                    }}
-                  >
-                    {currentEvent?.title || 'Nome do Evento'}
-                  </Typography>
-                  
-                  {formData.description && (
                     <Typography 
-                      variant="body2" 
+                      variant="h6" 
+                      gutterBottom
                       sx={{ 
-                        mb: 1.5,
-                        fontFamily: 'inherit',
-                        color: formData.textColor
+                        fontWeight: 600,
+                        mb: 3
                       }}
                     >
-                      {formData.description}
+                      Cores
                     </Typography>
-                  )}
-                  
-                  <Divider sx={{ mb: 1.5 }} />
-                  
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      mb: 1.5,
-                      fontFamily: 'inherit',
-                      color: formData.textColor
-                    }}
-                  >
-                    {formData.customText || 'Mensagem personalizada do convite...'}
-                  </Typography>
-                  
-                  <Typography 
-                    variant="caption" 
-                    color="text.secondary"
-                    sx={{ 
-                      fontFamily: 'inherit',
-                      textAlign: 'center',
-                      fontStyle: 'italic',
-                      display: 'block'
-                    }}
-                  >
-                    Confirme sua presença respondendo este convite.
-                  </Typography>
+                    
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                      <Grid item xs={12} sm={6}>
+                        <ColorPicker 
+                          label="Cor de Fundo" 
+                          color={formData.bgColor} 
+                          onChange={(color) => handleColorChange(color, 'bgColor')} 
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <ColorPicker 
+                          label="Cor de Destaque" 
+                          color={formData.accentColor} 
+                          onChange={(color) => handleColorChange(color, 'accentColor')} 
+                        />
+                      </Grid>
+                    </Grid>
+                    
+                    <Typography 
+                      variant="h6" 
+                      gutterBottom
+                      sx={{ 
+                        fontWeight: 600,
+                        mb: 2
+                      }}
+                    >
+                      Tipografia
+                    </Typography>
+                    
+                    <OptimizedFontPicker 
+                      value={formData.fontFamily} 
+                      onChange={handleFontChange}
+                    />
+                    
+                    {/* Amostra da fonte selecionada */}
+                    <Box sx={{ 
+                      mt: 2, 
+                      p: 2, 
+                      borderRadius: 1, 
+                      border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                      bgcolor: alpha(theme.palette.background.paper, 0.7),
+                      fontFamily: formData.fontFamily,
+                      textAlign: 'center'
+                    }}>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        Amostra da fonte: Aa Bb Cc 123
+                      </Typography>
+                    </Box>
+                  </Box>
                 </Box>
-              </Box>
+              </Paper>
             </Box>
             
-            <Box sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}`, textAlign: 'center' }}>
-              <StyledButton
-                variant="outlined"
-                color="success"
-                startIcon={<WhatsAppIcon />}
+            {/* Lado direito - Preview sempre visível com diferenciação clara entre dispositivos */}
+            <Box>
+              <Paper 
+                elevation={0}
                 sx={{ 
-                  color: '#25D366',
-                  borderColor: '#25D366',
-                  '&:hover': {
-                    borderColor: '#25D366',
-                    backgroundColor: 'rgba(37, 211, 102, 0.1)'
-                  }
+                  borderRadius: 2,
+                  border: `1px solid ${theme.palette.divider}`,
+                  p: 3, 
+                  width: 750,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  minHeight: tabContentHeight + 48 // Altura do conteúdo + altura das abas
                 }}
               >
-                Testar no WhatsApp
-              </StyledButton>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  mb: 2,
+                  flexShrink: 0
+                }}>
+                  {/* <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontWeight: 600,
+                    }}
+                  >
+                    Pré-visualização do Convite
+                  </Typography> */}
+                  
+                  {/* Seletor de dispositivos dentro da aba de pré-visualização */}
+                  <ButtonGroup variant="outlined" size="small" aria-label="device selection">
+                    {Object.keys(deviceSizes).map((type) => (
+                      <Button
+                        key={type}
+                        variant={deviceType === type ? "contained" : "outlined"}
+                        startIcon={deviceSizes[type].icon}
+                        onClick={() => handleDeviceChange(type)}
+                        sx={{ 
+                          textTransform: 'capitalize',
+                          backgroundColor: deviceType === type ? theme.palette.primary.main : 'transparent',
+                          color: deviceType === type ? '#fff' : theme.palette.primary.main,
+                          '&:hover': {
+                            backgroundColor: deviceType === type 
+                              ? alpha(theme.palette.primary.main, 0.9) 
+                              : alpha(theme.palette.primary.main, 0.1)
+                          }
+                        }}
+                      >
+                        {type}
+                      </Button>
+                    ))}
+                  </ButtonGroup>
+                </Box>
+                
+                {/* Preview com diferenciação clara entre dispositivos */}
+                <Box sx={{ 
+                  flexGrow: 1,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  height: tabContentHeight - 10 // Altura fixa para o container do preview
+                }}>
+                  {/* Container do dispositivo com moldura */}
+                  <Box sx={{ 
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'flex-start',
+                    overflow: 'auto',
+                    pt: 1
+                  }}>
+                    <Box sx={{ 
+                      width: '100%',
+                      height: `${deviceSizes[deviceType].height}px`,
+                      // transform: `scale(${calculateScale()})`,
+                      transformOrigin: 'top center',
+                      border: `12px solid ${alpha('#000', 0.8)}`,
+                      borderRadius: deviceType === 'mobile' ? '20px' : '8px',
+                      boxShadow: `0 10px 30px ${alpha('#000', 0.2)}`,
+                      overflow: 'hidden',
+                      position: 'relative',
+                      transition: 'all 0.3s ease',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: '-12px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: deviceType === 'mobile' ? '60px' : '100px',
+                        height: '12px',
+                        backgroundColor: alpha('#000', 0.9),
+                        borderRadius: '8px 8px 0 0',
+                        display: deviceType !== 'mobile' ? 'block' : 'none'
+                      },
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: '-20px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: deviceType === 'mobile' ? '40px' : '0',
+                        height: '8px',
+                        backgroundColor: alpha('#000', 0.9),
+                        borderRadius: '0 0 10px 10px',
+                        display: deviceType === 'mobile' ? 'block' : 'none'
+                      }
+                    }}>
+                      <Box sx={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        overflow: 'auto',
+                        backgroundColor: '#fff'
+                      }}>
+                        <InvitePreview 
+                          title={formData.title}
+                          eventTitle={currentEvent?.title}
+                          customText={formData.customText}
+                          bgColor={formData.bgColor}
+                          accentColor={formData.accentColor}
+                          fontFamily={formData.fontFamily}
+                          showActions={false}
+                          onWhatsAppTest={handleWhatsAppTest}
+                          deviceViewMode={deviceType}
+                        />
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              </Paper>
             </Box>
-          </Paper>
-        </Box>
+            
+          </Box>
+          <Box 
+                sx={{ 
+                  display: 'flex', 
+                  gap: 2, 
+                  justifyContent: 'end',
+                  mt: 3
+                }}
+              >
+                <StyledButton
+                  variant="outlined"
+                  color="inherit"
+                  onClick={handleCancelConfirm}
+                >
+                  Cancelar
+                </StyledButton>
+                
+                <StyledButton
+                  variant="contained"
+                  color="primary"
+                  startIcon={<SaveIcon />}
+                  onClick={handleSave}
+                  disabled={!formData.title || !formData.eventId || isLoading || inviteLoading}
+                >
+                  {inviteId ? 'Atualizar Convite' : 'Criar Convite'}
+                </StyledButton>
+              </Box>
+        </Container>
         
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            gap: 2, 
-            justifyContent: 'flex-end',
-            mb: 4
-          }}
+        <LoadingIndicator 
+          open={isLoading || inviteLoading} 
+          type="overlay" 
+          message={messageLoading}
+        />
+        
+        {/* Diálogo de confirmação para cancelamento */}
+        <ConfirmDialog
+          open={confirmDialogOpen}
+          onClose={() => setConfirmDialogOpen(false)}
+          onConfirm={handleCancel}
+          title={`Cancelar ${inviteId ? 'Edição' : 'Criação'}`}
+          message="Tem certeza que deseja cancelar? Todas as alterações não salvas serão perdidas."
+          cancelText="Voltar"
+          confirmText={`Cancelar ${inviteId ? 'Edição' : 'Criação'}`}
+          confirmColor="error"
+        />
+        
+        {/* Snackbar para feedback */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <StyledButton
-            variant="outlined"
-            color="inherit"
-            onClick={handleCancelConfirm}
+          <Alert 
+            onClose={handleCloseSnackbar} 
+            severity={snackbarSeverity}
+            variant="filled"
+            sx={{ width: '100%', borderRadius: 1, color: theme.palette.primary.contrastText }}
           >
-            Cancelar
-          </StyledButton>
-          
-          <StyledButton
-            variant="contained"
-            color="primary"
-            startIcon={<SaveIcon />}
-            onClick={handleSave}
-            disabled={!formData.title}
-          >
-            {inviteId ? 'Atualizar Convite' : 'Criar Convite'}
-          </StyledButton>
-        </Box>
-      </Container>
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Box>
+    );
+  };
 
-      <LoadingIndicator 
-        open={isLoading} 
-        type="overlay" 
-        message={messageLoading}
-      />
-
-      {/* Diálogo de confirmação para cancelamento */}
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        onConfirm={handleCancel}
-        title={`Cancelar ${inviteId ? 'Edição' : 'Criação'}`}
-        message="Tem certeza que deseja cancelar? Todas as alterações não salvas serão perdidas."
-        cancelText="Voltar"
-        confirmText={`Cancelar ${inviteId ? 'Edição' : 'Criação'}`}
-        confirmColor="error"
-      />
-      
-      {/* Snackbar para feedback */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbarSeverity}
-          variant="filled"
-          sx={{ width: '100%', borderRadius: 1, color: theme.palette.primary.contrastText }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-    </Box>
-  );
-};
-
-export default InviteCreate;
+  export default InviteCreate;
+  
