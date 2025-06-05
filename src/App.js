@@ -5,9 +5,9 @@ import { Box, CircularProgress } from '@mui/material';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
-import AuthLayout from './layouts/AuthLayout';
 
 // Pages
+import ModernLandingPage from './pages/landing/ModernLandingPage';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/dashboard/dashboard';
@@ -44,14 +44,15 @@ const ProtectedRoute = ({ children }) => {
 const App = () => {
   return (
     <Routes>
+      {/* Homepage moderna */}
+      <Route path="/" element={<ModernLandingPage />} />
+      
       {/* Rotas públicas */}
       <Route path="/rsvp/:guestId" element={<RsvpPage />} />
       
-      {/* Rotas de autenticação */}
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Route>
+      {/* Rotas de autenticação (agora sem o AuthLayout) */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       {/* Rotas protegidas */}
       <Route element={
@@ -59,7 +60,7 @@ const App = () => {
           <MainLayout />
         </ProtectedRoute>
       }>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/events" element={<EventList />} />
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/events/create" element={<EventCreate />} />
