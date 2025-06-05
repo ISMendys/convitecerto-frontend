@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -9,6 +10,7 @@ import {
   CardContent,
   IconButton,
   useMediaQuery,
+  Tooltip,
   Fade,
   Slide,
   Grid,
@@ -30,7 +32,10 @@ import {
   CardGiftcard as CardGiftcardIcon
 } from '@mui/icons-material';
 import InvitePreviewCard from '../../components/InvitePreviewCard';
+import { ColorModeContext } from '../../theme/ThemeConfig';
 
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 // Styled components
 const HeroSection = styled(Box)(({ theme }) => ({
@@ -140,7 +145,9 @@ const ModernLandingPage = () => {
   const featuresRef = useRef(null);
   const howItWorksRef = useRef(null);
   const demoRef = useRef(null);
-  
+
+  const colorMode = useContext(ColorModeContext);
+
   // Handle scroll events for parallax and animations
   useEffect(() => {
     const handleScroll = () => {
@@ -242,6 +249,17 @@ const ModernLandingPage = () => {
   
   return (
     <Box sx={{ overflow: 'hidden' }}>
+    <Box sx={{ ml: 'auto', position: 'fixed', top: 16, right: 16, zIndex: 1000 }}>
+        <Tooltip title={theme.palette.mode === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}>
+            <IconButton
+                edge="end"
+                color="inherit"
+                onClick={colorMode.toggleColorMode}
+            >
+                {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
+        </Tooltip>
+    </Box>
       {/* Hero Section - Full screen with parallax effect */}
       <HeroSection>
         {/* Decorative elements with parallax effect */}
