@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -80,7 +80,7 @@ const Login = () => {
         display: 'flex',
         position: 'relative',
         overflow: 'hidden', // Keep hidden to contain background elements
-        background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 50%, ${theme.palette.secondary.dark} 100%)`,
+        background: `linear-gradient(135deg, ${'#3c1f80'} 0%, ${'#5e35b1'} 50%, ${'#4d2c91'} 100%)`,
         alignItems: 'center', // Center content vertically
         justifyContent: 'center', // Center content horizontally
         py: { xs: 4, md: 6 } // Add vertical padding
@@ -277,7 +277,7 @@ const Login = () => {
                 sx={{
                   mb: 2,
                   '& .MuiInputBase-input': {
-                      color: theme.palette.text.primary, // Explicitly set text color
+                      color: 'rgb(127, 78, 218)', // Explicitly set text color
                   },
                   '& .MuiInputLabel-root': {
                       color: theme.palette.primary.main, // Ensure label color has contrast
@@ -331,7 +331,7 @@ const Login = () => {
                 sx={{
                   mb: 1, // Reduced margin bottom
                    '& .MuiInputBase-input': {
-                      color: theme.palette.text.primary, // Explicitly set text color
+                      color: 'rgb(127, 78, 218)', // Explicitly set text color
                   },
                   '& .MuiInputLabel-root': {
                       color: theme.palette.primary.main, // Ensure label color has contrast

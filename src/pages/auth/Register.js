@@ -98,7 +98,7 @@ const Register = () => {
         display: 'flex',
         position: 'relative',
         overflow: 'hidden',
-        background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 50%, ${theme.palette.secondary.dark} 100%)`,
+        background: `linear-gradient(135deg, ${'#3c1f80'} 0%, ${'#5e35b1'} 50%, ${'#4d2c91'} 100%)`,
       }}
     >
       {/* Animated background circles */}
@@ -278,7 +278,7 @@ const Register = () => {
                 sx={{
                   mb: 2,
                   '& .MuiInputBase-input': {
-                      color: theme.palette.text.primary, // Explicitly set text color
+                    color: 'rgb(127, 78, 218)', // Explicitly set text color
                   },
                   '& .MuiInputLabel-root': {
                       color: theme.palette.primary.main, // Ensure label color has contrast
@@ -318,7 +318,7 @@ const Register = () => {
                 sx={{
                   mb: 2,
                   '& .MuiInputBase-input': {
-                      color: theme.palette.text.primary, // Explicitly set text color
+                    color: 'rgb(127, 78, 218)', // Explicitly set text color
                   },
                   '& .MuiInputLabel-root': {
                       color: theme.palette.primary.main, // Ensure label color has contrast
@@ -357,7 +357,7 @@ const Register = () => {
                 sx={{
                   mb: 2,
                   '& .MuiInputBase-input': {
-                      color: theme.palette.text.primary, // Explicitly set text color
+                    color: 'rgb(127, 78, 218)', // Explicitly set text color
                   },
                   '& .MuiInputLabel-root': {
                       color: theme.palette.primary.main, // Ensure label color has contrast
@@ -408,7 +408,7 @@ const Register = () => {
                 sx={{
                   mb: 2,
                   '& .MuiInputBase-input': {
-                      color: theme.palette.text.primary, // Explicitly set text color
+                    color: 'rgb(127, 78, 218)', // Explicitly set text color
                   },
                   '& .MuiInputLabel-root': {
                       color: theme.palette.primary.main, // Ensure label color has contrast
@@ -461,7 +461,7 @@ const Register = () => {
                 sx={{
                   mb: 2,
                   '& .MuiInputBase-input': {
-                      color: theme.palette.text.primary, // Explicitly set text color
+                      color: 'rgb(127, 78, 218)', // Explicitly set text color
                   },
                   '& .MuiInputLabel-root': {
                       color: theme.palette.primary.main, // Ensure label color has contrast

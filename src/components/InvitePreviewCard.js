@@ -221,7 +221,7 @@ const InvitePreviewCard = ({
       <Box sx={cardFlipperStyle}>
         {/* Card Front */} 
         <Box sx={cardFrontStyle}>
-          <Box sx={{ background: `linear-gradient(140deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.dark} 100%)`, p: { xs: 3, sm: 4 }, position: 'relative', textAlign: 'center', color: 'white' }}>
+          <Box sx={{ background: `linear-gradient(140deg, ${'#5e35b1'} 0%, ${theme.palette.secondary.dark} 100%)`, p: { xs: 3, sm: 4 }, position: 'relative', textAlign: 'center', color: 'white' }}>
             <Typography variant="overline" sx={{ letterSpacing: 3.5, mb: 1, fontWeight: 300, textShadow: '0 1px 2px rgba(0,0,0,0.15)' }}>CONVITE</Typography>
             <Typography variant="h4" sx={{ fontWeight: 700, fontSize: { xs: '1.9rem', sm: '2.4rem', md: '2.7rem' }, textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>{inviteData.title}</Typography>
             <Typography variant="body1" sx={{ mt: 1.5, fontWeight: 300, textShadow: '0 1px 2px rgba(0,0,0,0.15)' }}>{inviteData.subtitle}</Typography>
@@ -241,7 +241,7 @@ const InvitePreviewCard = ({
 
         {/* Card Back */} 
         <Box sx={cardBackStyle}>
-          <Box sx={{ background: `linear-gradient(140deg, ${'rgb(181, 99, 236)'} 0%, ${theme.palette.primary.dark} 100%)`, p: { xs: 3, sm: 4 }, position: 'relative', textAlign: 'center', color: 'white', overflow: 'hidden' }}>
+          <Box sx={{ background: `linear-gradient(140deg, ${'rgb(181, 99, 236)'} 0%, ${'#3c1f80'} 100%)`, p: { xs: 3, sm: 4 }, position: 'relative', textAlign: 'center', color: 'white', overflow: 'hidden' }}>
             {/* Staggered Grow animation for header texts */} 
             <Grow in={showBackContent} timeout={600} style={{ transformOrigin: '50% 0%' }}>
               <Typography variant="overline" sx={{ letterSpacing: 3.5, mb: 1, fontWeight: 300, textShadow: '0 1px 2px rgba(0,0,0,0.15)' }}>PRESENÇA CONFIRMADA!</Typography>

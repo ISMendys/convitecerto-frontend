@@ -45,7 +45,7 @@ const HeroSection = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   position: 'relative',
   overflow: 'hidden',
-  background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 50%, ${theme.palette.secondary.dark} 100%)`,
+  background: `linear-gradient(135deg, ${'#3c1f80'} 0%, ${'#5e35b1'} 50%, ${'#4d2c91'} 100%)`,
   color: theme.palette.common.white,
 }));
 
@@ -841,9 +841,20 @@ const ModernLandingPage = () => {
               color: 'common.white'
             }}
           >
-            Crie quantos eventos quiser, totalmente grátis!
+            Crie quantos eventos quiser
           </Typography>
-          
+          <Typography 
+            variant="h3" 
+            component="h3" 
+            sx={{ 
+              fontWeight: 700,
+              mb: 3,
+              fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+              color: 'common.white'
+            }}
+          >
+            Totalmente grátis!
+          </Typography>
           <Typography 
             variant="h5" 
             sx={{ 
