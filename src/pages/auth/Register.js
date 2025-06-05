@@ -158,23 +158,6 @@ const Register = () => {
             }}
           >
             <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: { xs: 'center', md: 'flex-start' } }}>
-              <Box
-                sx={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: '50%',
-                  background: `linear-gradient(135deg, ${theme.palette.secondary.main}, ${theme.palette.secondary.light})`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
-                  mr: 2
-                }}
-              >
-                <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
-                  C
-                </Typography>
-              </Box>
               <Typography
                 variant="h4"
                 component="h1"
@@ -261,11 +244,11 @@ const Register = () => {
               maxWidth: { xs: '100%', md: 450 }
             }}
           >
-            <Typography variant="h4" component="h3" sx={{ mb: 1, fontWeight: 700, color: 'text.primary' }}>
+            <Typography variant="h4" component="h3" sx={{ mb: 1, fontWeight: 700, color: 'rgb(127, 78, 218)', textAlign: 'center' }}>
               Cadastre-se
             </Typography>
             
-            <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
+            <Typography variant="body1" sx={{ mb: 4, color: 'gray' }}>
               Preencha os campos abaixo para criar sua conta
             </Typography>
             
@@ -293,15 +276,23 @@ const Register = () => {
                   ),
                 }}
                 sx={{
-                  mb: 3,
+                  mb: 2,
+                  '& .MuiInputBase-input': {
+                      color: theme.palette.text.primary, // Explicitly set text color
+                  },
+                  '& .MuiInputLabel-root': {
+                      color: theme.palette.primary.main, // Ensure label color has contrast
+                  },
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    backgroundColor: 'white',
+                    '& fieldset': {
+                      borderColor: theme.palette.grey[400], // Lighter border
+                    },
                     '&:hover fieldset': {
-                      borderColor: theme.palette.primary.main,
+                      borderColor: theme.palette.primary.light,
                     },
                     '&.Mui-focused fieldset': {
-                      borderWidth: 2,
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: '1px',
                     },
                   }
                 }}
@@ -325,15 +316,23 @@ const Register = () => {
                   ),
                 }}
                 sx={{
-                  mb: 3,
+                  mb: 2,
+                  '& .MuiInputBase-input': {
+                      color: theme.palette.text.primary, // Explicitly set text color
+                  },
+                  '& .MuiInputLabel-root': {
+                      color: theme.palette.primary.main, // Ensure label color has contrast
+                  },
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    backgroundColor: 'white',
+                    '& fieldset': {
+                      borderColor: theme.palette.grey[400], // Lighter border
+                    },
                     '&:hover fieldset': {
-                      borderColor: theme.palette.primary.main,
+                      borderColor: theme.palette.primary.light,
                     },
                     '&.Mui-focused fieldset': {
-                      borderWidth: 2,
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: '1px',
                     },
                   }
                 }}
@@ -356,15 +355,23 @@ const Register = () => {
                   ),
                 }}
                 sx={{
-                  mb: 3,
+                  mb: 2,
+                  '& .MuiInputBase-input': {
+                      color: theme.palette.text.primary, // Explicitly set text color
+                  },
+                  '& .MuiInputLabel-root': {
+                      color: theme.palette.primary.main, // Ensure label color has contrast
+                  },
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    backgroundColor: 'white',
+                    '& fieldset': {
+                      borderColor: theme.palette.grey[400], // Lighter border
+                    },
                     '&:hover fieldset': {
-                      borderColor: theme.palette.primary.main,
+                      borderColor: theme.palette.primary.light,
                     },
                     '&.Mui-focused fieldset': {
-                      borderWidth: 2,
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: '1px',
                     },
                   }
                 }}
@@ -383,7 +390,7 @@ const Register = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockIcon color="primary" />
+                      <LockIcon sx={{ color: theme.palette.primary.main }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -393,21 +400,29 @@ const Register = () => {
                         onClick={toggleShowPassword}
                         edge="end"
                       >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                        {showPassword ? <VisibilityOff sx={{ color: theme.palette.primary.main }}/> : <Visibility sx={{ color: theme.palette.primary.main }}/>}
                       </IconButton>
                     </InputAdornment>
                   )
                 }}
                 sx={{
-                  mb: 3,
+                  mb: 2,
+                  '& .MuiInputBase-input': {
+                      color: theme.palette.text.primary, // Explicitly set text color
+                  },
+                  '& .MuiInputLabel-root': {
+                      color: theme.palette.primary.main, // Ensure label color has contrast
+                  },
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    backgroundColor: 'white',
+                    '& fieldset': {
+                      borderColor: theme.palette.grey[400], // Lighter border
+                    },
                     '&:hover fieldset': {
-                      borderColor: theme.palette.primary.main,
+                      borderColor: theme.palette.primary.light,
                     },
                     '&.Mui-focused fieldset': {
-                      borderWidth: 2,
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: '1px',
                     },
                   }
                 }}
@@ -428,7 +443,7 @@ const Register = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockIcon color="primary" />
+                      <LockIcon sx={{ color: theme.palette.primary.main }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -438,21 +453,29 @@ const Register = () => {
                         onClick={toggleShowConfirmPassword}
                         edge="end"
                       >
-                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                        {showConfirmPassword ? <VisibilityOff sx={{ color: theme.palette.primary.main }}/> : <Visibility sx={{ color: theme.palette.primary.main }}/>}
                       </IconButton>
                     </InputAdornment>
                   )
                 }}
                 sx={{
-                  mb: 4,
+                  mb: 2,
+                  '& .MuiInputBase-input': {
+                      color: theme.palette.text.primary, // Explicitly set text color
+                  },
+                  '& .MuiInputLabel-root': {
+                      color: theme.palette.primary.main, // Ensure label color has contrast
+                  },
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    backgroundColor: 'white',
+                    '& fieldset': {
+                      borderColor: theme.palette.grey[400], // Lighter border
+                    },
                     '&:hover fieldset': {
-                      borderColor: theme.palette.primary.main,
+                      borderColor: theme.palette.primary.light,
                     },
                     '&.Mui-focused fieldset': {
-                      borderWidth: 2,
+                      borderColor: theme.palette.primary.main,
+                      borderWidth: '1px',
                     },
                   }
                 }}

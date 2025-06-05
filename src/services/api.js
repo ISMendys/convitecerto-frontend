@@ -42,6 +42,14 @@ export const authService = {
   verifyToken: async () => {
     const response = await api.get('/auth/verify');
     return response.data;
+  },
+
+  logout: () => {
+    // Remove o token do armazenamento local
+    localStorage.removeItem('token');
+    // Opcional, mas recomendado: remove o header de autorização da instância do axios
+    // para que requisições futuras não usem o token antigo.
+    delete api.defaults.headers.common['Authorization'];
   }
 };
 
