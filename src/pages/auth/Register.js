@@ -71,7 +71,8 @@ const Register = () => {
       return;
     }
     //formData.phone
-    dispatch(registerUser( formData ));
+    const { phone, confirmPassword, ...dataToSend } = formData;
+    dispatch(registerUser( dataToSend ));
   };
   
   const toggleShowPassword = () => {
