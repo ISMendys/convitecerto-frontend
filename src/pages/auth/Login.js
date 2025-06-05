@@ -57,7 +57,7 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(loginUser(formData.email, formData.password));
+    dispatch(loginUser( formData ));
   };
 
   const toggleShowPassword = () => {

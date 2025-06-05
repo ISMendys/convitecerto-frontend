@@ -70,8 +70,8 @@ const Register = () => {
       setPasswordError('As senhas não coincidem');
       return;
     }
-    
-    dispatch(registerUser(formData.name, formData.email, formData.phone, formData.password));
+    //formData.phone
+    dispatch(registerUser( formData ));
   };
   
   const toggleShowPassword = () => {
