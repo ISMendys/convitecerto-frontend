@@ -140,6 +140,8 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
           Precisa de ajuda?
         </Typography>
         <Button
+          component={NavLink}
+          to={'/support'}
           color="primary"
           fullWidth
           variant="contained"

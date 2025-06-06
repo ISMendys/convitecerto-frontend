@@ -24,6 +24,14 @@ api.interceptors.request.use(
 
 // Serviço de autenticação
 export const authService = {
+
+  // support
+  help: async (credentials) => {
+    const response = await api.post('/auth/help', credentials);
+    localStorage.setItem('token', response.data.token);
+    return response.data;
+  },
+
   // Login
   login: async (credentials) => {
     const response = await api.post('/auth/login', credentials);

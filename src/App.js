@@ -21,6 +21,7 @@ import GuestForm from './pages/guests/GuestForm';
 import GuestImport from './pages/guests/GuestImport';
 import RsvpPage from './pages/public/RsvpPage';
 import NotFound from './pages/PageNotFound';
+import SupportPage from './pages/support/SupportPage';
 
 // Componente para rotas protegidas
 const ProtectedRoute = ({ children }) => {
@@ -62,6 +63,7 @@ const App = () => {
       }>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/events" element={<EventList />} />
+        <Route path="/support" element={<SupportPage />} />
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/events/create" element={<EventCreate />} />
         <Route path="/events/:id/guests" element={<GuestList />} />

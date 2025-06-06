@@ -6,7 +6,7 @@ export const fetchAllGuests = createAsyncThunk(
   'dashboard/fetchAllGuests',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/guests/all');
+      const response = await api.get('/guest/all');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Erro ao buscar convidados');
@@ -53,7 +53,7 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchAllGuests.fulfilled, (state, action) => {
         state.loading = false;
-        state.allGuests = action.payload;
+        state.allGuests = action.payload.guests || [];
       })
       .addCase(fetchAllGuests.rejected, (state, action) => {
         state.loading = false;

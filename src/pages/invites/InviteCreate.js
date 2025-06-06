@@ -301,7 +301,7 @@
           if (result.payload && result.payload.id) {
             showSnackbar('Convite criado com sucesso!', 'success');
             // Redirecionar para a página de edição após criar
-            navigate(`/invites/edit/${result.payload.id}`);
+            navigate(`/events`);
           }
         }
       } catch (error) {
@@ -318,7 +318,7 @@
     
     const handleCancel = () => {
       setConfirmDialogOpen(false);
-      navigate('/invites');
+      navigate('/events');
     };
     
     const handleWhatsAppTest = () => {
