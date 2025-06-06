@@ -22,7 +22,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useTheme, alpha } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/NotificationsOutlined';
-import { logoutUser } from '../../store/slices/authSlice';
+import { logoutUser } from '../../store/actions/authActions';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
