@@ -86,20 +86,20 @@ export const fetchPublicInvite = createAsyncThunk(
     try {
       console.log('Fetching public invite for guest ID:', id);
 
-      const guestResponse = await dispatch(fetchGuest(id));
-      console.log('Guest response:', guestResponse);
-      if (!guestResponse.payload) {
-        throw new Error('Convidado não encontrado');
-      }
+      // const guestResponse = await dispatch(fetchGuest(id));
+      // console.log('Guest response:', guestResponse);
+      // if (!guestResponse.payload) {
+      //   throw new Error('Convidado não encontrado');
+      // }
       
-      if (!guestResponse.payload.inviteId) {
-        return {
-          noInvite: true,
-          guestId: id,
-          guestName: guestResponse.name,
-          message: 'Este convidado ainda não possui um convite associado. Por favor, entre em contato com o organizador do evento.'
-        };
-      }
+      // if (!guestResponse.payload.inviteId) {
+      //   return {
+      //     noInvite: true,
+      //     guestId: id,
+      //     guestName: guestResponse.name,
+      //     message: 'Este convidado ainda não possui um convite associado. Por favor, entre em contato com o organizador do evento.'
+      //   };
+      // }
       
       // Agora, buscar o convite usando o ID do convite
       const response = await inviteService.getPublicInvite(guestResponse.payload.inviteId);
