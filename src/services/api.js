@@ -98,49 +98,49 @@ export const eventService = {
 export const guestService = {
   // Buscar todos os convidados de um evento
   getGuests: async (eventId) => {
-    const response = await api.get(`/guests/event/${eventId}`);
+    const response = await api.get(`/guest/event/${eventId}`);
     return response.data;
   },
   
   // Buscar um convidado específico
   getGuest: async (id) => {
-    const response = await api.get(`/guests/${id}`);
+    const response = await api.get(`/guest/${id}`);
     return response.data;
   },
   
   // Criar um convidado
   createGuest: async (guestData) => {
-    const response = await api.post('/guests', guestData);
+    const response = await api.post('/guest', guestData);
     return response.data;
   },
   
   // Atualizar um convidado
   updateGuest: async (id, guestData) => {
-    const response = await api.put(`/guests/${id}`, guestData);
+    const response = await api.put(`/guest/${id}`, guestData);
     return response.data;
   },
   
   // Excluir um convidado
   deleteGuest: async (id) => {
-    const response = await api.delete(`/guests/${id}`);
+    const response = await api.delete(`/guest/${id}`);
     return response.data;
   },
   
   // Atualizar status de um convidado (RSVP)
   updateGuestStatus: async (id, statusData) => {
-    const response = await api.put(`/guests/${id}/status`, statusData);
+    const response = await api.put(`/guest/${id}/status`, statusData);
     return response.data;
   },
   
   // Buscar histórico de RSVP de um convidado
   getGuestRsvpHistory: async (id) => {
-    const response = await api.get(`/guests/${id}/rsvp-history`);
+    const response = await api.get(`/guest/${id}/rsvp-history`);
     return response.data;
   },
   
   // Vincular múltiplos convidados a um convite
   linkGuestsToInvite: async (inviteId, guestIds) => {
-    const response = await api.post(`/guests/link-invite`, { inviteId, guestIds });
+    const response = await api.post(`/guest/link-invite`, { inviteId, guestIds });
     return response.data;
   }
 };
