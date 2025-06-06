@@ -19,6 +19,7 @@ import {
   Celebration as CelebrationIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material';
+import ConfigModal from '../config/ConfigModal';
 
 const items = [
   {
@@ -40,23 +41,35 @@ const items = [
     href: '/invites/new',
     icon: MailIcon,
     title: 'Criar Convite'
-  },
-  {
-    href: '/settings',
-    icon: SettingsIcon,
-    title: 'Configurações'
   }
 ];
 
 const Sidebar = ({ onMobileClose, openMobile }) => {
   const location = useLocation();
   const { user } = useSelector(state => state.auth);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   React.useEffect(() => {
     if (openMobile && onMobileClose) {
       onMobileClose();
     }
   }, [location.pathname, onMobileClose, openMobile]);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleSettings = () => {
+    setConfigModalOpen(true);
+    handleClose();
+  };
+
+
 
   const content = (
     <Box
@@ -121,6 +134,34 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
               <ListItemText primary={item.title} />
             </ListItem>
           ))}
+          <ListItem
+              disableGutters
+              key={'config'}
+              component={NavLink}
+              onClick={handleSettings}
+              sx={{
+                display: 'flex',
+                py: 1,
+                px: 2,
+                borderRadius: 1,
+                mb: 0.5,
+                '&.active': {
+                  backgroundColor: 'rgba(94, 53, 177, 0.08)',
+                  color: 'primary.main',
+                  '& .MuiListItemIcon-root': {
+                    color: 'primary.main'
+                  }
+                },
+                '&:hover': {
+                  backgroundColor: 'rgba(94, 53, 177, 0.04)'
+                }
+              }}
+            >
+              <ListItemIcon>
+                <SettingsIcon />
+              </ListItemIcon>
+              <ListItemText primary={'Configurações'} />
+            </ListItem>
         </List>
       </Box>
       <Box sx={{ flexGrow: 1 }} />
@@ -186,6 +227,11 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
           {content}
         </Drawer>
       </Box>
+      {/* Modal de Configurações */}
+      <ConfigModal 
+        open={configModalOpen} 
+        onClose={() => setConfigModalOpen(false)} 
+      />
     </>
   );
 };

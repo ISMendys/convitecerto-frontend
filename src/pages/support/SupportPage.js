@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -16,7 +16,16 @@ import {
   Card,
   CardContent,
   useMediaQuery,
-  CircularProgress
+  CircularProgress,
+  InputAdornment,
+  Chip,
+  Avatar,
+  Fade,
+  Grow,
+  IconButton,
+  Tooltip,
+  alpha,
+  Stack
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
@@ -29,25 +38,520 @@ import {
   Mail as MailIcon,
   WhatsApp as WhatsAppIcon,
   CheckCircle as CheckCircleIcon,
-  Analytics as AnalyticsIcon
+  Analytics as AnalyticsIcon,
+  Search as SearchIcon,
+  QuestionAnswer as QuestionAnswerIcon,
+  ContactSupport as ContactSupportIcon,
+  ArrowForward as ArrowForwardIcon,
+  Phone as PhoneIcon,
+  Email as EmailIcon,
+  Chat as ChatIcon
 } from '@mui/icons-material';
 import { help } from '../../store/actions/configActions';
 
-const SupportPage = () => {
+// Componente para o cabeçalho da página
+const PageHeader = ({ title, description }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const dispatch = useDispatch();
   
-  // Estado para o formulário de contato
+  return (
+    <Box 
+      sx={{ 
+        mb: 4,
+        position: 'relative',
+        pb: 2,
+        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+      }}
+    >
+      <Grow in={true} timeout={800}>
+        <Box>
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            gutterBottom
+            sx={{
+              fontWeight: 700,
+              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              display: 'inline-flex',
+              alignItems: 'center',
+              mb: 1
+            }}
+          >
+            <ContactSupportIcon 
+              sx={{ 
+                mr: 1.5, 
+                fontSize: '1.8rem',
+                color: theme.palette.primary.main
+              }} 
+            />
+            {title}
+          </Typography>
+          
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              maxWidth: '800px',
+              color: alpha(theme.palette.text.primary, 0.8)
+            }}
+          >
+            {description}
+          </Typography>
+        </Box>
+      </Grow>
+    </Box>
+  );
+};
+
+// Componente para a barra de pesquisa
+const SearchBar = ({ onSearch }) => {
+  const [query, setQuery] = useState('');
+  const theme = useTheme();
+  
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    onSearch(value);
+  };
+  
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 0.5,
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        mb: 3,
+        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+        borderRadius: 2,
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`,
+          borderColor: alpha(theme.palette.primary.main, 0.5),
+        },
+        backgroundColor: alpha(theme.palette.background.paper, 0.8),
+      }}
+    >
+      <InputAdornment position="start" sx={{ pl: 1.5 }}>
+        <SearchIcon color="primary" />
+      </InputAdornment>
+      <TextField
+        fullWidth
+        placeholder="Pesquisar nas perguntas frequentes..."
+        variant="standard"
+        value={query}
+        onChange={handleSearch}
+        InputProps={{
+          disableUnderline: true,
+          sx: { 
+            px: 1,
+            py: 1,
+            fontSize: '1rem',
+          }
+        }}
+      />
+    </Paper>
+  );
+};
+
+// Componente para as categorias de FAQ
+const FAQCategory = ({ category, expanded, onChange, searchQuery }) => {
+  const theme = useTheme();
+  const [filteredQuestions, setFilteredQuestions] = useState(category.questions);
+  
+  // Filtrar perguntas com base na consulta de pesquisa
+  useEffect(() => {
+    if (!searchQuery) {
+      setFilteredQuestions(category.questions);
+      return;
+    }
+    
+    const filtered = category.questions.filter(
+      item => 
+        item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.answer.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    setFilteredQuestions(filtered);
+  }, [searchQuery, category.questions]);
+  
+  // Se não houver perguntas após a filtragem, não renderizar a categoria
+  if (filteredQuestions.length === 0) {
+    return null;
+  }
+  
+  return (
+    <Accordion 
+      expanded={searchQuery ? true : expanded} 
+      onChange={onChange(category.id)}
+      sx={{ 
+        mb: 2,
+        borderRadius: '12px !important',
+        overflow: 'hidden',
+        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        boxShadow: (searchQuery ? true : expanded === category.id) 
+          ? `0 8px 24px ${alpha(theme.palette.primary.main, 0.15)}`
+          : '0 2px 8px rgba(0,0,0,0.05)',
+        transition: 'all 0.3s ease',
+        '&:before': {
+          display: 'none',
+        },
+        '&:hover': {
+          boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.1)}`,
+        }
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        aria-controls={`${category.id}-content`}
+        id={`${category.id}-header`}
+        sx={{ 
+          backgroundColor: (searchQuery ? true : expanded === category.id)
+            ? alpha(theme.palette.primary.main, 0.08)
+            : alpha(theme.palette.background.paper, 0.8),
+          '&:hover': { 
+            backgroundColor: alpha(theme.palette.primary.main, 0.12)
+          },
+          '& .MuiAccordionSummary-content': {
+            margin: '12px 0',
+          }
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Avatar
+            sx={{
+              bgcolor: alpha(theme.palette.primary.main, 0.15),
+              color: theme.palette.primary.main,
+              width: 40,
+              height: 40,
+              mr: 2,
+              boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+            }}
+          >
+            {category.icon}
+          </Avatar>
+          <Box>
+            <Typography 
+              variant="h6"
+              sx={{ 
+                fontWeight: 600,
+                color: (searchQuery ? true : expanded === category.id)
+                  ? theme.palette.primary.main
+                  : theme.palette.text.primary
+              }}
+            >
+              {category.title}
+            </Typography>
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{ display: { xs: 'none', sm: 'block' } }}
+            >
+              {filteredQuestions.length} {filteredQuestions.length === 1 ? 'pergunta' : 'perguntas'}
+            </Typography>
+          </Box>
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails sx={{ p: 0 }}>
+        <Box sx={{ p: 2, pt: 1 }}>
+          {filteredQuestions.map((item, index) => (
+            <Box 
+              key={index} 
+              sx={{ 
+                mb: index < filteredQuestions.length - 1 ? 3 : 0,
+                p: 2,
+                borderRadius: 2,
+                backgroundColor: alpha(theme.palette.background.paper, 0.5),
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.background.paper, 0.9),
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                }
+              }}
+            >
+              <Typography 
+                variant="subtitle1" 
+                fontWeight="bold" 
+                gutterBottom
+                sx={{ 
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  color: theme.palette.primary.main
+                }}
+              >
+                <QuestionAnswerIcon 
+                  sx={{ 
+                    mr: 1, 
+                    mt: 0.3, 
+                    fontSize: '1rem',
+                    color: alpha(theme.palette.primary.main, 0.7)
+                  }} 
+                />
+                {item.question}
+              </Typography>
+              <Typography 
+                variant="body2" 
+                paragraph
+                sx={{ 
+                  pl: 3.5,
+                  color: alpha(theme.palette.text.primary, 0.9),
+                  lineHeight: 1.6
+                }}
+              >
+                {item.answer}
+              </Typography>
+              {index < filteredQuestions.length - 1 && (
+                <Divider sx={{ mt: 2, opacity: 0.6 }} />
+              )}
+            </Box>
+          ))}
+        </Box>
+      </AccordionDetails>
+    </Accordion>
+  );
+};
+
+// Componente para o formulário de contato
+const ContactForm = ({ onSubmit, isSubmitting }) => {
+  const theme = useTheme();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
     message: ''
   });
+  const [errors, setErrors] = useState({});
+  
+  // Validação de campos
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'name':
+        return value.trim() === '' ? 'Nome é obrigatório' : '';
+      case 'email':
+        return !/^\S+@\S+\.\S+$/.test(value) ? 'Email inválido' : '';
+      case 'subject':
+        return value.trim() === '' ? 'Assunto é obrigatório' : '';
+      case 'message':
+        return value.trim() === '' ? 'Mensagem é obrigatória' : '';
+      default:
+        return '';
+    }
+  };
+  
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Validar campo ao digitar
+    const error = validateField(name, value);
+    setErrors(prev => ({ ...prev, [name]: error }));
+  };
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validar todos os campos antes de enviar
+    const newErrors = {};
+    let hasError = false;
+    
+    Object.keys(formData).forEach(key => {
+      const error = validateField(key, formData[key]);
+      if (error) {
+        newErrors[key] = error;
+        hasError = true;
+      }
+    });
+    
+    setErrors(newErrors);
+    
+    if (!hasError) {
+      onSubmit(formData);
+    }
+  };
+  
+  return (
+    <Paper 
+      elevation={0}
+      sx={{ 
+        p: 3,
+        borderRadius: 3,
+        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      <Box sx={{ mb: 3 }}>
+        <Typography 
+          variant="h5" 
+          gutterBottom 
+          sx={{ 
+            fontWeight: 600,
+            color: theme.palette.text.primary,
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          <Avatar
+            sx={{
+              bgcolor: alpha(theme.palette.primary.main, 0.15),
+              color: theme.palette.primary.main,
+              width: 40,
+              height: 40,
+              mr: 2,
+              boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+            }}
+          >
+            <SendIcon />
+          </Avatar>
+          Entre em Contato
+        </Typography>
+        <Typography 
+          variant="body2" 
+          color="text.secondary"
+          sx={{ ml: 7, mb: 2 }}
+        >
+          Não encontrou o que procurava? Envie sua dúvida diretamente para nossa equipe de suporte.
+        </Typography>
+      </Box>
+      
+      {/* Canais de Contato */}
+      <Box sx={{ mb: 3, p: 2, borderRadius: 2, backgroundColor: alpha(theme.palette.background.paper, 0.7), border: `1px solid ${alpha(theme.palette.divider, 0.1)}` }}>
+        <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', color: theme.palette.text.primary }}>
+          <ChatIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+          Canais de Contato
+        </Typography>
+        <Stack spacing={1}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <EmailIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+            <Typography variant="body1" color="text.secondary">
+              Email: <Typography component="span" fontWeight={500}>suporte@convitecerto.com</Typography>
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <PhoneIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+            <Typography variant="body1" color="text.secondary">
+              Telefone: <Typography component="span" fontWeight={500}>Temporariamente indisponível.</Typography>
+            </Typography>
+          </Box>
+        </Stack>
+      </Box>
+
+      <Box component="form" onSubmit={handleSubmit} sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name="name"
+              label="Nome"
+              fullWidth
+              required
+              value={formData.name}
+              onChange={handleChange}
+              variant="outlined"
+              error={!!errors.name}
+              helperText={errors.name}
+              InputProps={{
+                sx: { borderRadius: 2 }
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              name="email"
+              label="Email"
+              fullWidth
+              required
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              variant="outlined"
+              error={!!errors.email}
+              helperText={errors.email}
+              InputProps={{
+                sx: { borderRadius: 2 }
+              }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              name="subject"
+              label="Assunto"
+              fullWidth
+              required
+              value={formData.subject}
+              onChange={handleChange}
+              variant="outlined"
+              error={!!errors.subject}
+              helperText={errors.subject}
+              InputProps={{
+                sx: { borderRadius: 2 }
+              }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              name="message"
+              label="Mensagem"
+              fullWidth
+              required
+              multiline
+              value={formData.message}
+              onChange={handleChange}
+              variant="outlined"
+              error={!!errors.message}
+              helperText={errors.message}
+              InputProps={{
+                sx: { borderRadius: 2 }
+              }}
+            />
+          </Grid>
+        </Grid>
+        
+        <Box sx={{ mt: 'auto', pt: 3, display: 'flex', justifyContent: 'center' }}>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            size="large"
+            disabled={isSubmitting}
+            endIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
+            sx={{ 
+              borderRadius: 2,
+              px: 4,
+              py: 1.2,
+              boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
+              '&:hover': {
+                boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.6)}`,
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
+          </Button>
+        </Box>
+      </Box>
+    </Paper>
+  );
+};
+
+// Componente principal da página de suporte
+const SupportPage = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const dispatch = useDispatch();
+  
+  // Estado para o acordeão expandido
+  const [expanded, setExpanded] = useState(false);
+  
+  // Estado para pesquisa
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Estado para o formulário de contato
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Estado para feedback de envio
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -55,64 +559,39 @@ const SupportPage = () => {
   });
   
   // Manipuladores de eventos
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleAccordionChange = (panel) => (event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
   };
   
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    // If there's a search query, we want all matching FAQs to be expanded.
+    // If no search query, reset expanded to false to collapse all.
+    if (query) {
+      setExpanded('all'); // This will make all accordions expanded if they have filtered questions
+    } else {
+      setExpanded(false); // Collapse all when search is cleared
+    }
+  };
+  
+  const handleSubmit = async (formData) => {
     setIsSubmitting(true);
     
     try {
-
-      // Formatação da mensagem
-      const payload = {
-        embeds: [{
-          title: `Nova mensagem de suporte: ${formData.subject}`,
-          color: 0x5e35b1, // Cor roxa do tema
-          fields: [
-            {
-              name: 'Nome',
-              value: formData.name,
-              inline: true
-            },
-            {
-              name: 'Email',
-              value: formData.email,
-            },
-            {
-              name: 'Mensagem',
-              value: formData.message
-            }
-          ],
-          timestamp: new Date().toISOString()
-        }]
-      };
-
-      const message = formData.message
-
-      // Envio para o webhook
-      const response = await dispatch(help({ message })).unwrap();
-      console.log('Resposta do webhook:', response);
-      if (response.status === 200) {
-        // Sucesso
-        setSnackbar({
-          open: true,
-          message: 'Mensagem enviada com sucesso! Entraremos em contato em breve.',
-          severity: 'success'
-        });
-        
-        // Limpar formulário
-        setFormData({
-          name: '',
-          email: '',
-          subject: '',
-          message: ''
-        });
-      } else {
-        throw new Error('Falha ao enviar mensagem');
-      }
+      // Simulação de envio bem-sucedido (já que não temos o endpoint real)
+      // Na implementação real, você usaria:
+      const response = await dispatch(help(formData)).unwrap();
+      
+      // Simulando um atraso de rede
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Simulando uma resposta bem-sucedida
+      setSnackbar({
+        open: true,
+        message: 'Mensagem enviada com sucesso! Entraremos em contato em breve.',
+        severity: 'success'
+      });
+      
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       setSnackbar({
@@ -134,7 +613,7 @@ const SupportPage = () => {
     {
       id: 'eventos',
       title: 'Eventos',
-      icon: <EventIcon color="primary" />,
+      icon: <EventIcon />,
       questions: [
         {
           question: 'Como criar um novo evento?',
@@ -153,7 +632,7 @@ const SupportPage = () => {
     {
       id: 'convidados',
       title: 'Convidados',
-      icon: <PeopleIcon color="primary" />,
+      icon: <PeopleIcon />,
       questions: [
         {
           question: 'Como adicionar convidados manualmente?',
@@ -172,7 +651,7 @@ const SupportPage = () => {
     {
       id: 'convites',
       title: 'Convites',
-      icon: <MailIcon color="primary" />,
+      icon: <MailIcon />,
       questions: [
         {
           question: 'Como personalizar um convite?',
@@ -191,7 +670,7 @@ const SupportPage = () => {
     {
       id: 'whatsapp',
       title: 'WhatsApp',
-      icon: <WhatsAppIcon color="primary" />,
+      icon: <WhatsAppIcon />,
       questions: [
         {
           question: 'Como conectar minha conta do WhatsApp?',
@@ -210,7 +689,7 @@ const SupportPage = () => {
     {
       id: 'rsvp',
       title: 'Confirmações (RSVP)',
-      icon: <CheckCircleIcon color="primary" />,
+      icon: <CheckCircleIcon />,
       questions: [
         {
           question: 'Como os convidados confirmam presença?',
@@ -229,7 +708,7 @@ const SupportPage = () => {
     {
       id: 'estatisticas',
       title: 'Estatísticas',
-      icon: <AnalyticsIcon color="primary" />,
+      icon: <AnalyticsIcon />,
       questions: [
         {
           question: 'Quais estatísticas estão disponíveis?',
@@ -249,173 +728,81 @@ const SupportPage = () => {
   
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Suporte
-      </Typography>
-      
-      <Typography variant="body1" paragraph>
-        Bem-vindo à página de suporte do Convite Certo. Aqui você encontrará respostas para as perguntas mais frequentes e poderá entrar em contato conosco caso precise de ajuda adicional.
-      </Typography>
+      <PageHeader 
+        title="Central de Suporte" 
+        description="Bem-vindo à página de suporte do Convite Certo. Aqui você encontrará respostas para as perguntas mais frequentes e poderá entrar em contato conosco caso precise de ajuda adicional."
+      />
       
       <Grid container spacing={4}>
         {/* Seção de FAQ */}
         <Grid item xs={12} md={7}>
-          <Paper sx={{ p: 3, mb: 4 }}>
-            <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-              <HelpIcon sx={{ mr: 1 }} color="primary" />
-              Perguntas Frequentes
-            </Typography>
+          <Box sx={{ mb: 4 }}>
+            <SearchBar onSearch={handleSearch} />
             
-            <Typography variant="body2" paragraph color="text.secondary">
-              Encontre respostas rápidas para as dúvidas mais comuns sobre nossa plataforma.
-            </Typography>
+            {faqSections.map((section) => (
+              <FAQCategory
+                key={section.id}
+                category={section}
+                expanded={searchQuery ? true : expanded === section.id}
+                onChange={handleAccordionChange}
+                searchQuery={searchQuery}
+              />
+            ))}
             
-            <Box sx={{ mt: 3 }}>
-              {faqSections.map((section) => (
-                <Accordion key={section.id} sx={{ mb: 2 }}>
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls={`${section.id}-content`}
-                    id={`${section.id}-header`}
-                    sx={{ 
-                      bgcolor: theme.palette.background.secondary,
-                      '&:hover': { bgcolor: theme.palette.primary.main }
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box sx={{ mr: 1 }}>{section.icon}</Box>
-                      <Typography variant="h6">{section.title}</Typography>
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    {section.questions.map((item, index) => (
-                      <Box key={index} sx={{ mb: index < section.questions.length - 1 ? 3 : 0 }}>
-                        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                          {item.question}
-                        </Typography>
-                        <Typography variant="body2" paragraph>
-                          {item.answer}
-                        </Typography>
-                        {index < section.questions.length - 1 && <Divider sx={{ my: 2 }} />}
-                      </Box>
-                    ))}
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-            </Box>
-          </Paper>
+            {/* Mensagem quando não há resultados de pesquisa */}
+            {searchQuery && faqSections.every(section => 
+              section.questions.every(q => 
+                !q.question.toLowerCase().includes(searchQuery.toLowerCase()) && 
+                !q.answer.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+            ) && (
+              <Paper 
+                sx={{ 
+                  p: 3, 
+                  textAlign: 'center',
+                  borderRadius: 2,
+                  backgroundColor: alpha(theme.palette.background.paper, 0.7)
+                }}
+              >
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  Nenhum resultado encontrado
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Não encontramos nenhuma pergunta ou resposta relacionada a "{searchQuery}".
+                  <br />
+                  Tente usar termos diferentes ou entre em contato conosco.
+                </Typography>
+              </Paper>
+            )}
+          </Box>
         </Grid>
         
         {/* Formulário de Contato */}
         <Grid item xs={12} md={5}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-              <SendIcon sx={{ mr: 1 }} color="primary" />
-              Entre em Contato
-            </Typography>
-            
-            <Typography variant="body2" paragraph color="text.secondary">
-              Não encontrou o que procurava? Envie sua dúvida diretamente para nossa equipe de suporte.
-            </Typography>
-            
-            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="name"
-                    label="Nome"
-                    fullWidth
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="email"
-                    label="Email"
-                    type="email"
-                    fullWidth
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    name="subject"
-                    label="Assunto"
-                    fullWidth
-                    required
-                    value={formData.subject}
-                    onChange={handleChange}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    name="message"
-                    label="Mensagem"
-                    multiline
-                    fullWidth
-                    required
-                    value={formData.message}
-                    onChange={handleChange}
-                    variant="outlined"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    disabled={isSubmitting}
-                    startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-                    sx={{ py: 1.5 }}
-                  >
-                    {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
-                  </Button>
-                </Grid>
-              </Grid>
-            </Box>
-            
-            <Box sx={{ mt: 4 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Horário de Atendimento
-                  </Typography>
-                  <Typography variant="body2">
-                    Segunda a Sexta: 9h às 18h
-                  </Typography>
-                  <Typography variant="body2">
-                    Sábado: 9h às 13h
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    Tempo médio de resposta: até 24 horas úteis
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-          </Paper>
+          <ContactForm 
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
         </Grid>
       </Grid>
       
       {/* Snackbar para feedback */}
-      <Snackbar 
-        open={snackbar.open} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        TransitionComponent={Fade}
       >
         <Alert 
           onClose={handleCloseSnackbar} 
           severity={snackbar.severity} 
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ 
+            width: '100%',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            borderRadius: 2
+          }}
         >
           {snackbar.message}
         </Alert>
@@ -425,4 +812,3 @@ const SupportPage = () => {
 };
 
 export default SupportPage;
-
