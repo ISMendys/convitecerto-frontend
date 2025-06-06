@@ -918,7 +918,7 @@ const EventList = () => {
         <MenuItem 
           onClick={() => {
             handleMenuClose();
-            navigate(`/events/${selectedEvent}/edit`);
+            navigate(`/events/edit/${selectedEvent}`);
           }}
           sx={{ 
             py: 1.5,

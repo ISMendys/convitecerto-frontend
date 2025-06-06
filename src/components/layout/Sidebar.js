@@ -22,7 +22,7 @@ import {
 
 const items = [
   {
-    href: '/',
+    href: '/dashboard',
     icon: DashboardIcon,
     title: 'Dashboard'
   },
