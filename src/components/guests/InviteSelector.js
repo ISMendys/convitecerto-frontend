@@ -160,66 +160,72 @@ const InviteSelector = ({ value, onChange, eventId, error, helperText }) => {
               </Typography>
             </Box>
           ) : (
-            <Grid container spacing={2}>
-              {invites.map(invite => (
-                <Grid item xs={12} sm={6} md={4} key={invite.id}>
-                  <Card 
-                    sx={{ 
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                      border: selectedInvite?.id === invite.id 
-                        ? `2px solid ${theme.palette.primary.main}` 
-                        : '2px solid transparent',
-                      boxShadow: selectedInvite?.id === invite.id
-                        ? `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
-                        : '0 2px 8px rgba(0,0,0,0.08)',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
-                      }
-                    }}
-                    onClick={() => handleSelectInvite(invite)}
-                  >
-                    <CardMedia
-                      component="img"
-                      height="140"
-                      image={invite.imageUrl || `https://source.unsplash.com/random/300x200?wedding&sig=${invite.id}`}
-                      alt={invite.title}
-                    />
-                    <CardContent>
-                      <Typography variant="h6" noWrap fontWeight={600}>
-                        {invite.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {invite.description || 'Sem descrição'}
-                      </Typography>
-                      
-                      {selectedInvite?.id === invite.id && (
-                        <Box 
-                          sx={{ 
-                            position: 'absolute', 
-                            top: 8, 
-                            right: 8,
-                            bgcolor: alpha(theme.palette.primary.main, 0.9),
-                            borderRadius: '50%',
-                            width: 32,
-                            height: 32,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                          }}
-                        >
-                          <CheckIcon sx={{ color: 'white' }} />
-                        </Box>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', m: -1 }}> {/* m: -1 para spacing={2} */}
+            {invites.map(invite => (
+              <Box 
+                key={invite.id} 
+                sx={{ 
+                  p: 1, // p: 1 para spacing={2}
+                  width: { xs: '100%', sm: '50%', md: 'calc(100% / 3)' } 
+                }}
+              >
+                <Card 
+                  sx={{ 
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    border: selectedInvite?.id === invite.id 
+                      ? `2px solid ${theme.palette.primary.main}` 
+                      : '2px solid transparent',
+                    boxShadow: selectedInvite?.id === invite.id
+                      ? `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
+                      : '0 2px 8px rgba(0,0,0,0.08)',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                    }
+                  }}
+                  onClick={() => handleSelectInvite(invite)}
+                >
+                  <CardMedia
+                    component="img"
+                    height="140"
+                    image={invite.imageUrl || 'https://picsum.photos/400/200?random=1'}
+                    alt={invite.title}
+                  />
+                  <CardContent>
+                    <Typography variant="h6" noWrap fontWeight={600}>
+                      {invite.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                      {invite.description || 'Sem descrição'}
+                    </Typography>
+                    
+                    {selectedInvite?.id === invite.id && (
+                      <Box 
+                        sx={{ 
+                          position: 'absolute', 
+                          top: 8, 
+                          right: 8,
+                          bgcolor: alpha(theme.palette.primary.main, 0.9),
+                          borderRadius: '50%',
+                          width: 32,
+                          height: 32,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                        }}
+                      >
+                        <CheckIcon sx={{ color: 'white' }} />
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+              </Box>
+            ))}
+          </Box>
           )}
         </DialogContent>
         

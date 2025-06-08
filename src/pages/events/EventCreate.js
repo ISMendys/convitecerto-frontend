@@ -589,7 +589,7 @@ const EventCreate = () => {
                 value={formData.notes}
                 onChange={handleChange}
                 multiline
-                rows={3}
+                // rows={3}
                 startIcon={<NotesIcon />}
               />
             </Box>

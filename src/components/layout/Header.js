@@ -34,7 +34,7 @@ import ConfigModal from '../config/ConfigModal';
 
 // Importação do logo (caminho relativo à raiz do projeto)
 // Nota: Ajuste o caminho conforme a estrutura do seu projeto
-import logoImage from '../../logo_provisorio.png';
+import logoImage from '../../convitecerto.svg';
 
 const Header = ({ onMobileNavOpen }) => {
   const navigate = useNavigate();
@@ -149,14 +149,16 @@ const Header = ({ onMobileNavOpen }) => {
             >
               {/* Logo */}
               <Box 
-                component="img"
-                src={logoImage}
-                alt="Digital Invites Logo"
-                className="logo-image"
                 sx={{ 
-                  height: 40,
+                  height: 80,
+                  width: 150,
+                  backgroundColor: theme.palette.primary.main,
+                  maskImage: `url(${logoImage})`,
+                  maskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                  // Estilos anteriores
                   ml: 2.5,
-                  width: 'auto',
                   mr: 1.5,
                   transition: 'transform 0.3s ease',
                 }}

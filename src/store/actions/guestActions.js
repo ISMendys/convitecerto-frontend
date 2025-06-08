@@ -110,9 +110,10 @@ export const deleteGuest = createAsyncThunk(
 // Ação assíncrona para importar convidados
 export const importGuests = createAsyncThunk(
   'guests/importGuests',
-  async ({ eventId, guests }, { rejectWithValue }) => {
+  async (formData, { rejectWithValue }) => {
     try {
-      const response = await guestService.importGuests(eventId, guests);
+      console.log('Importando convidados...', formData);
+      const response = await guestService.importGuests(formData);
       return response;
     } catch (error) {
       return rejectWithValue(

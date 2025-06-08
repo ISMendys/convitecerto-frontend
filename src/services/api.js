@@ -96,6 +96,18 @@ export const eventService = {
 
 // Serviço de convidados
 export const guestService = {
+
+  // Importa todos os convidados de um csv
+  importGuests: async (formData) => {
+    console.log('Importando convidados...', formData);
+    const response = await api.post(`/guest/import-csv`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
   // Buscar todos os convidados de um evento
   getGuests: async (eventId) => {
     const response = await api.get(`/guest/event/${eventId}`);

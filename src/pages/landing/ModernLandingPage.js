@@ -43,7 +43,7 @@ import {
 } from '@mui/icons-material';
 import InvitePreviewCard from '../../components/InvitePreviewCard';
 import { ColorModeContext } from '../../theme/ThemeConfig';
-
+import LogoAnimation from '../../components/logoAnimation/AnimationLogo';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 
@@ -202,7 +202,15 @@ const MockChart = ({ type, data, color, title, isVisible }) => {
     const strokeDashoffset = circumference / 4; // Start from top
 
     return (
-      <Box sx={{ position: 'relative', width: 120, height: 120, mx: 'auto' }}>
+      <Box sx={{ position: 'relative',
+        width: 120,
+        height: 120,
+        mx: 'auto',
+        userSelect:'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none',
+        msUserSelect: 'none'
+      }} >
         <svg width="120" height="120" viewBox="0 0 120 120">
           <circle
             cx="60"
@@ -515,54 +523,73 @@ const ModernLandingPage = () => {
             <Box
                 sx={{
                 // Agora ocupa 100% no mobile e 50% no desktop
-                width: { xs: '100%', md: '50%' },
+                width: { xs: '100%', md: '70%' },
                 textAlign: { xs: 'center', md: 'left' },
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'center', md: 'flex-start' }, mb: 2 }}>
-                <Typography
-                    variant="overline"
-                    sx={{
-                    color: 'common.white',
-                    opacity: 0.9,
-                    letterSpacing: 2,
-                    display: 'block',
-                    }}
+
+                <Box
+                  sx={{
+                      display: 'flex',
+                      flexDirection: 'column', 
+                      alignItems: { xs: 'center', md: 'flex-start' },
+                  }}
                 >
-                    CONVITECERTO
-                </Typography>
+                    <Box sx={{
+                      ml: { xs: 0, sm: -6.5, md: -9.5 },
+                      mb: { xs: -12, sm: -8, md: -12.5},
+                      mt: { xs: -21, sm: -8, md: -12.5}
+                    }}>
+                      <LogoAnimation width={isMobile ? "50%" : "100%"} />
+                    </Box>
+                    
+                    {!isMobile && (
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          color: 'common.white',
+                          opacity: 0.8,
+                          letterSpacing: 1,
+                          fontSize: { xs: '0.8rem', sm: '1rem', md: '1.2rem' },
+                          mt: 2,
+                        }}
+                      >
+                        CONVITECERTO
+                      </Typography>
+                    )}
+
                 </Box>
 
                 <Box sx={{ position: 'relative', mb: 3 }}>
-                <Typography
-                    variant="h1"
-                    component="h1"
-                    sx={{
-                    fontWeight: 800,
-                    fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' },
-                    lineHeight: 1.1,
-                    color: 'common.white',
-                    textShadow: '0 4px 12px rgba(0,0,0,0.2)'
-                    }}
-                >
-                    Transforme seus
-                </Typography>
+                  <Typography
+                      variant="h1"
+                      component="h1"
+                      sx={{
+                      fontWeight: 800,
+                      fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' },
+                      lineHeight: 1.1,
+                      color: 'common.white',
+                      textShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                      }}
+                  >
+                      Seu evento começa
+                  </Typography>
 
-                <Typography
-                    variant="h1"
-                    component="span"
-                    sx={{
-                    fontWeight: 800,
-                    fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' },
-                    lineHeight: 1.1,
-                    display: 'block',
-                    mb: 1
-                    }}
-                >
-                    <GradientText component="span" variant="inherit">
-                    Eventos em Experiências
-                    </GradientText>
-                </Typography>
+                  <Typography
+                      variant="h1"
+                      component="span"
+                      sx={{
+                      fontWeight: 800,
+                      fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' },
+                      lineHeight: 1.1,
+                      display: 'block',
+                      mb: 1
+                      }}
+                  >
+                      <GradientText component="span" variant="inherit">
+                      com um clique.
+                      </GradientText>
+                  </Typography>
 
                 <Box
                     sx={{
@@ -1248,7 +1275,7 @@ const ModernLandingPage = () => {
                 <Box sx={{ position: 'relative' }}>
                 {/* Process visualization (conteúdo mantido como está) */}
                 <Box
-                    sx={{ mt: 40, width: '100%', maxWidth: 800, height: 'auto', backgroundColor: theme.palette.background.default, borderRadius: 4, display: 'flex', flexDirection: 'column', mx: 'auto', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.05)', transform: `translateY(${scrollY * -0.05}px)`, transition: 'transform 0.1s ease-out', border: `1px solid ${theme.palette.divider}`, overflow: 'hidden', p: 3 }}
+                    sx={{ mt: { xs: 55, md: 40 }, mb: { xs: -50, md: 0 }, width: '100%', maxWidth: 800, height: 'auto', backgroundColor: theme.palette.background.default, borderRadius: 4, display: 'flex', flexDirection: 'column', mx: 'auto', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.05)', transform: `translateY(${scrollY * -0.05}px)`, transition: 'transform 0.1s ease-out', border: `1px solid ${theme.palette.divider}`, overflow: 'hidden', p: 3 }}
                 >
                     {/* Header */}
                     <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>

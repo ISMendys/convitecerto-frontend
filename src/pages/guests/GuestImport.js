@@ -30,7 +30,10 @@ import {
   Error as ErrorIcon,
   Description as DescriptionIcon
 } from '@mui/icons-material';
-import axios from 'axios';
+import { importGuests } from '../../store/actions/guestActions';
+import { useDispatch } from 'react-redux';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning'; 
 
 /**
  * Componente para importação de convidados via CSV
@@ -39,7 +42,8 @@ import axios from 'axios';
 const GuestImport = ({ open, onClose, eventId, onSuccess }) => {
   const theme = useTheme();
   const fileInputRef = useRef(null);
-  
+  const dispatch = useDispatch();
+
   const [activeStep, setActiveStep] = useState(0);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -69,6 +73,14 @@ const GuestImport = ({ open, onClose, eventId, onSuccess }) => {
       setImportResults(null);
     }
   }, [open]);
+  const getImportStatus = (results) => {
+    if (!results) return 'loading';
+    if (results.errors > 0 || !results.success) return 'error';
+    if (results.imported > 0) return 'success';
+    // Se não houve erros e nada foi importado (só ignorados), é um aviso.
+    if (results.imported === 0 && results.errors === 0) return 'warning';
+    return 'unknown';
+  };
   
   // Passos do processo de importação
   const steps = ['Selecionar arquivo', 'Mapear colunas', 'Revisar e importar'];
@@ -197,64 +209,36 @@ const GuestImport = ({ open, onClose, eventId, onSuccess }) => {
       // Preparar o FormData para envio
       const formData = new FormData();
       formData.append('file', file);
+      console.log('file ID:', file);
       formData.append('eventId', eventId);
       formData.append('mappings', JSON.stringify(mappings));
+      console.log('mappings:', formData);
+      const response = await dispatch(importGuests(formData)).unwrap();
+
+      const status = getImportStatus(response); 
       
-      // Enviar para o backend
-      const response = await axios.post('/api/guests/import-csv', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      setImportResults(response); 
+      setActiveStep(3);
       
-      setImportResults(response.data);
-      setActiveStep(3); // Avançar para o resultado
-      
-      // Notificar sucesso
       if (onSuccess) {
-        onSuccess(response.data);
+        onSuccess(status, response);
       }
+      
+      // Mostrar mensagem de sucesso
+      setSnackbarMessage(response.data.message || 'Convidados importados com sucesso!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      
     } catch (err) {
       console.error('Erro ao importar CSV:', err);
-      setError(err.response?.data?.error || 'Erro ao importar convidados. Tente novamente.');
-      setSnackbarMessage(err.response?.data?.error || 'Erro ao importar convidados. Tente novamente.');
+      const errorMessage = err.response?.data?.error || 'Erro ao importar convidados. Tente novamente.';
+      setError(errorMessage);
+      setSnackbarMessage(errorMessage);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     } finally {
       setLoading(false);
     }
-  };
-  
-  // Simular importação (para desenvolvimento)
-  const handleSimulateImport = () => {
-    setLoading(true);
-    setError(null);
-    
-    // Simular processamento
-    setTimeout(() => {
-      const results = {
-        success: true,
-        imported: 3,
-        skipped: 1,
-        errors: 0,
-        details: [
-          { name: 'João Silva', status: 'success', message: 'Importado com sucesso' },
-          { name: 'Maria Oliveira', status: 'success', message: 'Importado com sucesso' },
-          { name: 'Carlos Santos', status: 'success', message: 'Importado com sucesso' },
-          { name: 'Ana Pereira', status: 'skipped', message: 'Email duplicado' }
-        ]
-      };
-      
-      setImportResults(results);
-      setActiveStep(3); // Avançar para o resultado
-      
-      // Notificar sucesso
-      if (onSuccess) {
-        onSuccess(results);
-      }
-      
-      setLoading(false);
-    }, 2000);
   };
   
   // Renderizar conteúdo do passo atual
@@ -437,22 +421,22 @@ const GuestImport = ({ open, onClose, eventId, onSuccess }) => {
             </Box>
             
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={process.env.NODE_ENV === 'development' ? handleSimulateImport : handleImport}
-                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CloudUploadIcon />}
-                disabled={loading}
-                sx={{ 
-                  borderRadius: 2,
-                  py: 1.5,
-                  px: 4,
-                  boxShadow: '0 4px 12px rgba(94, 53, 177, 0.2)',
-                  background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.light} 90%)`,
-                }}
-              >
-                {loading ? 'Importando...' : 'Importar Convidados'}
-              </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleImport}
+              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CloudUploadIcon />}
+              disabled={loading}
+              sx={{ 
+                borderRadius: 2,
+                py: 1.5,
+                px: 4,
+                boxShadow: '0 4px 12px rgba(94, 53, 177, 0.2)',
+                background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.light} 90%)`,
+              }}
+            >
+              {loading ? 'Importando...' : 'Importar Convidados'}
+            </Button>
             </Box>
           </Box>
         );
@@ -460,68 +444,64 @@ const GuestImport = ({ open, onClose, eventId, onSuccess }) => {
       case 3: // Resultados
         return (
           <Box sx={{ mt: 2 }}>
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              {importResults?.success ? (
-                <CheckIcon color="success" sx={{ fontSize: 60 }} />
-              ) : (
-                <ErrorIcon color="error" sx={{ fontSize: 60 }} />
-              )}
-              
-              <Typography variant="h6" gutterBottom>
-                {importResults?.success ? 'Importação Concluída!' : 'Erro na Importação'}
-              </Typography>
-              
-              <Typography variant="body1" paragraph>
-                {importResults?.success 
-                  ? `${importResults.imported} convidados importados com sucesso.`
-                  : 'Ocorreu um erro durante a importação.'}
-              </Typography>
-              
-              {importResults?.skipped > 0 && (
-                <Typography variant="body2" color="textSecondary">
-                  {importResults.skipped} registros ignorados devido a duplicações ou erros.
-                </Typography>
-              )}
-            </Box>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            {/* Exibe o ícone correto baseado no status */}
+            {status === 'success' && <CheckCircleIcon color="success" sx={{ fontSize: 60 }} />}
+            {status === 'warning' && <WarningIcon color="warning" sx={{ fontSize: 60 }} />}
+            {status === 'error' && <ErrorIcon color="error" sx={{ fontSize: 60 }} />}
             
-            {importResults?.details && (
-              <Box>
-                <Typography variant="subtitle1" gutterBottom>
-                  Detalhes:
-                </Typography>
-                
-                <Paper 
-                  variant="outlined" 
-                  sx={{ 
-                    p: 2, 
-                    maxHeight: 300, 
-                    overflow: 'auto',
-                    borderRadius: 2
-                  }}
-                >
-                  {importResults.details.map((detail, index) => (
-                    <Box 
-                      key={index}
-                      sx={{ 
-                        p: 1, 
-                        mb: 1, 
-                        borderRadius: 1,
-                        bgcolor: detail.status === 'success' 
-                          ? alpha(theme.palette.success.main, 0.1)
-                          : detail.status === 'skipped'
-                            ? alpha(theme.palette.warning.main, 0.1)
-                            : alpha(theme.palette.error.main, 0.1)
-                      }}
-                    >
-                      <Typography variant="body2">
-                        <strong>{detail.name}</strong>: {detail.message}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Paper>
-              </Box>
-            )}
+            {/* Exibe o título correto */}
+            <Typography variant="h6" gutterBottom>
+              {status === 'success' && 'Importação Concluída!'}
+              {status === 'warning' && 'Processamento Concluído'}
+              {status === 'error' && 'Erro na Importação'}
+            </Typography>
+            
+            {/* Usa a mensagem de resumo da API, que é mais completa */}
+            <Typography variant="body1" paragraph>
+              {importResults?.message}
+            </Typography>
           </Box>
+          
+          {importResults?.details && importResults.details.length > 0 && (
+            <Box>
+              <Typography variant="subtitle1" gutterBottom>
+                Detalhes do Processamento:
+              </Typography>
+              
+              <Paper 
+                variant="outlined" 
+                sx={{ 
+                  p: 2, 
+                  maxHeight: 300, 
+                  overflow: 'auto',
+                  borderRadius: 2
+                }}
+              >
+                {importResults.details.map((detail, index) => (
+                  <Box 
+                    key={index}
+                    sx={{ 
+                      p: 1, 
+                      mb: 1, 
+                      borderRadius: 1,
+                      // A lógica de cores aqui já está ótima
+                      bgcolor: detail.status === 'success' 
+                        ? alpha(theme.palette.success.main, 0.1)
+                        : detail.status === 'skipped'
+                          ? alpha(theme.palette.warning.main, 0.1)
+                          : alpha(theme.palette.error.main, 0.1)
+                    }}
+                  >
+                    <Typography variant="body2">
+                      <strong>{detail.name}</strong>: {detail.message}
+                    </Typography>
+                  </Box>
+                ))}
+              </Paper>
+            </Box>
+          )}
+        </Box>
         );
         
       default:

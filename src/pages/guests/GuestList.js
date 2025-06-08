@@ -1501,7 +1501,7 @@ const GuestList = () => {
       <GuestImport
         open={importDialogOpen}
         onClose={() => setImportDialogOpen(false)}
-        eventId={eventId}
+        eventId={eventId || currentEvent.id}
         onSuccess={handleImportSuccess}
       />
       
