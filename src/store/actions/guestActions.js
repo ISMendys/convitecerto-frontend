@@ -31,6 +31,21 @@ export const fetchGuest = createAsyncThunk(
   }
 );
 
+// Ação assíncrona para buscar um convidado específico publico
+export const fetchGuestPublic = createAsyncThunk(
+  'guests/fetchGuest',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await guestService.getGuestPublic(id);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error || 'Erro ao buscar convidado'
+      );
+    }
+  }
+);
+
 // Ação assíncrona para adicionar um convidado
 export const createGuest = createAsyncThunk(
   'guests/createGuest',
@@ -67,7 +82,7 @@ export const updateGuestStatus = createAsyncThunk(
   'guests/updateGuestStatus',
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      const response = await guestService.updateGuest(id, { status });
+      const response = await guestService.updateGuestStatus(id, { status });
       return response;
     } catch (error) {
       return rejectWithValue(

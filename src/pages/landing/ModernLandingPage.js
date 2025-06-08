@@ -16,7 +16,9 @@ import {
   Grid,
   Zoom,
   Paper,
-  Divider
+  Divider,
+  LinearProgress,
+  Chip
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import {
@@ -29,7 +31,15 @@ import {
   ArrowForward as ArrowForwardIcon,
   ContactPhone as ContactPhoneIcon,
   Celebration as CelebrationIcon,
-  CardGiftcard as CardGiftcardIcon
+  CardGiftcard as CardGiftcardIcon,
+  TrendingUp as TrendingUpIcon,
+  PieChart as PieChartIcon,
+  BarChart as BarChartIcon,
+  Timeline as TimelineIcon,
+  Group as GroupIcon,
+  CheckCircle as CheckCircleIcon,
+  Schedule as ScheduleIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
 import InvitePreviewCard from '../../components/InvitePreviewCard';
 import { ColorModeContext } from '../../theme/ThemeConfig';
@@ -128,6 +138,201 @@ const DemoCard = styled(Paper)(({ theme }) => ({
   }
 }));
 
+const AnimatedNumber = ({ value, isVisible }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    let startTimestamp = null;
+    const duration = 1000; // 1 second
+
+    const animate = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      setDisplayValue(Math.floor(progress * value));
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [value, isVisible]);
+
+  return <>{displayValue}</>;
+};
+
+const MockChart = ({ type, data, color, title, isVisible }) => {
+  const theme = useTheme();
+  const [chartData, setChartData] = useState(type === 'bar' ? data.map(() => 0) : { percentage: 0 });
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    if (type === 'pie') {
+      let startTimestamp = null;
+      const duration = 1000;
+      const animate = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        setChartData({ percentage: Math.floor(progress * data.percentage) });
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+      requestAnimationFrame(animate);
+    } else if (type === 'bar') {
+      let startTimestamp = null;
+      const duration = 1000;
+      const animate = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        setChartData(data.map(val => Math.floor(progress * val)));
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+      requestAnimationFrame(animate);
+    }
+  }, [data, isVisible, type]);
+
+  if (type === 'pie') {
+    const circumference = 2 * Math.PI * 50; // 2 * pi * radius
+    const strokeDasharray = `${(chartData.percentage / 100) * circumference} ${circumference}`;
+    const strokeDashoffset = circumference / 4; // Start from top
+
+    return (
+      <Box sx={{ position: 'relative', width: 120, height: 120, mx: 'auto' }}>
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle
+            cx="60"
+            cy="60"
+            r="50"
+            fill="none"
+            stroke={theme.palette.grey[200]}
+            strokeWidth="20"
+          />
+          <circle
+            cx="60"
+            cy="60"
+            r="50"
+            fill="none"
+            stroke={color}
+            strokeWidth="20"
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            transform="rotate(-90 60 60)"
+            style={{ transition: 'stroke-dasharray 1s ease' }}
+          />
+        </svg>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center'
+          }}
+        >
+          <Typography variant="h6" fontWeight="bold" color={color}>
+            <AnimatedNumber value={data.percentage} isVisible={isVisible} />%
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {title}
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
+  
+  if (type === 'bar') {
+    return (
+      <Box sx={{ width: '100%', height: 100, display: 'flex', alignItems: 'end', gap: 1 }}>
+        {chartData.map((value, index) => (
+          <Box
+            key={index}
+            sx={{
+              flex: 1,
+              height: `${value}%`,
+              backgroundColor: color,
+              borderRadius: '4px 4px 0 0',
+              transition: 'height 1s ease',
+              minHeight: '10%'
+            }}
+          />
+        ))}
+      </Box>
+    );
+  }
+  
+  return null;
+};
+
+// Componente de estatística
+const StatCard = ({ icon, title, value, subtitle, color, trend, isVisible }) => {
+  const theme = useTheme();
+  
+  return (
+    <Card sx={{ 
+      p: 3, 
+      height: '100%',
+      background: `linear-gradient(135deg, ${color}10, ${color}05)`,
+      border: `1px solid ${color}20`,
+      borderRadius: 3,
+      transition: 'transform 0.3s ease',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: `0 8px 25px ${color}20`
+      },
+      // --- Alterações para centralizar ---
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center' // Centraliza os blocos filhos horizontalmente
+    }}>
+      {/* Bloco do ícone e valor mantido com layout horizontal */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ 
+          p: 1.5, 
+          borderRadius: 2, 
+          backgroundColor: `${color}15`,
+          color: color,
+          height: 48,
+          ml: -8,
+          display: 'flex',
+          justifyContent: 'initial'
+        }}>
+          {icon}
+        </Box>
+        <Box sx={{ alignItems: 'center', ml: 5 }}> {/* Removemos o flex: 1 para o conteúdo não se esticar */}
+          <Typography variant="h4" fontWeight="bold" color="text.primary">
+            <AnimatedNumber value={value} isVisible={isVisible} />
+          </Typography>
+          {trend && (
+            <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+              <TrendingUpIcon sx={{ fontSize: 16, color: theme.palette.success.main, mr: 0.5 }} />
+              <Typography variant="caption" color="success.main" fontWeight="medium">
+                +<AnimatedNumber value={trend} isVisible={isVisible} />% este mês
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      {/* Título e subtítulo com texto centralizado */}
+      <Box sx={{ textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary" fontWeight="medium">
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography variant="caption" color="text.secondary">
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
+    </Card>
+  );
+};
+
 const ModernLandingPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -137,28 +342,36 @@ const ModernLandingPage = () => {
   const [isVisible, setIsVisible] = useState({
     hero: true,
     features: false,
+    dashboard: false,
     howItWorks: false,
     demo: false,
     testimonials: false,
   });
   
   const featuresRef = useRef(null);
+  const dashboardRef = useRef(null);
   const howItWorksRef = useRef(null);
   const demoRef = useRef(null);
 
   const colorMode = useContext(ColorModeContext);
 
-  // Handle scroll events for parallax and animations
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
-      
-      // Check visibility for animations
+
       if (featuresRef.current) {
         const rect = featuresRef.current.getBoundingClientRect();
         setIsVisible(prev => ({
           ...prev,
           features: rect.top < window.innerHeight * 0.75
+        }));
+      }
+      
+      if (dashboardRef.current) {
+        const rect = dashboardRef.current.getBoundingClientRect();
+        setIsVisible(prev => ({
+          ...prev,
+          dashboard: rect.top < window.innerHeight * 0.75
         }));
       }
       
@@ -513,13 +726,319 @@ const ModernLandingPage = () => {
           </Box>
         </Container>
       </Box>
-      
+
+      {/* Dashboard Analytics Section */}
+      <Box 
+        ref={dashboardRef}
+        sx={{ 
+          py: { xs: 10, md: 1 },
+          background: `linear-gradient(180deg, ${theme.palette.background.default} 0%, ${theme.palette.background.paper} 100%)`,
+        }}
+      >
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: 8 }}>
+            <Fade in={isVisible.dashboard} timeout={800}>
+              <Box>
+                <Typography 
+                  variant="overline" 
+                  sx={{ 
+                    color: 'primary.main',
+                    letterSpacing: 2,
+                    mb: 1,
+                    display: 'block'
+                  }}
+                >
+                  DASHBOARD INTELIGENTE
+                </Typography>
+                
+                <Typography 
+                  variant="h2" 
+                  component="h2" 
+                  sx={{ 
+                    fontWeight: 700,
+                    mb: 2,
+                    color: 'text.primary'
+                  }}
+                >
+                  Controle total dos seus eventos
+                </Typography>
+                
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    maxWidth: 700,
+                    mx: 'auto',
+                    color: 'text.secondary',
+                    mb: 8
+                  }}
+                >
+                  Visualize estatísticas em tempo real, acompanhe confirmações e tome decisões baseadas em dados
+                </Typography>
+              </Box>
+            </Fade>
+          </Box>
+
+          <Fade in={isVisible.dashboard} timeout={1000}>
+            <Box>
+              {/* Estatísticas principais */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  // Margem negativa para compensar o padding dos filhos e alinhar com o layout
+                  m: -1.5, 
+                  mb: 6,
+                }}
+              >
+                <Box sx={{ p: 1.5, width: { xs: '100%', sm: '50%', md: '25%' } }}>
+                  <StatCard
+                    icon={<GroupIcon />}
+                    title="Total de Convidados"
+                    value={247}
+                    subtitle="Últimos 30 dias"
+                    color={theme.palette.primary.main}
+                    trend={12}
+                    isVisible={isVisible.dashboard}
+                  />
+                </Box>
+                <Box sx={{ p: 1.5, width: { xs: '100%', sm: '50%', md: '25%' } }}>
+                  <StatCard
+                    icon={<CheckCircleIcon />}
+                    title="Confirmações"
+                    value={189}
+                    subtitle="76% de taxa de confirmação"
+                    color={theme.palette.success.main}
+                    trend={8}
+                    isVisible={isVisible.dashboard}
+                  />
+                </Box>
+                <Box sx={{ p: 1.5, width: { xs: '100%', sm: '50%', md: '25%' } }}>
+                  <StatCard
+                    icon={<ScheduleIcon />}
+                    title="Pendentes"
+                    value={42}
+                    subtitle="Aguardando resposta"
+                    color={theme.palette.warning.main}
+                    isVisible={isVisible.dashboard}
+                  />
+                </Box>
+                <Box sx={{ p: 1.5, width: { xs: '100%', sm: '50%', md: '25%' } }}>
+                  <StatCard
+                    icon={<CancelIcon />}
+                    title="Recusados"
+                    value={16}
+                    subtitle="6% de recusa"
+                    color={theme.palette.error.main}
+                    isVisible={isVisible.dashboard}
+                  />
+                </Box>
+              </Box>
+
+              {/* Gráficos e visualizações */}
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', m: -2 }}>
+               <Box sx={{ p: 2, width: { xs: '100%', md: '50%' } }}>
+                  <Card sx={{ p: 4, height: '100%', borderRadius: 3 }}>
+                    <Typography variant="h6" gutterBottom fontWeight={600} color="text.primary">
+                      Status das Confirmações
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                      Distribuição atual das respostas
+                    </Typography>
+                    
+                    <Box sx={{ display: 'flex', justifyContent: 'space-around', mb: 3 }}>
+                      <MockChart 
+                        type="pie" 
+                        data={{ percentage: 76 }} 
+                        color={theme.palette.success.main}
+                        title="Confirmados"
+                        isVisible={isVisible.dashboard}
+                      />
+                      <MockChart 
+                        type="pie" 
+                        data={{ percentage: 17 }} 
+                        color={theme.palette.warning.main}
+                        title="Pendentes"
+                        isVisible={isVisible.dashboard}
+                      />
+                      <MockChart 
+                        type="pie" 
+                        data={{ percentage: 7 }} 
+                        color={theme.palette.error.main}
+                        title="Recusados"
+                        isVisible={isVisible.dashboard}
+                      />
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                      <Chip 
+                        icon={<CheckCircleIcon />} 
+                        label="189 Confirmados" 
+                        color="success" 
+                        variant="outlined" 
+                        size="small"
+                      />
+                      <Chip 
+                        icon={<ScheduleIcon />} 
+                        label="42 Pendentes" 
+                        color="warning" 
+                        variant="outlined" 
+                        size="small"
+                      />
+                      <Chip 
+                        icon={<CancelIcon />} 
+                        label="16 Recusados" 
+                        color="error" 
+                        variant="outlined" 
+                        size="small"
+                      />
+                    </Box>
+                  </Card>
+                </Box>
+
+                <Box sx={{ p: 2, width: { xs: '100%', md: '50%' } }}>
+                  <Card sx={{ p: 4, height: '100%', borderRadius: 3 }}>
+                    <Typography variant="h6" gutterBottom fontWeight={600} color="text.primary">
+                      Confirmações por Evento
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                      Performance dos seus últimos eventos
+                    </Typography>
+                    
+                    <Box sx={{ mb: 3 }}>
+                      <MockChart 
+                        type="bar" 
+                        data={[85, 92, 78, 95, 88, 90, 82]} 
+                        color={theme.palette.primary.main}
+                        isVisible={isVisible.dashboard}
+                      />
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Casamento Ana & Carlos
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium" color="text.primary">
+                        95%
+                      </Typography>
+                    </Box>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={95} 
+                      sx={{ mb: 2, height: 6, borderRadius: 3 }}
+                      color="primary"
+                    />
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Aniversário Maria
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium" color="text.primary">
+                        88%
+                      </Typography>
+                    </Box>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={88} 
+                      sx={{ mb: 2, height: 6, borderRadius: 3 }}
+                      color="secondary"
+                    />
+
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Evento Corporativo
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium" color="text.primary">
+                        82%
+                      </Typography>
+                    </Box>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={82} 
+                      sx={{ height: 6, borderRadius: 3 }}
+                      color="info"
+                    />
+                  </Card>
+                </Box>
+              </Box>
+
+              <Box sx={{ mt: 6 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', m: -2 }}>
+                  {/* Card Relatórios Visuais */}
+                  <Box sx={{ p: 2, width: { xs: '100%', md: 'calc(100% / 3)' } }}>
+                    <Card sx={{ p: 4, textAlign: 'center', height: '100%', borderRadius: 3 }}>
+                      <PieChartIcon sx={{ fontSize: 48, color: theme.palette.primary.main, mb: 2 }} />
+                      <Typography variant="h6" gutterBottom fontWeight={600} color="text.primary">
+                        Relatórios Visuais
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Gráficos interativos que mostram o status das confirmações, distribuição por grupos e tendências ao longo do tempo.
+                      </Typography>
+                    </Card>
+                  </Box>
+
+                  {/* Card Acompanhamento em Tempo Real */}
+                  <Box sx={{ p: 2, width: { xs: '100%', md: 'calc(100% / 3)' } }}>
+                    <Card sx={{ p: 4, textAlign: 'center', height: '100%', borderRadius: 3 }}>
+                      <TimelineIcon sx={{ fontSize: 48, color: theme.palette.secondary.main, mb: 2 }} />
+                      <Typography variant="h6" gutterBottom fontWeight={600} color="text.primary">
+                        Acompanhamento em Tempo Real
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Monitore as confirmações conforme elas chegam, com notificações instantâneas e atualizações automáticas.
+                      </Typography>
+                    </Card>
+                  </Box>
+
+                  {/* Card Análise Detalhada */}
+                  <Box sx={{ p: 2, width: { xs: '100%', md: 'calc(100% / 3)' } }}>
+                    <Card sx={{ p: 4, textAlign: 'center', height: '100%', borderRadius: 3 }}>
+                      <BarChartIcon sx={{ fontSize: 48, color: theme.palette.success.main, mb: 2 }} />
+                      <Typography variant="h6" gutterBottom fontWeight={600} color="text.primary">
+                        Análise Detalhada
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Insights profundos sobre o comportamento dos convidados, taxas de resposta e otimizações para futuros eventos.
+                      </Typography>
+                    </Card>
+                  </Box>
+                </Box>
+              </Box>
+
+              <Box sx={{ textAlign: 'center', mt: 6 }}>
+                <Button 
+                  variant="contained" 
+                  color="primary"
+                  size="large"
+                  endIcon={<ArrowForwardIcon />}
+                  onClick={() => navigate('/register')}
+                  sx={{ 
+                    borderRadius: 50,
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    boxShadow: '0 8px 16px rgba(94, 53, 177, 0.2)',
+                    '&:hover': { 
+                      boxShadow: '0 12px 24px rgba(94, 53, 177, 0.3)',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                >
+                  Experimente o Dashboard
+                </Button>
+              </Box>
+            </Box>
+          </Fade>
+        </Container>
+      </Box>
+
       {/* Demo Section */}
       <Box 
         ref={demoRef}
         sx={{ 
-          py: { xs: 10, md: 1 },
-          background: `linear-gradient(180deg, ${theme.palette.background.default} 0%, ${theme.palette.background.paper} 100%)`,
+          py: { xs: 10, md: 15 },
+          background: theme.palette.background.paper,
         }}
       >
         <Container maxWidth="lg">
@@ -630,7 +1149,7 @@ const ModernLandingPage = () => {
         ref={howItWorksRef}
         sx={{ 
           py: { xs: 10 },
-          background: theme.palette.background.paper,
+          background: theme.palette.background.default,
         }}
       >
         <Container maxWidth="lg">
@@ -901,3 +1420,4 @@ const ModernLandingPage = () => {
 };
 
 export default ModernLandingPage;
+

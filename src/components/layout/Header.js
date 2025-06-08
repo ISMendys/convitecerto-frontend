@@ -32,6 +32,10 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { ColorModeContext } from '../../theme/ThemeConfig';
 import ConfigModal from '../config/ConfigModal';
 
+// Importação do logo (caminho relativo à raiz do projeto)
+// Nota: Ajuste o caminho conforme a estrutura do seu projeto
+import logoImage from '../../logo_provisorio.png';
+
 const Header = ({ onMobileNavOpen }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -78,13 +82,17 @@ const Header = ({ onMobileNavOpen }) => {
       <AppBar 
         elevation={0}
         sx={{
-          backgroundColor: 'background.paper',
+          backgroundColor: theme.palette.mode === 'dark' 
+            ? alpha(theme.palette.background.paper, 0.95)
+            : alpha(theme.palette.background.paper, 0.98),
           color: 'text.primary',
           position: 'sticky',
           top: 0,
           zIndex: theme.zIndex.drawer + 1,
-          backdropFilter: 'blur(8px)',
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          backdropFilter: 'blur(10px)',
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+          height: 72,
           '&::after': {
             content: '""',
             position: 'absolute',
@@ -92,13 +100,13 @@ const Header = ({ onMobileNavOpen }) => {
             left: 0,
             right: 0,
             height: '3px',
-            background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.light}, ${alpha(theme.palette.primary.main, 0.7)})`
+            background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${alpha(theme.palette.primary.main, 0.7)})`
           }
         }}
       >
         <Toolbar 
           sx={{ 
-            height: 70, 
+            height: '100%', 
             px: { xs: 2, sm: 3 },
             display: 'flex',
             justifyContent: 'space-between'
@@ -116,38 +124,62 @@ const Header = ({ onMobileNavOpen }) => {
                 color: theme.palette.primary.main,
                 '&:hover': {
                   backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                }
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.2s ease'
               }}
             >
               <MenuIcon />
             </IconButton>
             
-            <Typography
-              variant="h5"
-              color="primary"
+            {/* Logo e nome da aplicação */}
+            <Box 
               sx={{ 
-                fontWeight: 700,
-                letterSpacing: '-0.5px',
-                display: 'flex',
+                display: 'flex', 
                 alignItems: 'center',
-                background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: '0 2px 10px rgba(0,0,0,0.08)',
-                position: 'relative',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  bottom: -4,
-                  left: 0,
-                  width: '40%',
-                  height: '3px',
-                  background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.light})`
+                '&:hover': {
+                  '& .logo-image': {
+                    transform: 'scale(1.05)',
+                  },
+                  '& .logo-text': {
+                    letterSpacing: '0px',
+                  }
                 }
               }}
             >
-              Convites Digitais
-            </Typography>
+              {/* Logo */}
+              <Box 
+                component="img"
+                src={logoImage}
+                alt="Digital Invites Logo"
+                className="logo-image"
+                sx={{ 
+                  height: 40,
+                  ml: 2.5,
+                  width: 'auto',
+                  mr: 1.5,
+                  transition: 'transform 0.3s ease',
+                }}
+              />
+              
+              {/* Nome da aplicação */}
+              {/* <Typography
+                variant="h5"
+                color="primary"
+                className="logo-text"
+                sx={{ 
+                  fontWeight: 600,
+                  letterSpacing: '-0.5px',
+                  display: { xs: 'none', sm: 'block' },
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                Digital Invites
+              </Typography> */}
+            </Box>
           </Box>
           
           {/* Seção direita: Tema, Notificações e Perfil */}
@@ -158,8 +190,20 @@ const Header = ({ onMobileNavOpen }) => {
                 edge="end"
                 color="inherit"
                 onClick={colorMode.toggleColorMode}
+                sx={{
+                  borderRadius: '50%',
+                  p: 1,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    transform: 'translateY(-2px)'
+                  }
+                }}
               >
-                {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                {theme.palette.mode === 'dark' ? 
+                  <Brightness7Icon sx={{ color: theme.palette.primary.light }} /> : 
+                  <Brightness4Icon sx={{ color: theme.palette.primary.main }} />
+                }
               </IconButton>
             </Tooltip>
             
@@ -177,8 +221,21 @@ const Header = ({ onMobileNavOpen }) => {
                   }
                 }}
               >
-                <Badge badgeContent={3} color="error">
-                  <NotificationsIcon />
+                <Badge 
+                  badgeContent={3} 
+                  color="error"
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      animation: 'pulse 2s infinite',
+                      '@keyframes pulse': {
+                        '0%': { transform: 'scale(0.95)' },
+                        '70%': { transform: 'scale(1)' },
+                        '100%': { transform: 'scale(0.95)' }
+                      }
+                    }
+                  }}
+                >
+                  <NotificationsIcon sx={{ color: theme.palette.primary.main }} />
                 </Badge>
               </IconButton>
             </Tooltip>
@@ -197,6 +254,8 @@ const Header = ({ onMobileNavOpen }) => {
                 transition: 'all 0.2s ease',
                 '&:hover': {
                   backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.05)'
                 }
               }}
             >
@@ -262,7 +321,12 @@ const Header = ({ onMobileNavOpen }) => {
                 }
               }}
             >
-              <Box sx={{ px: 2, py: 1.5, borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}` }}>
+              <Box sx={{ 
+                px: 2, 
+                py: 1.5, 
+                borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                background: `linear-gradient(to right, ${alpha(theme.palette.primary.main, 0.05)}, ${alpha(theme.palette.background.paper, 0.01)})`,
+              }}>
                 <Typography variant="subtitle1" fontWeight={600}>
                   {user?.name || 'Usuário'}
                 </Typography>

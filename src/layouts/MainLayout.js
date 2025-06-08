@@ -1,25 +1,29 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Box, Container } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 
 // Componentes de layout
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
 
 const MainLayoutRoot = styled('div')(({ theme }) => ({
-  // display: 'flex',
-  // minHeight: '100vh',
-  // overflow: 'hidden',
-  // width: '100%'
+  display: 'flex',
+  minHeight: '100vh',
+  overflow: 'hidden',
+  width: '100%',
+  backgroundColor: theme.palette.mode === 'dark' 
+    ? alpha(theme.palette.background.default, 0.98)
+    : alpha(theme.palette.background.default, 0.98),
 }));
 
 const MainLayoutWrapper = styled('div')(({ theme }) => ({
   display: 'flex',
   flex: '1 1 auto',
   overflow: 'hidden',
+  paddingTop: 72, // Altura do header
   [theme.breakpoints.up('lg')]: {
-    paddingLeft: 280
+    paddingLeft: 280 // Largura da sidebar
   }
 }));
 
@@ -42,28 +46,28 @@ const MainLayout = () => {
 
   return (
     <MainLayoutRoot>
-      <Header onMobileNavOpen={() => setMobileNavOpen(true)} />
       <Sidebar
         onMobileClose={() => setMobileNavOpen(false)}
         openMobile={isMobileNavOpen}
       />
-      <MainLayoutWrapper>
-        <MainLayoutContainer>
+      {/* <MainLayoutWrapper> */}
+        {/* <MainLayoutContainer> */}
           <MainLayoutContent>
+            <Header onMobileNavOpen={() => setMobileNavOpen(true)} />
+
             <Box
               sx={{
                 backgroundColor: 'background.default',
-                minHeight: '100%',
-                py: 3
+                width: '100%'
               }}
             >
-              <Container maxWidth="lg">
+              <Container sx={{ width: '100%', ml: { xs: 0, lg: 56 } }}>
                 <Outlet />
               </Container>
             </Box>
           </MainLayoutContent>
-        </MainLayoutContainer>
-      </MainLayoutWrapper>
+        {/* </MainLayoutContainer> */}
+      {/* </MainLayoutWrapper> */}
     </MainLayoutRoot>
   );
 };

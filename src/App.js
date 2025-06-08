@@ -1,7 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Box, CircularProgress } from '@mui/material';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -22,6 +21,7 @@ import GuestImport from './pages/guests/GuestImport';
 import RsvpPage from './pages/public/RsvpPage';
 import NotFound from './pages/PageNotFound';
 import SupportPage from './pages/support/SupportPage';
+import LoadingIndicator from './components/LoadingIndicator';
 
 // Componente para rotas protegidas
 const ProtectedRoute = ({ children }) => {
@@ -29,9 +29,11 @@ const ProtectedRoute = ({ children }) => {
   
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
+      <LoadingIndicator
+        open={loading}
+        type="fullscreen"
+        message="Processando sua solicitação..."
+      />
     );
   }
   

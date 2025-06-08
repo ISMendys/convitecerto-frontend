@@ -1,6 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { inviteService } from '../../services/api';
-import { fetchGuest, updateGuest } from '../../store/actions/guestActions';
+import { fetchGuestPublic, updateGuest } from '../../store/actions/guestActions';
 
 // Ação assíncrona para buscar todos os convites de um evento
 export const fetchInvites = createAsyncThunk(
@@ -84,22 +84,21 @@ export const fetchPublicInvite = createAsyncThunk(
   'invites/fetchPublicInvite',
   async (id, { rejectWithValue, dispatch }) => {
     try {
-      console.log('Fetching public invite for guest ID:', id);
 
-      // const guestResponse = await dispatch(fetchGuest(id));
-      // console.log('Guest response:', guestResponse);
-      // if (!guestResponse.payload) {
-      //   throw new Error('Convidado não encontrado');
-      // }
+      const guestResponse = await dispatch(fetchGuestPublic(id));
+      console.log('Guest response:', guestResponse);
+      if (!guestResponse.payload) {
+        throw new Error('Convidado não encontrado');
+      }
       
-      // if (!guestResponse.payload.inviteId) {
-      //   return {
-      //     noInvite: true,
-      //     guestId: id,
-      //     guestName: guestResponse.name,
-      //     message: 'Este convidado ainda não possui um convite associado. Por favor, entre em contato com o organizador do evento.'
-      //   };
-      // }
+      if (!guestResponse.payload.inviteId) {
+        return {
+          noInvite: true,
+          guestId: id,
+          guestName: guestResponse.name,
+          message: 'Este convidado ainda não possui um convite associado. Por favor, entre em contato com o organizador do evento.'
+        };
+      }
       
       // Agora, buscar o convite usando o ID do convite
       const response = await inviteService.getPublicInvite(guestResponse.payload.inviteId);

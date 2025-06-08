@@ -107,7 +107,13 @@ export const guestService = {
     const response = await api.get(`/guest/${id}`);
     return response.data;
   },
-  
+
+  // Buscar um convidado específico publico
+  getGuestPublic: async (id) => {
+    const response = await api.get(`/guest/${id}/public`);
+    return response.data;
+  },
+
   // Criar um convidado
   createGuest: async (guestData) => {
     const response = await api.post('/guest', guestData);
@@ -128,7 +134,7 @@ export const guestService = {
   
   // Atualizar status de um convidado (RSVP)
   updateGuestStatus: async (id, statusData) => {
-    const response = await api.put(`/guest/${id}/status`, statusData);
+    const response = await api.put(`/guest/${id}/rsvp`, statusData);
     return response.data;
   },
   

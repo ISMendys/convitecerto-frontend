@@ -558,7 +558,12 @@ const Dashboard = () => {
         alignItems: 'center', 
         minHeight: '50vh'
       }}>
-        <CircularProgress color="primary" />
+        <LoadingIndicator
+          open={loading}
+          type="fullscreen"
+          message="Carregando Dashboard..."
+        />
+        {/* <CircularProgress color="primary" /> */}
       </Box>
     );
   }
