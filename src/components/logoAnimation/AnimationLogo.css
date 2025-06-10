@@ -13,7 +13,7 @@
              fillLogo 1s ease forwards 3s, 
              fadeStrokeOut 1s ease forwards 3s;
   fill: transparent;
-  stroke: white; /* Cor inicial do contorno */
+  stroke: white;
 }
 
 @keyframes drawPath {

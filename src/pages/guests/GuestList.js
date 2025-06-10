@@ -73,6 +73,8 @@ import { fetchInvites, linkGuestsToInvite } from '../../store/actions/inviteActi
 import { sendWhatsappBulk, sendWhatsappReminder } from '../../store/actions/whatsappActions';
 import GuestCard from '../../components/GuestCard';
 
+import EventSelectorModal from '../../components/EventSelectorModal';
+
 // Componentes reutilizáveis
 import PageTitle from '../../components/PageTitle';
 import StatCard from '../../components/StatCard';
@@ -106,7 +108,7 @@ const stringToColor = (string) => {
 // Componente de card de convidado
 
 const GuestList = () => {
-  const { eventId } = useParams();
+  const { eventId } = useParams() || currentEventId;
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -117,7 +119,10 @@ const GuestList = () => {
   const { guests, loading, error } = useSelector(state => state.guests);
   const { invites, loading: invitesLoading, linkingGuests, linkingSuccess } = useSelector(state => state.invites);
   const { currentEvent } = useSelector(state => state.events);
-  
+
+  const [showEventSelector, setShowEventSelector] = useState(false);
+  const [currentEventId, setCurrentEventId] = useState(eventId);
+
   const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGroup, setFilterGroup] = useState('all');
@@ -136,35 +141,61 @@ const GuestList = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
   
-  // Novo estado para o diálogo de vinculação de convites
   const [linkInviteDialogOpen, setLinkInviteDialogOpen] = useState(false);
   const [selectedInviteId, setSelectedInviteId] = useState('');
   
-  // Novo estado para o diálogo de envio de mensagens
   const [sendMessageDialogOpen, setSendMessageDialogOpen] = useState(false);
   const [messageText, setMessageText] = useState('');
   
-  // Novo estado para o diálogo de importação
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-  
-  // Carregar convidados e convites
-  useEffect(() => {
-    if (eventId) {
+
+    // Carregar convidados e convites quando o eventId estiver disponível
+    useEffect(() => {
+      if (!eventId && !currentEventId) {
+        setShowEventSelector(true);
+        return;
+      }
+      setShowEventSelector(false);
       const fetchData = async () => {
         setIsLoading(true);
         try {
           await Promise.all([
-            dispatch(fetchGuests(eventId)),
-            dispatch(fetchInvites(eventId))
+            dispatch(fetchGuests(eventId || currentEventId)),
+            dispatch(fetchInvites(eventId || currentEventId))
           ]);
         } finally {
           setIsLoading(false);
         }
       };
       fetchData();
-    }
-  }, [dispatch, eventId]);
-  
+      
+    }, [dispatch, currentEventId]);
+
+  // Função para lidar com a seleção de evento no modal
+  const handleEventSelect = (selectedEventId, eventData) => {
+    console.log('Evento selecionado:', selectedEventId, eventData);
+    setShowEventSelector(false);
+    setCurrentEventId(selectedEventId);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          dispatch(fetchGuests(selectedEventId)),
+          dispatch(fetchInvites(selectedEventId))
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  };
+
+
+  // Função para mostrar o modal de seleção novamente (pode ser útil para trocar de evento)
+  const handleChangeEvent = () => {
+    setShowEventSelector(true);
+  };
+
   // Exibir erro se houver
   useEffect(() => {
     if (error) {
@@ -213,7 +244,7 @@ const GuestList = () => {
   
   // Excluir convidado
   const handleDeleteGuest = async () => {
-    if (!guestToDelete || !guestToDelete.id) {
+    if (!guestToDelete || !guestToDelete?.id) {
       setSnackbarMessage('Erro: Convidado não selecionado corretamente');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -223,7 +254,7 @@ const GuestList = () => {
     
     setIsLoading(true);
     try {
-      await dispatch(deleteGuest(guestToDelete.id)).unwrap();
+      await dispatch(deleteGuest(guestToDelete?.id)).unwrap();
       setSnackbarMessage('Convidado excluído com sucesso!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
@@ -313,7 +344,7 @@ const GuestList = () => {
     
     // Verificar se todos os convidados selecionados têm convites vinculados
     const guestsWithoutInvite = selectedGuests.filter(
-      guestId => !guests.find(g => g.id === guestId)?.inviteId
+      guestId => !guests.find(g => g?.id === guestId)?.inviteId
     );
     
     if (guestsWithoutInvite.length > 0) {
@@ -347,7 +378,7 @@ const GuestList = () => {
       // Usamos sendWhatsappReminder que aceita guestId e message
       const sendPromises = selectedGuests.map(guestId => {
         // Encontrar o objeto convidado completo para obter o ID
-        const guest = guests.find(g => g.id === guestId);
+        const guest = guests.find(g => g?.id === guestId);
         if (!guest) {
           console.error(`Convidado com ID ${guestId} não encontrado na lista.`);
           // Retorna uma promessa rejeitada para que seja contada como erro
@@ -356,13 +387,13 @@ const GuestList = () => {
         
         // Construir a URL RSVP
         // Usar window.location.origin para obter a base da URL atual
-        const rsvpUrl = `${window.location.origin}/rsvp/${guest.id}`;
+        const rsvpUrl = `${window.location.origin}/rsvp/${guest?.id}`;
         
         // Montar a mensagem final com o link RSVP
         const finalMessage = `${messageText}\n\nResponda aqui: ${rsvpUrl}`;
         
         const payload = {
-          guestId: guest.id, // Usar guest.id que já temos
+          guestId: guest?.id, // Usar guest?.id que já temos
           message: finalMessage // Usar a mensagem com o link
         };
         return dispatch(sendWhatsappReminder(payload)).unwrap();
@@ -377,7 +408,7 @@ const GuestList = () => {
           successCount++;
         } else {
           errorCount++;
-          const guestInfo = guests.find(g => g.id === selectedGuests[index]);
+          const guestInfo = guests.find(g => g?.id === selectedGuests[index]);
           errors.push(`Falha ao enviar para ${guestInfo?.name || selectedGuests[index]}: ${result.reason}`);
           console.error(`Erro ao enviar para ${selectedGuests[index]}:`, result.reason);
         }
@@ -485,7 +516,7 @@ const GuestList = () => {
     if (selectedGuests.length === filteredGuests.length) {
       setSelectedGuests([]);
     } else {
-      setSelectedGuests(filteredGuests.map(guest => guest.id));
+      setSelectedGuests(filteredGuests.map(guest => guest?.id));
     }
   };
   
@@ -503,7 +534,7 @@ const GuestList = () => {
   const handleExportCsv = () => {
     // Determinar quais convidados exportar
     const guestsToExport = selectedGuests.length > 0
-      ? guests.filter(guest => selectedGuests.includes(guest.id))
+      ? guests.filter(guest => selectedGuests.includes(guest?.id))
       : guests;
     
     // Definir cabeçalhos
@@ -614,26 +645,26 @@ const GuestList = () => {
     {
       label: 'Editar',
       icon: <EditIcon fontSize="small" />,
-      onClick: () => navigate(`/events/${eventId || currentEvent.id}/guests/edit/${guest.id}`)
+      onClick: () => navigate(`/events/${eventId || currentEvent?.id}/guests/edit/${guest?.id}`)
     },
     {
       label: 'Marcar como Confirmado',
       icon: <CheckCircleIcon fontSize="small" />,
-      onClick: () => handleUpdateStatus(guest.id, 'confirmed'),
+      onClick: () => handleUpdateStatus(guest?.id, 'confirmed'),
       color: 'success',
       disabled: guest.status === 'confirmed'
     },
     {
       label: 'Marcar como Pendente',
       icon: <HelpOutlineIcon fontSize="small" />,
-      onClick: () => handleUpdateStatus(guest.id, 'pending'),
+      onClick: () => handleUpdateStatus(guest?.id, 'pending'),
       color: 'warning',
       disabled: guest.status === 'pending'
     },
     {
       label: 'Marcar como Recusado',
       icon: <CancelIcon fontSize="small" />,
-      onClick: () => handleUpdateStatus(guest.id, 'declined'),
+      onClick: () => handleUpdateStatus(guest?.id, 'declined'),
       color: 'error',
       disabled: guest.status === 'declined'
     },
@@ -641,7 +672,7 @@ const GuestList = () => {
       label: 'Enviar Mensagem',
       icon: <SendIcon fontSize="small" />,
       onClick: () => {
-        setSelectedGuests([guest.id]);
+        setSelectedGuests([guest?.id]);
         handleOpenSendMessageDialog();
       },
       color: 'primary'
@@ -650,7 +681,7 @@ const GuestList = () => {
       label: 'Exportar Dados',
       icon: <FileDownloadIcon fontSize="small" />,
       onClick: () => {
-        setSelectedGuests([guest.id]);
+        setSelectedGuests([guest?.id]);
         handleExportCsv();
         handleMenuClose();
       },
@@ -672,7 +703,7 @@ const GuestList = () => {
     { 
       icon: <AddIcon />, 
       name: 'Adicionar Convidado', 
-      action: () => navigate(`/events/${eventId || currentEvent.id}/guests/new`),
+      action: () => navigate(`/events/${eventId || currentEvent?.id}/guests/new`),
       color: theme.palette.success.main
     },
     { 
@@ -722,65 +753,33 @@ const GuestList = () => {
   ];
   
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh',
-        pt: 3,
-        pb: 6,
-        display: 'flex',
-        justifyContent: 'center',
-        backgroundColor: theme.palette.mode === 'dark' 
-          ? alpha(theme.palette.background.default, 0.9) 
-          : theme.palette.background.default
-      }}
-    >
-      {/* Componente de loading */}
-      <LoadingIndicator open={isLoading} />
-      
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Header com botão voltar à esquerda e título à direita */}
-        <Box sx={{ 
-          mb: 4,
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            bottom: -16,
-            left: 0,
-            right: 0,
-            height: '1px',
-            background: `linear-gradient(to right, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(theme.palette.primary.main, 0.3)}, ${alpha(theme.palette.primary.main, 0.1)})`
-          }
-        }}>
-          {/* Botão Voltar à esquerda */}
-          <StyledButton
-            variant="outlined"
-            color="primary"
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+      <EventSelectorModal
+        open={showEventSelector}
+        onClose={() => setShowEventSelector(false)}
+        onSelectEvent={handleEventSelect}
+        apiEndpoint="/api/events" 
+      />
+      <Box>
+        {/* Botão para trocar de evento */}
+        <Box sx={{ mb: 2 }}>
+          <Button 
+            variant="outlined" 
+            onClick={handleChangeEvent}
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate(`/events/${eventId || currentEvent.id}`)}
-            sx={{ 
-              borderRadius: 10,
-              px: 2,
-              py: 1,
-              '&:hover': {
-                transform: 'translateX(-4px)'
-              }
-            }}
           >
-            Voltar para o Evento
-          </StyledButton>
-          
+            Trocar Evento
+          </Button>
+        </Box>
+        </Box>
+        <>
           {/* Título e subtítulo à direita */}
           <PageTitle
-            title="Lista de Convidados"
+            title={currentEvent?.title || 'Lista de Convidados'}
             subtitle={`${currentEvent?.title || 'Evento'} - ${guests.length} convidados`}
             alignRight={true}
             mb={0}
           />
-        </Box>
         
         {/* Cards de estatísticas */}
         <Box
@@ -928,7 +927,7 @@ const GuestList = () => {
                       }}
                     >
                       {sortOptions.map(option => (
-                        <MenuItem key={option.id} value={option.id}>
+                        <MenuItem key={option?.id} value={option?.id}>
                           {option.name}
                         </MenuItem>
                       ))}
@@ -953,7 +952,7 @@ const GuestList = () => {
                     }}
                   >
                     {groups.map(group => (
-                      <MenuItem key={group.id} value={group.id}>
+                      <MenuItem key={group?.id} value={group?.id}>
                         {group.name}
                       </MenuItem>
                     ))}
@@ -1009,7 +1008,7 @@ const GuestList = () => {
                     variant="contained"
                     color="success"
                     startIcon={<AddIcon />}
-                    onClick={() => navigate(`/events/${eventId || currentEvent.id}/guests/new`)}
+                    onClick={() => navigate(`/events/${eventId || currentEvent?.id}/guests/new`)}
                     size="small"
                     sx={{
                       borderRadius: 10,
@@ -1069,7 +1068,7 @@ const GuestList = () => {
                   color={emptyConfigs[index].color}
                   actionText={index === 0 ? "Adicionar Convidado" : null}
                   actionIcon={<AddIcon />}
-                  onAction={index === 0 ? () => navigate(`/events/${eventId || currentEvent.id}/guests/new`) : null}
+                  onAction={index === 0 ? () => navigate(`/events/${eventId || currentEvent?.id}/guests/new`) : null}
                 />
               ) : (
                 <Box sx={{ 
@@ -1085,9 +1084,9 @@ const GuestList = () => {
                 }}>
                   {sortedGuests.map(guest => (
                     <GuestCard
-                      key={guest.id}
+                      key={guest?.id}
                       guest={guest}
-                      selected={selectedGuests.includes(guest.id)}
+                      selected={selectedGuests.includes(guest?.id)}
                       onSelect={handleSelectGuest}
                       onMenuOpen={handleMenuOpen}
                       onDelete={(guest) => {
@@ -1104,9 +1103,7 @@ const GuestList = () => {
             </TabPanel>
           ))}
         </Paper>
-      </Container>
-      
-      {/* Menu de ações para um convidado */}
+
       <Menu
         anchorEl={menuAnchorEl}
         open={Boolean(menuAnchorEl)}
@@ -1368,8 +1365,8 @@ const GuestList = () => {
               label="Convite"
             >
               {invites.map(invite => (
-                <MenuItem key={invite.id} value={invite.id}>
-                  {invite.title || `Convite #${invite.id}`}
+                <MenuItem key={invite?.id} value={invite?.id}>
+                  {invite.title || `Convite #${invite?.id}`}
                 </MenuItem>
               ))}
             </Select>
@@ -1438,7 +1435,7 @@ const GuestList = () => {
           <TextField
             fullWidth
             multiline
-            rows={4}
+            // rows={4}
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             label="Mensagem"
@@ -1468,6 +1465,7 @@ const GuestList = () => {
               variant="contained"
               startIcon={<MailIcon />}
               color="primary"
+              disabled={true}
               fullWidth
               onClick={handleSendMessage}
               sx={{ 
@@ -1501,7 +1499,7 @@ const GuestList = () => {
       <GuestImport
         open={importDialogOpen}
         onClose={() => setImportDialogOpen(false)}
-        eventId={eventId || currentEvent.id}
+        eventId={eventId || currentEventId || currentEvent?.id}
         onSuccess={handleImportSuccess}
       />
       
@@ -1519,7 +1517,8 @@ const GuestList = () => {
           sx={{ 
             width: '100%',
             boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-            borderRadius: 2
+            borderRadius: 2,
+            color: 'white',
           }}
         >
           {snackbarMessage}
@@ -1572,8 +1571,18 @@ const GuestList = () => {
           />
         ))}
       </SpeedDial>
-    </Box>
-  );
-};
+
+      </>
+      {!currentEventId || isLoading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+              <LoadingIndicator
+                open={loading}
+                type="fullscreen"
+                message="Carregando..."
+              />
+          </Box>
+        ) : (null)}
+  </Container>
+)}
 
 export default GuestList;

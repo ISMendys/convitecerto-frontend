@@ -31,7 +31,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { ColorModeContext } from '../../theme/ThemeConfig';
 import ConfigModal from '../config/ConfigModal';
-
+import LogoAnimation from '../logoAnimation/AnimationLogo';
 // Importação do logo (caminho relativo à raiz do projeto)
 // Nota: Ajuste o caminho conforme a estrutura do seu projeto
 import logoImage from '../../convitecerto.svg';
@@ -148,7 +148,27 @@ const Header = ({ onMobileNavOpen }) => {
               }}
             >
               {/* Logo */}
-              <Box 
+              {!isMobile && 
+                <Box
+                  onClick={() => navigate('/dashboard')}
+                  sx={{
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    '&:hover': {
+                    '& .logo-image': {
+                      transform: 'scale(1.05)',
+                    },
+                    '& .logo-text': {
+                      letterSpacing: '0px',
+                    }
+                    }
+                  }}
+                  >
+                    <LogoAnimation width={"40%"} color={'black'} />
+                </Box>
+              }
+              {/* <Box 
                 sx={{ 
                   height: 80,
                   width: 150,
@@ -162,7 +182,7 @@ const Header = ({ onMobileNavOpen }) => {
                   mr: 1.5,
                   transition: 'transform 0.3s ease',
                 }}
-              />
+              /> */}
               
               {/* Nome da aplicação */}
               {/* <Typography

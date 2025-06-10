@@ -522,9 +522,8 @@ const ModernLandingPage = () => {
             {/* ===== COLUNA 1: CONTEÚDO DE TEXTO E BOTÕES ===== */}
             <Box
                 sx={{
-                // Agora ocupa 100% no mobile e 50% no desktop
-                width: { xs: '100%', md: '70%' },
-                textAlign: { xs: 'center', md: 'left' },
+                  width: { xs: '100%', md: '70%' },
+                  textAlign: { xs: 'center', md: 'left' },
                 }}
             >
 
@@ -535,28 +534,28 @@ const ModernLandingPage = () => {
                       alignItems: { xs: 'center', md: 'flex-start' },
                   }}
                 >
-                    <Box sx={{
+                    {/* <Box sx={{
                       ml: { xs: 0, sm: -6.5, md: -9.5 },
-                      mb: { xs: -12, sm: -8, md: -12.5},
+                      mb: { xs: -12, sm: -8, md: 5},
                       mt: { xs: -21, sm: -8, md: -12.5}
                     }}>
                       <LogoAnimation width={isMobile ? "50%" : "100%"} />
-                    </Box>
-                    
+                    </Box> */}
+{/*                     
                     {!isMobile && (
                       <Typography
                         variant="subtitle1"
                         sx={{
                           color: 'common.white',
                           opacity: 0.8,
-                          letterSpacing: 1,
+                          letterSpacing: 2,
                           fontSize: { xs: '0.8rem', sm: '1rem', md: '1.2rem' },
                           mt: 2,
                         }}
                       >
                         CONVITECERTO
                       </Typography>
-                    )}
+                    )} */}
 
                 </Box>
 

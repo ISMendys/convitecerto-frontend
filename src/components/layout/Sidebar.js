@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import {
   Box,
   Button,
-  Divider,
   Drawer,
   List,
   ListItem,
@@ -13,7 +12,6 @@ import {
   Typography,
   Avatar,
   Chip,
-  Tooltip,
   alpha,
   useTheme
 } from '@mui/material';

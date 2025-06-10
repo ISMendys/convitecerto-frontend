@@ -3,7 +3,8 @@ import './AnimationLogo.css';
 
 const LogoAnimation = ({
   width = '100%',
-  height = '100%',    
+  height = '100%',
+  color = 'black',
 }) => {
   return (
     <div className="logo-container">
@@ -15,7 +16,7 @@ const LogoAnimation = ({
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="xMidYMid meet"
       >
-        <g transform="translate(0,1024) scale(0.1,-0.1)" stroke="white " strokeWidth="40" fill="white">
+        <g transform="translate(0,1024) scale(0.1,-0.1)" stroke={color} strokeWidth="40" fill={color}>
           <path d="M2671 7269 c-297 -50 -534 -286 -596 -594 -14 -72 -15 -233 -13
             -1565 3 -1672 -4 -1520 83 -1695 56 -114 131 -197 243 -273 122 -81 218 -111
             392 -123 80 -6 1040 -8 2355 -6 2079 3 2224 4 2285 20 253 69 450 263 529 522

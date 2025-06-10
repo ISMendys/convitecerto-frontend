@@ -444,7 +444,7 @@
                         onChange={handleChange}
                         label="Evento"
                       >
-                        <MenuItem value="">Selecione um evento</MenuItem>
+                        <MenuItem value="">Selecione ou crie um novo evento</MenuItem>
                         {events.map(event => (
                           <MenuItem key={event.id} value={event.id}>
                             {event.title}
