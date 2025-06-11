@@ -1199,7 +1199,26 @@ const GuestList = () => {
           <DialogContentText sx={{ mb: 3 }}>
             Escolha uma ação para aplicar aos convidados selecionados:
           </DialogContentText>
-          
+          <Button
+                fullWidth
+                variant="contained"
+                color="success"
+                startIcon={<CheckCircleIcon />}
+                onClick={() => {
+                  setBulkAction('status');
+                  handleBulkAction();
+                }}
+                sx={{ 
+                  borderRadius: 2,
+                  py: 1.5,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.2)',
+                  background: `linear-gradient(45deg, ${theme.palette.success.main} 30%, ${theme.palette.success.light} 90%)`,
+                }}
+              >
+                Confirmar Todos
+              </Button>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button

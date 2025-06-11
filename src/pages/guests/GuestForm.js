@@ -213,7 +213,7 @@ const GuestForm = () => {
     if (confirm && defaultInvite) {
       setFormData(prev => ({
         ...prev,
-        inviteId: defaultInvite.id
+        inviteId: defaultInvite?.id
       }));
     }
     setAutoLinkDialogOpen(false);
@@ -255,7 +255,7 @@ const GuestForm = () => {
       let guestData = {
         ...formData,
         imageUrl: imageData,
-        eventId: currentEvent.id,
+        eventId: currentEvent?.id,
       };
       
       if (guestId) {
@@ -268,7 +268,7 @@ const GuestForm = () => {
       
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
-      navigate(`/events/${eventId || currentEvent.id}/guests`);
+      navigate(`/events/${eventId || currentEvent?.id}/guests`);
     } catch (err) {
       const errorMessage = err?.message || err || 'Erro ao salvar convidado';
       setSnackbarMessage(errorMessage);
@@ -289,7 +289,7 @@ const GuestForm = () => {
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
 
-      navigate(`/events/${eventId || currentEvent.id}/guests`);
+      navigate(`/events/${eventId || currentEvent?.id}/guests`);
 
     } catch (err) {
       setSnackbarMessage(err || 'Erro ao excluir convidado');
@@ -313,7 +313,7 @@ const GuestForm = () => {
   
   // Cancelar criação/edição
   const handleCancel = () => {
-    navigate(`/events/${eventId || currentEvent.id}/guests`);
+    navigate(`/events/${eventId || currentEvent?.id}/guests`);
   };
   
   // Grupos disponíveis
@@ -379,7 +379,7 @@ const GuestForm = () => {
             variant="outlined"
             color="primary"
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate(`/events/${eventId || currentEvent.id}/guests`)}
+            onClick={() => navigate(`/events/${eventId || currentEvent?.id}/guests`)}
             sx={{ 
               borderRadius: 10,
               px: 2,
@@ -623,15 +623,15 @@ const GuestForm = () => {
                   // }
                 >
                   {statuses.map(status => (
-                    <MenuItem key={status.id} value={status.id}>
+                    <MenuItem key={status?.id} value={status?.id}>
                       <Box sx={{ 
                         display: 'flex', 
                         alignItems: 'center',
                         color: status.color
                       }}>
-                        {status.id === 'confirmed' && <CheckCircleIcon sx={{ mr: 1 }} />}
-                        {status.id === 'pending' && <HelpOutlineIcon sx={{ mr: 1 }} />}
-                        {status.id === 'declined' && <CancelIcon sx={{ mr: 1 }} />}
+                        {status?.id === 'confirmed' && <CheckCircleIcon sx={{ mr: 1 }} />}
+                        {status?.id === 'pending' && <HelpOutlineIcon sx={{ mr: 1 }} />}
+                        {status?.id === 'declined' && <CancelIcon sx={{ mr: 1 }} />}
                         {status.name}
                       </Box>
                     </MenuItem>
@@ -669,7 +669,7 @@ const GuestForm = () => {
                   }
                 >
                   {groups.map(group => (
-                    <MenuItem key={group.id} value={group.id}>
+                    <MenuItem key={group?.id} value={group?.id}>
                       {group.name}
                     </MenuItem>
                   ))}

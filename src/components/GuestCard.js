@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux'; // Adicionar useDispatch
-import { sendWhatsappReminder } from '../store/actions/whatsappActions'; // Adicionar action
+import { useDispatch } from 'react-redux';
+import { sendWhatsappReminder } from '../store/actions/whatsappActions';
 
 import { useTheme, alpha } from '@mui/material/styles';
 import { Box, Typography, Paper, Avatar, Chip, IconButton, Badge, Divider, Checkbox, Tooltip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, CircularProgress } from '@mui/material'; // Adicionar CircularProgress
@@ -16,7 +16,7 @@ import {
   Delete as DeleteIcon,
   Send as SendIcon
 } from '@mui/icons-material';
-
+import FormattedPhone from './FormattedPhone'
 // Utility function for generating colors
 const stringToColor = (string) => {
   let hash = 0;
@@ -275,17 +275,10 @@ const GuestCard = ({
               </Typography>
             </Box>
           )}
+
+          {/* Aqui está a mágica! */}
           {guest.phone && (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              {guest.whatsapp ? (
-                <WhatsAppIcon fontSize="small" color="success" sx={{ mr: 1, flexShrink: 0 }} />
-              ) : (
-                <PhoneIcon fontSize="small" color="action" sx={{ mr: 1, flexShrink: 0 }} />
-              )}
-              <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {guest.phone}
-              </Typography>
-            </Box>
+            <FormattedPhone phone={guest.phone} isWhatsApp={guest.whatsapp} />
           )}
         </Box>
         
