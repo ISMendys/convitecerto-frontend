@@ -166,9 +166,9 @@ const GuestForm = () => {
       errors.phone = 'Telefone é obrigatório';
     }
   
-    if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
-      errors.email = 'E-mail inválido';
-    }
+    // if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+    //   errors.email = 'E-mail inválido';
+    // }
 
     return errors;
   };
