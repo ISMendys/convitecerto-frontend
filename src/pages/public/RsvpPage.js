@@ -43,6 +43,7 @@ import CountdownRenderer from './components/CountdownRenderer';
 import DetailCard from './components/DetailCard';
 import HostMessage from './components/HostMessage';
 import ThemedMap from './components/ThemedMap';
+import ImpactfulConfirmationFeedback from './components/ImpactfulConfirmationFeedback';
 
 // Configuração para usar tema dinâmico baseado nas cores do convite
 const USE_DYNAMIC_THEME = true;
@@ -67,6 +68,98 @@ const bounceAnimation = {
     repeat: Infinity,
     repeatType: "loop",
   },
+};
+
+// Função para geocodificação melhorada usando API do OpenStreetMap
+const geocodeLocation = async (location) => {
+  try {
+    // Limpar e formatar o endereço
+    const cleanLocation = location.trim();
+    console.log('minha loccc', cleanLocation)
+    // Primeiro, tentar busca estruturada se possível
+    const parts = cleanLocation.split(',').map(part => part.trim());
+    
+    let searchUrl;
+    
+    if (parts.length >= 2) {
+
+      // Busca livre para endereços simples
+      searchUrl = `https://nominatim.openstreetmap.org/search?` +
+      `q=${encodeURIComponent(cleanLocation + ', Brazil')}&` +
+      `format=json&` +
+      `limit=1&` +
+      `addressdetails=1&` +
+      `countrycodes=br`;
+
+    } else {
+      // Busca estruturada para endereços com múltiplas partes
+      const city = parts[parts.length - 2]; // Penúltimo elemento (cidade)
+      const state = parts[parts.length - 1]; // Último elemento (estado)
+      searchUrl = `https://nominatim.openstreetmap.org/search?` +
+        `city=${encodeURIComponent(city)}&` +
+        `state=${encodeURIComponent(state)}&` +
+        `country=Brazil&` +
+        `format=json&` +
+        `limit=1&` +
+        `addressdetails=1`;
+    }
+    
+    console.log('Geocoding URL:', searchUrl);
+    
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'RSVP-App/1.0 (contact@example.com)' // User-Agent obrigatório
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Geocoding response:', data);
+    
+    if (data && data.length > 0) {
+      const result = data[0];
+      // Mapbox espera [longitude, latitude], não [latitude, longitude]
+      return [parseFloat(result.lon), parseFloat(result.lat)];
+    }
+    
+    // Se não encontrou, tentar busca mais ampla
+    const fallbackUrl = `https://nominatim.openstreetmap.org/search?` +
+      `q=${encodeURIComponent(cleanLocation)}&` +
+      `format=json&` +
+      `limit=1&` +
+      `countrycodes=br`;
+    
+    console.log('Fallback geocoding URL:', fallbackUrl);
+    
+    const fallbackResponse = await fetch(fallbackUrl, {
+      headers: {
+        'User-Agent': 'RSVP-App/1.0 (contact@example.com)'
+      }
+    });
+    
+    if (fallbackResponse.ok) {
+      const fallbackData = await fallbackResponse.json();
+      console.log('Fallback geocoding response:', fallbackData);
+      
+      if (fallbackData && fallbackData.length > 0) {
+        const result = fallbackData[0];
+        // Mapbox espera [longitude, latitude], não [latitude, longitude]
+        return [parseFloat(result.lon), parseFloat(result.lat)];
+      }
+    }
+    
+    // Fallback para coordenadas do Brasil se não encontrar nada
+    console.warn('Geocodificação falhou, usando coordenadas do Brasil');
+    return [-51.9253, -14.2350]; // [longitude, latitude] para o Brasil
+    
+  } catch (error) {
+    console.error('Erro na geocodificação:', error);
+    // Fallback para coordenadas do Brasil em caso de erro
+    return [-51.9253, -14.2350]; // [longitude, latitude] para o Brasil
+  }
 };
 
 // Componente principal da página RSVP
@@ -121,15 +214,7 @@ const RsvpPage = () => {
       const locationString = publicInvite.event.location;
       setMapMarkerText(`${publicInvite.event.title || 'Local do Evento'}<br/>${locationString}`);
 
-      // Lógica de geocodificação (placeholder)
-      const geocodeLocation = async (location) => {
-        console.warn("Geocoding não implementado. Usando coordenadas de placeholder.");
-        if (location.toLowerCase().includes("salvador")) return [-12.9777, -38.5016];
-        if (location.toLowerCase().includes("são paulo")) return [-23.5505, -46.6333];
-        if (location.toLowerCase().includes("rio")) return [-22.9068, -43.1729];
-        return [-14.2350, -51.9253]; // Fallback para o Brasil
-      };
-
+      // Usar geocodificação real
       geocodeLocation(locationString).then(coords => {
         if (coords) {
           setMapCenter(coords);
@@ -242,11 +327,29 @@ const RsvpPage = () => {
           position: 'relative', 
           overflowX: 'hidden', 
           minHeight: '100vh',
-          backgroundImage: 'linear-gradient(135deg, rgba(106,27,154,0.95) 0%, rgba(233,30,99,0.85) 100%)',
+          backgroundImage: publicInvite.imageUrl 
+            ? `linear-gradient(135deg, rgba(106,27,154,0.8) 0%, rgba(233,30,99,0.7) 100%), url(${publicInvite.imageUrl})`
+            : 'linear-gradient(135deg, rgba(106,27,154,0.95) 0%, rgba(233,30,99,0.85) 100%)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
         }}
       >
         {/* Confetti para animação de confirmação */}
-        {showConfetti && <Confetti recycle={false} numberOfPieces={200} />}
+        {showConfetti && (
+          <Confetti 
+            recycle={false} 
+            numberOfPieces={200}
+            confettiSource={{
+              x: window.innerWidth / 2,
+              y: window.innerHeight * 0.8, // 80% da altura da tela (onde estão os botões)
+              w: 10,
+              h: 10
+            }}
+            initialVelocityY={-20}
+            gravity={0.3}
+          />
+        )}
 
         {/* Seção Hero */}
         <Box
@@ -281,9 +384,24 @@ const RsvpPage = () => {
               fontWeight: 400,
               mb: 4
             }}>
-              {publicInvite.event?.title || 'Para um evento especial'}
+              {publicInvite.eventTitle || publicInvite.event?.title || 'Para um evento especial'}
             </Typography>
           </motion.div>
+
+          {/* Descrição do evento */}
+          {publicInvite.description && (
+            <motion.div variants={fadeInUp} initial="hidden" animate="visible" custom={2.5}>
+              <Typography variant="h6" sx={{ 
+                color: 'text.secondary', 
+                fontWeight: 300,
+                mb: 4,
+                maxWidth: 600,
+                mx: 'auto'
+              }}>
+                {publicInvite.description}
+              </Typography>
+            </motion.div>
+          )}
 
           {/* Nome do convidado */}
           {publicInvite.guest?.name && (
@@ -345,8 +463,8 @@ const RsvpPage = () => {
           {/* Seção de detalhes */}
           <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={3}>
             <Box sx={{ 
-              display: 'grid', 
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, 
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
               gap: { xs: 4, md: 5 }, 
               mb: { xs: 12, md: 18 } 
             }}>
@@ -381,7 +499,7 @@ const RsvpPage = () => {
               <Box sx={{
                 height: { xs: 350, sm: 450, md: 500 },
                 mb: { xs: 12, md: 18 },
-                // borderRadius: theme.shape.borderRadius,
+                borderRadius: 0, // Removendo borda arredondada
                 overflow: 'hidden',
                 border: `1px solid ${theme.palette.divider}`,
                 boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
@@ -392,7 +510,7 @@ const RsvpPage = () => {
                   markerPosition={mapMarkerPos}
                   markerPopupText={mapMarkerText}
                   theme={theme}
-                  mapStyle="mapbox://styles/mapbox/light-v11" // Estilo mais contrastante
+                  mapStyle="mapbox://styles/mapbox/streets-v11"
                 />
               </Box>
             </motion.div>
@@ -446,20 +564,7 @@ const RsvpPage = () => {
               
               {/* Status de confirmação */}
               {confirmationStatus && (
-                <Grow in={true}>
-                  <Alert 
-                    severity={confirmationStatus === 'confirmed' ? 'success' : 'info'}
-                    sx={{ 
-                      mb: 4, 
-                      justifyContent: 'center',
-                      '& .MuiAlert-message': { fontSize: '1.1rem' }
-                    }}
-                  >
-                    {confirmationStatus === 'confirmed' 
-                      ? 'Sua presença está confirmada! Agradecemos sua resposta.' 
-                      : 'Você indicou que não poderá comparecer. Sentiremos sua falta!'}
-                  </Alert>
-                </Grow>
+                <ImpactfulConfirmationFeedback status={confirmationStatus} theme={theme} />
               )}
               
               <Stack 
@@ -477,15 +582,26 @@ const RsvpPage = () => {
                   disabled={rsvpLoading}
                   sx={{ 
                     minWidth: 220,
-                    py: 1.5,
+                    py: 2,
+                    px: 4,
                     fontSize: '1.1rem',
-                    fontWeight: 500,
+                    fontWeight: 600,
                     borderRadius: '50px',
-                    boxShadow: confirmationStatus === 'confirmed' ? '0 8px 16px rgba(76, 175, 80, 0.3)' : 'none',
+                    background: confirmationStatus === 'confirmed' 
+                      ? 'linear-gradient(45deg, #4caf50 30%, #66bb6a 90%)'
+                      : 'transparent',
+                    border: '2px solid #4caf50',
+                    color: confirmationStatus === 'confirmed' ? '#ffffff' : '#4caf50',
+                    boxShadow: confirmationStatus === 'confirmed' 
+                      ? '0 8px 16px rgba(76, 175, 80, 0.3)' 
+                      : '0 4px 12px rgba(76, 175, 80, 0.2)',
                     transition: 'all 0.3s ease',
                     '&:hover': {
                       transform: 'translateY(-3px)',
                       boxShadow: '0 12px 20px rgba(76, 175, 80, 0.4)',
+                      background: confirmationStatus === 'confirmed' 
+                        ? 'linear-gradient(45deg, #388e3c 30%, #4caf50 90%)'
+                        : 'rgba(76, 175, 80, 0.1)',
                     }
                   }}
                 >
@@ -502,15 +618,26 @@ const RsvpPage = () => {
                   disabled={rsvpLoading}
                   sx={{ 
                     minWidth: 220,
-                    py: 1.5,
+                    py: 2,
+                    px: 4,
                     fontSize: '1.1rem',
-                    fontWeight: 500,
+                    fontWeight: 600,
                     borderRadius: '50px',
-                    boxShadow: confirmationStatus === 'declined' ? '0 8px 16px rgba(244, 67, 54, 0.3)' : 'none',
+                    background: confirmationStatus === 'declined' 
+                      ? 'linear-gradient(45deg, #f44336 30%, #ef5350 90%)'
+                      : 'transparent',
+                    border: '2px solid #f44336',
+                    color: confirmationStatus === 'declined' ? '#ffffff' : '#f44336',
+                    boxShadow: confirmationStatus === 'declined' 
+                      ? '0 8px 16px rgba(244, 67, 54, 0.3)' 
+                      : '0 4px 12px rgba(244, 67, 54, 0.2)',
                     transition: 'all 0.3s ease',
                     '&:hover': {
                       transform: 'translateY(-3px)',
                       boxShadow: '0 12px 20px rgba(244, 67, 54, 0.4)',
+                      background: confirmationStatus === 'declined' 
+                        ? 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)'
+                        : 'rgba(244, 67, 54, 0.1)',
                     }
                   }}
                 >
@@ -532,23 +659,19 @@ const RsvpPage = () => {
             mt: 8,
           }}
         >
-          <Typography variant="body2" sx={{ opacity: 0.7 }}>
-            © {new Date().getFullYear()} ConviteCerto • Todos os direitos reservados
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Feito com ❤️ para você
           </Typography>
         </Box>
 
         {/* Snackbar para notificações */}
-        <Snackbar 
-          open={snackbarOpen} 
-          autoHideDuration={6000} 
-          onClose={handleSnackbarClose} 
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={handleSnackbarClose}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert 
-            onClose={handleSnackbarClose} 
-            severity={snackbarSeverity} 
-            sx={{ width: '100%' }}
-          >
+          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
             {snackbarMessage}
           </Alert>
         </Snackbar>
@@ -558,4 +681,4 @@ const RsvpPage = () => {
 };
 
 export default RsvpPage;
-// RsvpPage.js
+

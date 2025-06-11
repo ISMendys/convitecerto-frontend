@@ -5,7 +5,6 @@ import {
   DialogContent, 
   Box, 
   Typography, 
-  Grid, 
   Card, 
   Avatar, 
   Zoom 
@@ -39,8 +38,12 @@ const ConfirmationModal = ({ open, onClose, onConfirm, onDecline, theme }) => {
             Sua resposta é muito importante para nós! Por favor, confirme se poderemos contar com sua presença neste dia especial.
           </Typography>
           
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 3 
+          }}>
+            <Box sx={{ flex: 1 }}>
               <Card 
                 sx={{ 
                   p: 3, 
@@ -70,9 +73,9 @@ const ConfirmationModal = ({ open, onClose, onConfirm, onDecline, theme }) => {
                   Sim, estarei presente neste evento especial!
                 </Typography>
               </Card>
-            </Grid>
+            </Box>
             
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ flex: 1 }}>
               <Card 
                 sx={{ 
                   p: 3, 
@@ -102,8 +105,8 @@ const ConfirmationModal = ({ open, onClose, onConfirm, onDecline, theme }) => {
                   Infelizmente não poderei estar presente.
                 </Typography>
               </Card>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </Box>
       </DialogContent>
     </Dialog>

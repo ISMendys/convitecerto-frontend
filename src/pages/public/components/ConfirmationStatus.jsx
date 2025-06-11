@@ -1,54 +1,69 @@
 import React from 'react';
-import { Box, Typography, Avatar, Grow } from '@mui/material';
+import { Box, Typography, Alert, Grow } from '@mui/material';
 import { CheckCircle as CheckCircleIcon, Cancel as CancelIcon } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 
-// Componente para exibir o status de confirmação
+// Variantes de animação
+const statusVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: { 
+    opacity: 1, 
+    scale: 1,
+    transition: { 
+      duration: 0.5,
+      ease: 'easeOut'
+    }
+  }
+};
+
+// Componente de status de confirmação
 const ConfirmationStatus = ({ status, theme }) => {
   if (!status) return null;
 
   const isConfirmed = status === 'confirmed';
   
   return (
-    <Grow in={true}>
-      <Box sx={{ 
-        mb: 4, 
-        p: 3, 
-        borderRadius: '16px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        backgroundColor: isConfirmed 
-          ? 'rgba(76, 175, 80, 0.1)' 
-          : 'rgba(244, 67, 54, 0.1)',
-        border: `1px solid ${isConfirmed ? '#4caf50' : '#f44336'}`,
-      }}>
-        <Avatar 
+    <motion.div
+      variants={statusVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <Grow in={true}>
+        <Alert 
+          severity={isConfirmed ? 'success' : 'info'}
+          icon={isConfirmed ? <CheckCircleIcon /> : <CancelIcon />}
           sx={{ 
-            width: 100, 
-            height: 100, 
-            mb: 2,
-            backgroundColor: isConfirmed ? '#4caf50' : '#f44336',
-            boxShadow: `0 8px 24px ${isConfirmed ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)'}`,
+            mb: 4, 
+            justifyContent: 'center',
+            borderRadius: '12px',
+            fontSize: '1.1rem',
+            fontWeight: 500,
+            background: isConfirmed 
+              ? 'linear-gradient(45deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%)'
+              : 'linear-gradient(45deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.05) 100%)',
+            border: `2px solid ${isConfirmed ? '#4caf50' : '#2196f3'}`,
+            '& .MuiAlert-message': { 
+              fontSize: '1.1rem',
+              fontWeight: 500
+            },
+            '& .MuiAlert-icon': {
+              fontSize: '1.5rem'
+            }
           }}
         >
-          {isConfirmed 
-            ? <CheckCircleIcon sx={{ fontSize: 60 }} /> 
-            : <CancelIcon sx={{ fontSize: 60 }} />}
-        </Avatar>
-        
-        <Typography variant="h4" sx={{ mb: 1, fontWeight: 700 }}>
-          {isConfirmed 
-            ? 'Presença Confirmada!' 
-            : 'Não Poderá Comparecer'}
-        </Typography>
-        
-        <Typography variant="body1" sx={{ textAlign: 'center' }}>
-          {isConfirmed 
-            ? 'Agradecemos sua confirmação. Estamos ansiosos para recebê-lo!' 
-            : 'Sentiremos sua falta! Obrigado por nos informar.'}
-        </Typography>
-      </Box>
-    </Grow>
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+              {isConfirmed ? 'Presença Confirmada!' : 'Resposta Registrada'}
+            </Typography>
+            <Typography variant="body1">
+              {isConfirmed 
+                ? 'Sua presença está confirmada! Agradecemos sua resposta e esperamos vê-lo no evento.' 
+                : 'Você indicou que não poderá comparecer. Sentiremos sua falta, mas agradecemos por nos informar.'}
+            </Typography>
+          </Box>
+        </Alert>
+      </Grow>
+    </motion.div>
   );
 };
 

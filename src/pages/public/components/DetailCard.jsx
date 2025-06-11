@@ -12,7 +12,8 @@ const StyledDetailCard = styled(Paper)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
   border: '1px solid rgba(255, 255, 255, 0.2)',
   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-  height: '100%',
+  minHeight: '180px', // Altura mínima aumentada para textos longos
+  width: '100%',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
@@ -35,6 +36,7 @@ const IconWrapper = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
   boxShadow: `0 8px 16px ${theme.palette.primary.main}40`,
+  flexShrink: 0, // Impede que o ícone encolha
 }));
 
 // Variantes de animação para o card
@@ -56,6 +58,7 @@ const DetailCard = ({ icon: Icon, title, value, theme, index }) => {
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
       custom={index}
+      style={{ flex: 1, minWidth: '200px' }}
     >
       <StyledDetailCard>
         <IconWrapper>
@@ -65,13 +68,24 @@ const DetailCard = ({ icon: Icon, title, value, theme, index }) => {
           mb: 1, 
           fontWeight: 600,
           letterSpacing: 0.5,
+          fontSize: '1rem',
+          flexShrink: 0 // Impede que o título encolha
         }}>
           {title}
         </Typography>
-        <Typography variant="body1" sx={{ 
+        <Typography variant="body2" sx={{ 
           color: 'text.secondary',
           fontWeight: 400,
-          lineHeight: 1.6,
+          lineHeight: 1.4,
+          fontSize: '0.875rem',
+          wordBreak: 'break-word', // Quebra palavras longas
+          hyphens: 'auto', // Adiciona hífens automáticos
+          textAlign: 'center',
+          flex: 1, // Permite que o texto ocupe o espaço restante
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '0 8px', // Padding lateral para evitar texto colado nas bordas
         }}>
           {value}
         </Typography>

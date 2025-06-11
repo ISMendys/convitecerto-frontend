@@ -30,55 +30,67 @@ const ElegantLoadingIndicator = ({ theme }) => {
     <ThemeProvider theme={theme}>
       <Box 
         sx={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
           display: 'flex', 
           flexDirection: 'column',
           justifyContent: 'center', 
           alignItems: 'center', 
-          minHeight: '100vh',
           background: 'linear-gradient(135deg, rgba(106,27,154,0.95) 0%, rgba(233,30,99,0.85) 100%)',
           color: 'text.primary',
-          px: 3,
+          zIndex: 9999,
         }}
       >
         <motion.div
           variants={loadingVariants}
           initial="hidden"
           animate="visible"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '24px'
+          }}
         >
           <motion.div variants={itemVariants}>
             <CircularProgress 
               size={70} 
-              thickness={4} 
+              thickness={4}
               sx={{ 
-                color: 'secondary.main',
-                mb: 3,
+                color: 'text.primary',
+                '& .MuiCircularProgress-circle': {
+                  strokeLinecap: 'round',
+                }
               }} 
             />
           </motion.div>
           
           <motion.div variants={itemVariants}>
             <Typography 
-              variant="h4" 
+              variant="h5" 
               sx={{ 
-                fontWeight: 600,
+                fontWeight: 500,
                 textAlign: 'center',
-                mb: 2,
+                letterSpacing: '0.5px'
               }}
             >
-              Carregando seu convite
+              Carregando seu convite...
             </Typography>
           </motion.div>
           
           <motion.div variants={itemVariants}>
             <Typography 
-              variant="body1" 
+              variant="body2" 
               sx={{ 
-                opacity: 0.8,
+                color: 'text.secondary',
                 textAlign: 'center',
-                maxWidth: 400,
+                maxWidth: 300
               }}
             >
-              Estamos preparando todos os detalhes do seu evento especial...
+              Preparando uma experiência especial para você
             </Typography>
           </motion.div>
         </motion.div>

@@ -1,18 +1,19 @@
 import React from 'react';
-import { Box, Typography, Grid, Paper } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 
 // Componente estilizado para os cards de contagem regressiva
 const CountdownCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
+  padding: theme.spacing(3),
   textAlign: 'center',
   borderRadius: '16px',
   background: 'rgba(255, 255, 255, 0.1)',
   backdropFilter: 'blur(10px)',
   border: '1px solid rgba(255, 255, 255, 0.2)',
   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-  height: '100%',
+  height: '140px', // Altura fixa para uniformidade
+  width: '100%',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
@@ -46,9 +47,15 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
 
   // Renderização da contagem regressiva
   return (
-    <Grid container spacing={3} justifyContent="center">
+    <Box sx={{ 
+      display: 'flex',
+      flexDirection: { xs: 'column', sm: 'row' },
+      gap: { xs: 2, sm: 3 },
+      justifyContent: 'center',
+      alignItems: 'stretch'
+    }}>
       {/* Dias */}
-      <Grid item xs={6} sm={3}>
+      <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '120px' } }}>
         <CountdownCard>
           <motion.div
             key={`days-${days}`}
@@ -59,8 +66,8 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
           >
             <Typography variant="h2" sx={{ 
               fontWeight: 700, 
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '4rem' },
-              lineHeight: 1.2,
+              fontSize: { xs: '2.5rem', sm: '3rem' },
+              lineHeight: 1,
               mb: 1,
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
               WebkitBackgroundClip: 'text',
@@ -74,14 +81,15 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
             letterSpacing: 1,
             fontWeight: 500,
             opacity: 0.8,
+            fontSize: '0.875rem'
           }}>
             Dias
           </Typography>
         </CountdownCard>
-      </Grid>
+      </Box>
 
       {/* Horas */}
-      <Grid item xs={6} sm={3}>
+      <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '120px' } }}>
         <CountdownCard>
           <motion.div
             key={`hours-${hours}`}
@@ -92,8 +100,8 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
           >
             <Typography variant="h2" sx={{ 
               fontWeight: 700, 
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '4rem' },
-              lineHeight: 1.2,
+              fontSize: { xs: '2.5rem', sm: '3rem' },
+              lineHeight: 1,
               mb: 1,
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
               WebkitBackgroundClip: 'text',
@@ -107,14 +115,15 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
             letterSpacing: 1,
             fontWeight: 500,
             opacity: 0.8,
+            fontSize: '0.875rem'
           }}>
             Horas
           </Typography>
         </CountdownCard>
-      </Grid>
+      </Box>
 
       {/* Minutos */}
-      <Grid item xs={6} sm={3}>
+      <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '120px' } }}>
         <CountdownCard>
           <motion.div
             key={`minutes-${minutes}`}
@@ -125,8 +134,8 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
           >
             <Typography variant="h2" sx={{ 
               fontWeight: 700, 
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '4rem' },
-              lineHeight: 1.2,
+              fontSize: { xs: '2.5rem', sm: '3rem' },
+              lineHeight: 1,
               mb: 1,
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
               WebkitBackgroundClip: 'text',
@@ -140,14 +149,15 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
             letterSpacing: 1,
             fontWeight: 500,
             opacity: 0.8,
+            fontSize: '0.875rem'
           }}>
             Minutos
           </Typography>
         </CountdownCard>
-      </Grid>
+      </Box>
 
       {/* Segundos */}
-      <Grid item xs={6} sm={3}>
+      <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '120px' } }}>
         <CountdownCard>
           <motion.div
             key={`seconds-${seconds}`}
@@ -158,8 +168,8 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
           >
             <Typography variant="h2" sx={{ 
               fontWeight: 700, 
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '4rem' },
-              lineHeight: 1.2,
+              fontSize: { xs: '2.5rem', sm: '3rem' },
+              lineHeight: 1,
               mb: 1,
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
               WebkitBackgroundClip: 'text',
@@ -173,12 +183,13 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
             letterSpacing: 1,
             fontWeight: 500,
             opacity: 0.8,
+            fontSize: '0.875rem'
           }}>
             Segundos
           </Typography>
         </CountdownCard>
-      </Grid>
-    </Grid>
+      </Box>
+    </Box>
   );
 };
 
