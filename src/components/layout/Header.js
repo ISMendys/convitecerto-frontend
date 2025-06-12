@@ -34,7 +34,7 @@ import ConfigModal from '../config/ConfigModal';
 import LogoAnimation from '../logoAnimation/AnimationLogo';
 // Importação do logo (caminho relativo à raiz do projeto)
 // Nota: Ajuste o caminho conforme a estrutura do seu projeto
-import logoImage from '../../convitecerto.svg';
+import logoImage from '../../assets/logo.png';
 
 const Header = ({ onMobileNavOpen }) => {
   const navigate = useNavigate();
@@ -148,6 +148,21 @@ const Header = ({ onMobileNavOpen }) => {
               }}
             >
               {/* Logo */}
+              <Box
+                component="img"
+                src={logoImage}
+                alt="Logo"
+                sx={{
+                  height: 40,
+                  width: 40,
+                  cursor: 'pointer',
+                  transition: 'transform 0.3s ease',
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                  },
+                }}
+                onClick={() => navigate('/dashboard')}
+              />
               {!isMobile && 
                 <Box
                   onClick={() => navigate('/dashboard')}
@@ -165,7 +180,7 @@ const Header = ({ onMobileNavOpen }) => {
                     }
                   }}
                   >
-                    <LogoAnimation width={"40%"} color={'black'} />
+                    {/* <LogoAnimation width={"40%"} color={'black'} /> */}
                 </Box>
               }
               {/* <Box 

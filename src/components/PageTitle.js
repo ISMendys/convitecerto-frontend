@@ -41,16 +41,16 @@ const PageTitle = ({
           position: 'relative',
           display: 'inline-block',
           mb: 0.5, // Reduzido para diminuir o espaço
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            bottom: -4,
-            left: alignRight ? 'auto' : 0,
-            right: alignRight ? 0 : 'auto',
-            width: alignRight ? '40%' : '30%',
-            height: '3px',
-            background: `linear-gradient(to right, ${theme.palette.primary.light}, ${theme.palette.primary.main})`
-          }
+          // '&::after': {
+          //   content: '""',
+          //   position: 'absolute',
+          //   bottom: -4,
+          //   left: alignRight ? 'auto' : 0,
+          //   right: alignRight ? 0 : 'auto',
+          //   width: alignRight ? '40%' : '30%',
+          //   height: '3px',
+          //   background: `linear-gradient(to right, ${theme.palette.primary.light}, ${theme.palette.primary.main})`
+          // }
         }}
       >
         {title}

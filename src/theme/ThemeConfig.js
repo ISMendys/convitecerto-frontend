@@ -1084,7 +1084,7 @@ const createDarkTheme = () => {
 
 // Componente que envolve a app e fornece o tema e o contexto de troca
 export default function ThemeConfig({ children }) {
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: light)');
   const [mode, setMode] = useState(prefersDarkMode ? 'dark' : 'light');
 
   // Se o usuário mudar o modo do sistema, atualiza aqui

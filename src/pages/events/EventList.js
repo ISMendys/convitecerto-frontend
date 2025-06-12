@@ -278,15 +278,15 @@ const EventList = () => {
                     position: 'relative',
                     mb: 1,
                     display: 'inline-block',
-                    '&::after': {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: -2,
-                      left: '0',
-                      width: '40%',
-                      height: '3px',
-                      background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.light})`
-                    }
+                    // '&::after': {
+                    //   content: '""',
+                    //   position: 'absolute',
+                    //   bottom: -2,
+                    //   left: '0',
+                    //   width: '40%',
+                    //   height: '3px',
+                    //   background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.light})`
+                    // }
                   }}
                 >
                   Meus Eventos

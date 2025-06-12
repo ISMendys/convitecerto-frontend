@@ -42,16 +42,12 @@ import {
 import {
   Search as SearchIcon,
   Add as AddIcon,
-  FilterList as FilterListIcon,
-  Sort as SortIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   WhatsApp as WhatsAppIcon,
   Mail as MailIcon,
-  Phone as PhoneIcon,
   Person as PersonIcon,
   ArrowBack as ArrowBackIcon,
-  MoreVert as MoreVertIcon,
   FileDownload as FileDownloadIcon,
   FileUpload as FileUploadIcon,
   CheckCircle as CheckCircleIcon,
@@ -62,11 +58,8 @@ import {
   Send as SendIcon,
   Group as GroupIcon,
   ArrowUpward as ArrowUpwardIcon,
-  ArrowDownward as ArrowDownwardIcon,
-  MoreHoriz as MoreHorizIcon,
-  CloudDownload as CloudDownloadIcon,
-  CloudUpload as CloudUploadIcon,
-  Description as DescriptionIcon
+  SyncAlt as SyncAltIcon,
+  ArrowDownward as ArrowDownwardIcon
 } from '@mui/icons-material';
 import { fetchGuests, deleteGuest, updateGuestStatus } from '../../store/actions/guestActions';
 import { fetchInvites, linkGuestsToInvite } from '../../store/actions/inviteActions';
@@ -122,7 +115,9 @@ const GuestList = () => {
 
   const [showEventSelector, setShowEventSelector] = useState(false);
   const [currentEventId, setCurrentEventId] = useState(eventId);
+  const [currentEventData, setCurrentEventData] = useState();
 
+  setCurrentEventData
   const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGroup, setFilterGroup] = useState('all');
@@ -151,7 +146,8 @@ const GuestList = () => {
 
     // Carregar convidados e convites quando o eventId estiver disponível
     useEffect(() => {
-      if (!eventId && !currentEventId) {
+      console.log(currentEventData, currentEvent, 'DATA AQUIIIIIIII')
+      if (!eventId && !currentEventId && !currentEvent) {
         setShowEventSelector(true);
         return;
       }
@@ -160,8 +156,8 @@ const GuestList = () => {
         setIsLoading(true);
         try {
           await Promise.all([
-            dispatch(fetchGuests(eventId || currentEventId)),
-            dispatch(fetchInvites(eventId || currentEventId))
+            dispatch(fetchGuests(eventId || currentEventId || currentEvent?.id)),
+            dispatch(fetchInvites(eventId || currentEventId || currentEvent?.id))
           ]);
         } finally {
           setIsLoading(false);
@@ -174,8 +170,10 @@ const GuestList = () => {
   // Função para lidar com a seleção de evento no modal
   const handleEventSelect = (selectedEventId, eventData) => {
     console.log('Evento selecionado:', selectedEventId, eventData);
+
     setShowEventSelector(false);
     setCurrentEventId(selectedEventId);
+    setCurrentEventData(eventData);
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -214,9 +212,9 @@ const GuestList = () => {
       setSelectedGuests([]);
       setLinkInviteDialogOpen(false);
       // Recarregar a lista de convidados para mostrar as atualizações
-      dispatch(fetchGuests(eventId));
+      dispatch(fetchGuests(eventId || currentEventId || currentEvent?.id));
     }
-  }, [linkingSuccess, dispatch, eventId]);
+  }, [linkingSuccess, dispatch, eventId || currentEventId || currentEvent?.id]);
   
   // Manipular mudança de aba
   const handleTabChange = (event, newValue) => {
@@ -334,8 +332,8 @@ const GuestList = () => {
   };
   
   // Abrir diálogo de envio de mensagens
-  const handleOpenSendMessageDialog = () => {
-    if (selectedGuests.length === 0) {
+  const handleOpenSendMessageDialog = (unique = false) => {
+    if (selectedGuests.length === 0 && !unique) {
       setSnackbarMessage('Selecione pelo menos um convidado para enviar mensagem');
       setSnackbarSeverity('warning');
       setSnackbarOpen(true);
@@ -390,7 +388,7 @@ const GuestList = () => {
         const rsvpUrl = `${window.location.origin}/rsvp/${guest?.id}`;
         
         // Montar a mensagem final com o link RSVP
-        const finalMessage = `${messageText}\n\nResponda aqui: ${rsvpUrl}`;
+        const finalMessage = `${messageText}\n\nResponda aqui:\n ${rsvpUrl}`;
         
         const payload = {
           guestId: guest?.id, // Usar guest?.id que já temos
@@ -559,7 +557,7 @@ const GuestList = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `convidados_${eventId}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `convidados_${eventId || currentEventId || currentEvent?.id}_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -577,7 +575,7 @@ const GuestList = () => {
     setSnackbarOpen(true);
     
     // Recarregar a lista de convidados
-    dispatch(fetchGuests(eventId));
+    dispatch(fetchGuests(eventId || currentEventId || currentEvent?.id));
   };
   
   // Filtrar convidados
@@ -645,7 +643,7 @@ const GuestList = () => {
     {
       label: 'Editar',
       icon: <EditIcon fontSize="small" />,
-      onClick: () => navigate(`/events/${eventId || currentEvent?.id}/guests/edit/${guest?.id}`)
+      onClick: () => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/edit/${guest?.id}`)
     },
     {
       label: 'Marcar como Confirmado',
@@ -703,7 +701,7 @@ const GuestList = () => {
     { 
       icon: <AddIcon />, 
       name: 'Adicionar Convidado', 
-      action: () => navigate(`/events/${eventId || currentEvent?.id}/guests/new`),
+      action: () => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/new`),
       color: theme.palette.success.main
     },
     { 
@@ -760,27 +758,38 @@ const GuestList = () => {
         onSelectEvent={handleEventSelect}
         apiEndpoint="/api/events" 
       />
-      <Box>
-        {/* Botão para trocar de evento */}
-        <Box sx={{ mb: 2 }}>
-          <Button 
-            variant="outlined" 
-            onClick={handleChangeEvent}
-            startIcon={<ArrowBackIcon />}
-          >
-            Trocar Evento
-          </Button>
-        </Box>
-        </Box>
-        <>
+        <Box sx={{ display: 'flex' }}>
+
+          <Box sx={{ mb: 2, mr: 3 }}>
+            <Button 
+              variant="outlined" 
+              onClick={() => navigate(`/events/${eventId || currentEventId || currentEvent?.id}`)}
+              startIcon={<ArrowBackIcon />}
+            >
+              Voltar ao Evento
+            </Button>
+          </Box>
+          <Box>
+            {/* Botão para trocar de evento */}
+            <Box sx={{ mb: 2 }}>
+              <Button 
+                variant="outlined" 
+                onClick={handleChangeEvent}
+                startIcon={<SyncAltIcon />}
+              >
+                Trocar Evento
+              </Button>
+            </Box>
+          </Box>
           {/* Título e subtítulo à direita */}
           <PageTitle
             title={currentEvent?.title || 'Lista de Convidados'}
             subtitle={`${currentEvent?.title || 'Evento'} - ${guests.length} convidados`}
             alignRight={true}
-            mb={0}
+            sx={{mb: 5, ml:75}}
           />
-        
+        </Box>
+        <>
         {/* Cards de estatísticas */}
         <Box
           sx={{
@@ -1008,7 +1017,7 @@ const GuestList = () => {
                     variant="contained"
                     color="success"
                     startIcon={<AddIcon />}
-                    onClick={() => navigate(`/events/${eventId || currentEvent?.id}/guests/new`)}
+                    onClick={() => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/new`)}
                     size="small"
                     sx={{
                       borderRadius: 10,
@@ -1068,7 +1077,7 @@ const GuestList = () => {
                   color={emptyConfigs[index].color}
                   actionText={index === 0 ? "Adicionar Convidado" : null}
                   actionIcon={<AddIcon />}
-                  onAction={index === 0 ? () => navigate(`/events/${eventId || currentEvent?.id}/guests/new`) : null}
+                  onAction={index === 0 ? () => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/new`) : null}
                 />
               ) : (
                 <Box sx={{ 
@@ -1089,12 +1098,13 @@ const GuestList = () => {
                       selected={selectedGuests.includes(guest?.id)}
                       onSelect={handleSelectGuest}
                       onMenuOpen={handleMenuOpen}
+                      handleOpenSendMessageDialog={handleOpenSendMessageDialog}
                       onDelete={(guest) => {
                         setGuestToDelete(guest);
                         setDeleteDialogOpen(true);
                       }}
                       groups={groups}
-                      eventId={eventId}
+                      event={currentEvent || currentEventData}
                       navigate={navigate}
                     />
                   ))}
@@ -1592,7 +1602,7 @@ const GuestList = () => {
       </SpeedDial>
 
       </>
-      {!currentEventId || isLoading ? (
+      {!eventId || !currentEventId || !currentEvent?.id || isLoading ? (
           <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
               <LoadingIndicator
                 open={loading}

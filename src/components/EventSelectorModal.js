@@ -12,12 +12,14 @@ import {
   Grid
 } from '@mui/material';
 import EventCard from './EventCard';
+import { useTheme } from '@mui/material/styles';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchEvents } from '../store/actions/eventActions';
 import LoadingIndicator from './LoadingIndicator';
 const EventSelectorModal = ({ open, onClose, onSelectEvent, apiEndpoint = '/api/events' }) => {
   const dispatch = useDispatch();
   const { events: allEvents = [], loading: eventsLoading } = useSelector(state => state.events);
+  const theme = useTheme();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -73,13 +75,13 @@ const EventSelectorModal = ({ open, onClose, onSelectEvent, apiEndpoint = '/api/
     <Dialog 
       open={open} 
       onClose={onClose} 
-      maxWidth="lg" 
+      maxWidth="lg"
       fullWidth
       PaperProps={{
         sx: { minHeight: '600px' }
       }}
     >
-      <DialogTitle>
+      <DialogTitle color={theme.palette.primary.main}>
         Selecione um Evento para Gerenciar Convidados
       </DialogTitle>
       

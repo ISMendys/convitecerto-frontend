@@ -206,7 +206,7 @@ const LandingPage = () => {
             <Grid item xs={12} md={6}>
               <Box 
                 component="img"
-                src="/assets/convitecerto.svg"
+                src="/assets/logo.png"
                 alt="Convites Digitais App"
                 sx={{ 
                   width: '100%',
@@ -346,7 +346,7 @@ const LandingPage = () => {
             <Grid item xs={12} md={6}>
               <Box 
                 component="img"
-                src="/assets/convitecerto.svg"
+                src="/assets/logo.png"
                 alt="Como funciona"
                 sx={{ 
                   width: '100%',

@@ -11,7 +11,8 @@
     TextField, 
     Button, 
     Divider, 
-    Snackbar, 
+    Snackbar,
+    useMediaQuery,
     Alert,
     FormControl,
     InputLabel,
@@ -30,7 +31,7 @@
   import SmartphoneIcon from '@mui/icons-material/Smartphone';
   import TabletIcon from '@mui/icons-material/Tablet';
   import LaptopIcon from '@mui/icons-material/Laptop';
-
+  import PageTitle from '../../components/PageTitle';
   // Importando componentes
   import LoadingIndicator from '../../components/LoadingIndicator';
   import ConfirmDialog from '../../components/ConfirmDialog';
@@ -136,6 +137,7 @@
     const navigate = useNavigate();
     const { inviteId } = useParams();
     const dispatch = useDispatch();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     
     // Selecionando dados do Redux store
     const { events } = useSelector(state => state.events);
@@ -352,17 +354,12 @@
     return (
       <Box sx={{ py: 3, height: '100%' }}>
         <Container maxWidth="lg">
-          <Typography 
-            variant="h4" 
-            component="h1" 
-            gutterBottom
-            sx={{ 
-              fontWeight: 'bold',
-              mb: 3
-            }}
-          >
-            {inviteId ? 'Editar Convite' : 'Criar Novo Convite'}
-          </Typography>
+          <PageTitle
+              title={inviteId ? 'Editar Convite' : 'Criar Novo Convite'}
+              subtitle={'Crie convites, personalize do seu jeito.'}
+              alignRight={false}
+              mb={2}
+            />
           
           <Box sx={{ display: 'flex', flexDirection: 'row', gap: 3}}>
             {/* Lado esquerdo - Formulário com abas */}

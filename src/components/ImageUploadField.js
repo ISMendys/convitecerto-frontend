@@ -101,6 +101,22 @@ const ImageUploadField = ({
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       
+      const MAX_SIZE_MB = 8;
+      const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+      // 1. Verificar o tamanho do arquivo
+      if (file.size > MAX_SIZE_BYTES) {
+        setSnackbarMessage(`O arquivo é muito grande. O tamanho máximo é de ${MAX_SIZE_MB - 1}MB.`);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+
+        // Limpa o input de arquivo para que o usuário possa tentar novamente
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        return; // Impede a continuação do processo
+      }
+
       // Verificar se é uma imagem
       if (!file.type.startsWith('image/')) {
         setSnackbarMessage('Por favor, selecione apenas arquivos de imagem.');

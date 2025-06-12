@@ -13,6 +13,7 @@ import {
   Mail as MailIcon,
   Phone as PhoneIcon,
   Link as LinkIcon,
+  Message as  MessageIcon,
   Delete as DeleteIcon,
   Send as SendIcon
 } from '@mui/icons-material';
@@ -38,6 +39,7 @@ const stringToColor = (string) => {
  * @param {Object} props.guest - Dados do convidado
  * @param {Object} props.event - Dados do evento
  * @param {Function} props.onViewDetails - Função para visualizar detalhes
+ * @param {Function} props.handleOpenSendMessageDialog - Função para enviar mensagem personalizada
  * @param {Function} props.onMenuOpen - Função para abrir menu de ações
  */
 // const GuestCard = ({ guest, event, onViewDetails, onMenuOpen }) => {
@@ -45,10 +47,11 @@ const GuestCard = ({
     guest, 
     selected, 
     onSelect, 
-    onMenuOpen, 
+    onMenuOpen,
+    handleOpenSendMessageDialog,
     onDelete,
     groups,
-    eventId,
+    event,
     navigate,
     // Adicionar props para feedback (snackbar)
     showSnackbar // Ex: (message, severity) => void
@@ -57,6 +60,14 @@ const GuestCard = ({
     const dispatch = useDispatch(); // Adicionar dispatch
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [isSending, setIsSending] = useState(false); // Adicionar estado de envio
+    
+    const formatDate = (dateString) => {
+      return new Date(dateString).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    };
     
     // Obter texto do status
     const getStatusText = (status) => {
@@ -119,7 +130,7 @@ const GuestCard = ({
       setIsSending(true);
       try {
         // Mensagem padrão - pode ser personalizada ou vir de um diálogo/prop no futuro
-        const message = `Olá ${guest.name}, apenas um lembrete sobre nosso evento!`; 
+        const message = `Olá ${guest.name}, apenas um lembrete sobre nosso evento ${event.title}, dia ${formatDate(event.date)}`; 
         const payload = {
           guestId: guest.id,
           message: message
@@ -303,26 +314,51 @@ const GuestCard = ({
           
           {/* Adicionar grupo de botões de ação */}
           <Box>
-            <Tooltip title="Enviar Mensagem WhatsApp">
-              {/* Envolver o botão com span para o tooltip funcionar quando desabilitado */}
-              <span> 
-                <IconButton 
-                  size="small" 
-                  color="primary"
-                  onClick={handleSendIndividualMessage}
-                  disabled={isSending || !guest.phone} // Desabilitar se enviando ou sem telefone
-                  sx={{
-                    mr: 1, // Adicionar margem à direita
-                    bgcolor: isSending ? alpha(theme.palette.action.disabledBackground, 0.5) : alpha(theme.palette.primary.main, 0.1),
-                    '&:hover': {
-                      bgcolor: !isSending ? alpha(theme.palette.primary.main, 0.2) : undefined,
-                    },
-                  }}
-                >
-                  {isSending ? <CircularProgress size={16} /> : <SendIcon fontSize="small" sx={{color: theme.palette.success.main}}/>}
-                </IconButton>
-              </span>
-            </Tooltip>
+          {/* Botão para Mensagem Personalizada */}
+          <Tooltip title="Enviar Mensagem Personalizada">
+            <span>
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => {
+                  onSelect(guest.id);
+                  handleOpenSendMessageDialog(true);
+                }}
+                disabled={isSending || !guest.phone} // Desabilitar se enviando ou sem telefone
+                sx={{
+                  mr: 2,
+                  bgcolor: isSending ? alpha(theme.palette.action.disabledBackground, 0.5) : alpha(theme.palette.primary.main, 0.1),
+                  '&:hover': {
+                    bgcolor: !isSending ? alpha(theme.palette.primary.main, 0.2) : undefined,
+                  },
+                }}
+              >
+                {/* Usar um ícone diferente para diferenciar a ação */}
+                <MessageIcon fontSize="small" /> 
+              </IconButton>
+            </span>
+          </Tooltip>
+
+          {/* Botão para Lembrete Simples */}
+          <Tooltip title="Enviar Lembrete do Convite">
+            <span>
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={handleSendIndividualMessage}
+                disabled={isSending || !guest.phone} // Desabilitar se enviando ou sem telefone
+                sx={{
+                  mr:1,
+                  bgcolor: isSending ? alpha(theme.palette.action.disabledBackground, 0.5) : alpha(theme.palette.primary.main, 0.1),
+                  '&:hover': {
+                    bgcolor: !isSending ? alpha(theme.palette.primary.main, 0.2) : undefined,
+                  },
+                }}
+              >
+                {isSending ? <CircularProgress size={16} /> : <SendIcon fontSize="small" sx={{ color: theme.palette.success.main }} />}
+              </IconButton>
+            </span>
+          </Tooltip>
             
             <Tooltip title="Excluir convidado">
               <IconButton 
