@@ -119,10 +119,10 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
   const theme = useTheme();
 
   useEffect(() => {
-    if (openMobile && onMobileClose) {
+    if (onMobileClose) {
       onMobileClose();
     }
-  }, [location.pathname, onMobileClose, openMobile]);
+  }, [location.pathname]);
 
   const handleSettings = () => {
     setConfigModalOpen(true);
@@ -343,6 +343,9 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
               width: 280,
               top: 72, // Altura do header
               height: 'calc(100% - 72px)',
+              borderRight: 'none',
+              boxShadow: '4px 0px 12px rgba(0,0,0,0.1)',
+              zIndex: (theme) => theme.zIndex.appBar - 1,
               borderRight: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
               boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
             }

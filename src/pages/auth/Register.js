@@ -140,7 +140,7 @@ const Register = () => {
           width: '100%',
           maxWidth: '1200px',
           margin: '0 auto',
-          display: 'flex',
+          display: { xs: '', md: 'flex' },
           flexDirection: { xs: 'column', md: 'row' },
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -202,7 +202,7 @@ const Register = () => {
             
             <Box
               sx={{
-                display: { xs: 'none', md: 'flex' },
+                display: { md: 'flex', xs: 'none' },
                 alignItems: 'center',
                 mt: 8
               }}

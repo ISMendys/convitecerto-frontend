@@ -466,46 +466,47 @@ const EventCreate = () => {
             icon={<EventIcon />}
           >
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
-              <StyledTextField
-                label="Título do Evento"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                error={!!formErrors.title}
-                helperText={formErrors.title}
-                startIcon={<EventIcon />}
-              />
-              
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                <DateTimePicker
-                  label="Data e Hora"
-                  value={formData.date}
-                  onChange={handleDateChange}
-                  renderInput={(params) => (
-                    <TextField 
-                      {...params} 
-                      fullWidth 
-                      required
-                      error={!!formErrors.date}
-                      helperText={formErrors.date}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          transition: 'all 0.2s ease',
-                          '&:hover': { 
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)' 
-                          },
-                          '&.Mui-focused': {
-                            boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
-                          }
-                        }
-                      }}
-                    />
-                  )}
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                <StyledTextField
+                  label="Título do Evento"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                  error={!!formErrors.title}
+                  helperText={formErrors.title}
+                  startIcon={<EventIcon />}
+                  sx={{maxWidth: 600}}
                 />
-              </LocalizationProvider>
+                
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                  <DateTimePicker
+                    label="Data e Hora"
+                    value={formData.date}
+                    onChange={handleDateChange}
+                    renderInput={(params) => (
+                      <TextField 
+                        {...params} 
+                        fullWidth 
+                        required
+                        error={!!formErrors.date}
+                        helperText={formErrors.date}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            transition: 'all 0.2s ease',
+                            '&:hover': { 
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.08)' 
+                            },
+                            '&.Mui-focused': {
+                              boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
+                            }
+                          }
+                        }}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
               </Box>
               
               {/* Componente de seleção de localização com tema escuro */}

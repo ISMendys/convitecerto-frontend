@@ -164,31 +164,38 @@ const EventForm = () => {
       
       <Paper sx={{ p: 3, mb: 4 }}>
         <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <TextField
-                name="title"
-                label="Título do Evento"
-                value={formData.title}
-                onChange={handleChange}
-                fullWidth
-                required
-                variant="outlined"
-              />
-            </Grid>
+        <Box 
+          component="form" 
+          onSubmit={handleSubmit}
+          sx={{ display: 'flex', flexDirection: 'column', gap: 3 }} // gap substitui o spacing do Grid
+        >
+          <TextField
+            name="title"
+            label="Título do Evento"
+            value={formData.title}
+            onChange={handleChange}
+            fullWidth
+            required
+            variant="outlined"
+          />
+          
+          {/* Box aninhado para a linha de Data e Local */}
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
             
-            <Grid item xs={12} md={6}>
+            {/* Wrapper para controlar a largura do DateTimePicker */}
+            <Box >
               <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
                 <DateTimePicker
                   label="Data e Hora"
                   value={formData.date}
                   onChange={handleDateChange}
-                  renderInput={(params) => <TextField {...params} fullWidth required />}
+                  slotProps={{ textField: { fullWidth: true, required: true } }}
                 />
               </LocalizationProvider>
-            </Grid>
+            </Box>
             
-            <Grid item xs={12} md={6}>
+            {/* Wrapper para controlar a largura do campo Local */}
+            <Box sx={{ width: { xs: '100%', md: '35%' } }}>
               <TextField
                 name="location"
                 label="Local"
@@ -198,76 +205,72 @@ const EventForm = () => {
                 variant="outlined"
                 placeholder="Endereço ou link para evento online"
               />
-            </Grid>
+            </Box>
+          </Box>
+          
+          <FormControl fullWidth variant="outlined">
+            <InputLabel>Tipo de Evento</InputLabel>
+            <Select
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              label="Tipo de Evento"
+            >
+              <MenuItem value="birthday">Aniversário</MenuItem>
+              <MenuItem value="wedding">Casamento</MenuItem>
+              <MenuItem value="corporate">Corporativo</MenuItem>
+              <MenuItem value="party">Festa</MenuItem>
+              <MenuItem value="other">Outro</MenuItem>
+            </Select>
+          </FormControl>
+          
+          <TextField
+            name="description"
+            label="Descrição"
+            value={formData.description}
+            onChange={handleChange}
+            fullWidth
+            multiline
+            rows={4}
+            variant="outlined"
+          />
+          
+          <Divider sx={{ my: 2 }} />
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => navigate(-1)}
+            >
+              Cancelar
+            </Button>
             
-            <Grid item xs={12}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>Tipo de Evento</InputLabel>
-                <Select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  label="Tipo de Evento"
-                >
-                  <MenuItem value="birthday">Aniversário</MenuItem>
-                  <MenuItem value="wedding">Casamento</MenuItem>
-                  <MenuItem value="corporate">Corporativo</MenuItem>
-                  <MenuItem value="party">Festa</MenuItem>
-                  <MenuItem value="other">Outro</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                name="description"
-                label="Descrição"
-                value={formData.description}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={4}
-                variant="outlined"
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Divider sx={{ my: 2 }} />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Box>
+              {isEditMode && (
                 <Button
                   variant="outlined"
-                  color="inherit"
-                  onClick={() => navigate(-1)}
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => setDeleteDialogOpen(true)}
+                  sx={{ mr: 2 }}
                 >
-                  Cancelar
+                  Excluir
                 </Button>
-                
-                <Box>
-                  {isEditMode && (
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      startIcon={<DeleteIcon />}
-                      onClick={() => setDeleteDialogOpen(true)}
-                      sx={{ mr: 2 }}
-                    >
-                      Excluir
-                    </Button>
-                  )}
-                  
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    startIcon={loading ? <CircularProgress size={24} color="inherit" /> : <SaveIcon />}
-                    disabled={loading}
-                  >
-                    {loading ? 'Salvando...' : 'Salvar'}
-                  </Button>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
+              )}
+              
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                startIcon={loading ? <CircularProgress size={24} color="inherit" /> : <SaveIcon />}
+                disabled={loading}
+              >
+                {loading ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </Box>
+          </Box>
+        </Box>
         </form>
       </Paper>
       

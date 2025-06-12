@@ -6,7 +6,6 @@ import {
   Box,
   Container,
   Grid,
-  Divider,
   Snackbar,
   Alert,
   useMediaQuery,
@@ -20,24 +19,18 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Checkbox,
   Tooltip,
-  Badge,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Avatar,
-  Fade,
-  Chip,
   Menu,
   ListItemIcon,
   ListItemText,
   SpeedDial,
   SpeedDialAction,
-  SpeedDialIcon,
-  ButtonGroup
+  SpeedDialIcon
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -58,8 +51,9 @@ import {
   Send as SendIcon,
   Group as GroupIcon,
   ArrowUpward as ArrowUpwardIcon,
-  SyncAlt as SyncAltIcon,
-  ArrowDownward as ArrowDownwardIcon
+  SwapHoriz as SwapHorizIcon,
+  ArrowDownward as ArrowDownwardIcon,
+  ForwardToInbox as ForwardToInboxIcon
 } from '@mui/icons-material';
 import { fetchGuests, deleteGuest, updateGuestStatus } from '../../store/actions/guestActions';
 import { fetchInvites, linkGuestsToInvite } from '../../store/actions/inviteActions';
@@ -144,28 +138,38 @@ const GuestList = () => {
   
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
-    // Carregar convidados e convites quando o eventId estiver disponível
-    useEffect(() => {
-      console.log(currentEventData, currentEvent, 'DATA AQUIIIIIIII')
-      if (!eventId && !currentEventId && !currentEvent) {
-        setShowEventSelector(true);
-        return;
-      }
-      setShowEventSelector(false);
-      const fetchData = async () => {
-        setIsLoading(true);
-        try {
-          await Promise.all([
-            dispatch(fetchGuests(eventId || currentEventId || currentEvent?.id)),
-            dispatch(fetchInvites(eventId || currentEventId || currentEvent?.id))
-          ]);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchData();
+  useEffect(() => {
+    // Verificamos se bulkAction tem um valor para evitar rodar na montagem inicial
+    if (bulkAction) {
+      handleBulkAction();
       
-    }, [dispatch, currentEventId]);
+      // Opcional: Limpar a ação depois de executada
+      setBulkAction(''); 
+    }
+  }, [bulkAction]);
+
+  // Carregar convidados e convites quando o eventId estiver disponível
+  useEffect(() => {
+    console.log(currentEventData, currentEvent, 'DATA AQUIIIIIIII')
+    if (!eventId && !currentEventId && !currentEvent) {
+      setShowEventSelector(true);
+      return;
+    }
+    setShowEventSelector(false);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          dispatch(fetchGuests(eventId || currentEventId || currentEvent?.id)),
+          dispatch(fetchInvites(eventId || currentEventId || currentEvent?.id))
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+    
+  }, [dispatch, currentEventId]);
 
   // Função para lidar com a seleção de evento no modal
   const handleEventSelect = (selectedEventId, eventData) => {
@@ -352,7 +356,7 @@ const GuestList = () => {
       return;
     }
     
-    setMessageText(`Olá! Gostaria de confirmar sua presença no evento ${currentEvent?.title || 'nosso evento'}. Por favor, acesse o link do convite para responder.`);
+    setMessageText(`Olá! Gostaria de confirmar sua presença no evento ${currentEventData?.title || currentEvent?.title || 'nosso evento'}. Por favor, acesse o link do convite para responder.`);
     setSendMessageDialogOpen(true);
     setSpeedDialOpen(false);
   };
@@ -709,7 +713,6 @@ const GuestList = () => {
       name: 'Confirmar Todos', 
       action: () => {
         setBulkAction('status');
-        handleBulkAction();
       },
       color: theme.palette.success.main
     },
@@ -718,7 +721,6 @@ const GuestList = () => {
       name: 'Excluir Todos', 
       action: () => {
         setBulkAction('delete');
-        handleBulkAction();
       },
       color: theme.palette.error.main
     },
@@ -775,7 +777,7 @@ const GuestList = () => {
               <Button 
                 variant="outlined" 
                 onClick={handleChangeEvent}
-                startIcon={<SyncAltIcon />}
+                startIcon={<SwapHorizIcon />}
               >
                 Trocar Evento
               </Button>
@@ -783,10 +785,10 @@ const GuestList = () => {
           </Box>
           {/* Título e subtítulo à direita */}
           <PageTitle
-            title={currentEvent?.title || 'Lista de Convidados'}
-            subtitle={`${currentEvent?.title || 'Evento'} - ${guests.length} convidados`}
+            title={currentEventData?.title || currentEvent?.title || 'Lista de Convidados'}
+            subtitle={`${currentEventData?.title || currentEvent?.title || 'Evento'} - ${guests.length} convidados`}
             alignRight={true}
-            sx={{mb: 5, ml:75}}
+            sx={{mb: 5, ml:'35%'}}
           />
         </Box>
         <>
@@ -994,7 +996,7 @@ const GuestList = () => {
                   {/* Botão Importar */}
                   <Button
                     variant="contained"
-                    color="warning"
+                    color="primary"
                     startIcon={<FileUploadIcon />}
                     onClick={() => setImportDialogOpen(true)}
                     size="small"
@@ -1015,7 +1017,7 @@ const GuestList = () => {
                   {/* Botão Adicionar Convidado */}
                   <Button
                     variant="contained"
-                    color="success"
+                    color="primary"
                     startIcon={<AddIcon />}
                     onClick={() => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/new`)}
                     size="small"
@@ -1031,6 +1033,29 @@ const GuestList = () => {
                     }}
                   >
                     Adicionar
+                  </Button>
+
+                  {/* Botão Convidar */}
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<ForwardToInboxIcon />}
+                    onClick={() => {
+                      setBulkAction('message');
+                    }}
+                    size="small"
+                    sx={{
+                      borderRadius: 10,
+                      fontWeight: 600,
+                      boxShadow: '0 4px 12px rgba(76, 175, 80, 0.2)',
+                      background: `linear-gradient(45deg, ${theme.palette.secondary.main} 20%, ${theme.palette.error.main} 90%)`,
+                      '&:hover': {
+                        boxShadow: '0 6px 16px rgba(76, 175, 80, 0.3)',
+                        transform: 'translateY(-2px)'
+                      }
+                    }}
+                  >
+                    Convidar
                   </Button>
                   
                   {selectedGuests.length > 0 && (
@@ -1209,36 +1234,15 @@ const GuestList = () => {
           <DialogContentText sx={{ mb: 3 }}>
             Escolha uma ação para aplicar aos convidados selecionados:
           </DialogContentText>
-          <Button
-                fullWidth
-                variant="contained"
-                color="success"
-                startIcon={<CheckCircleIcon />}
-                onClick={() => {
-                  setBulkAction('status');
-                  handleBulkAction();
-                }}
-                sx={{ 
-                  borderRadius: 2,
-                  py: 1.5,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.2)',
-                  background: `linear-gradient(45deg, ${theme.palette.success.main} 30%, ${theme.palette.success.light} 90%)`,
-                }}
-              >
-                Confirmar Todos
-              </Button>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
                 fullWidth
                 variant="contained"
-                color="success"
+                color="primary"
                 startIcon={<CheckCircleIcon />}
                 onClick={() => {
                   setBulkAction('status');
-                  handleBulkAction();
                 }}
                 sx={{ 
                   borderRadius: 2,
@@ -1255,11 +1259,10 @@ const GuestList = () => {
               <Button
                 fullWidth
                 variant="contained"
-                color="error"
+                color="primary"
                 startIcon={<DeleteIcon />}
                 onClick={() => {
                   setBulkAction('delete');
-                  handleBulkAction();
                 }}
                 sx={{ 
                   borderRadius: 2,
@@ -1282,7 +1285,6 @@ const GuestList = () => {
                 startIcon={<LinkIcon />}
                 onClick={() => {
                   setBulkAction('link');
-                  handleBulkAction();
                 }}
                 sx={{ 
                   borderRadius: 2,
@@ -1299,11 +1301,10 @@ const GuestList = () => {
               <Button
                 fullWidth
                 variant="contained"
-                color="info"
+                color="primary"
                 startIcon={<SendIcon />}
                 onClick={() => {
                   setBulkAction('message');
-                  handleBulkAction();
                 }}
                 sx={{ 
                   borderRadius: 2,
@@ -1326,7 +1327,6 @@ const GuestList = () => {
                 startIcon={<FileDownloadIcon />}
                 onClick={() => {
                   setBulkAction('export');
-                  handleBulkAction();
                 }}
                 sx={{ 
                   borderRadius: 2,
@@ -1464,7 +1464,6 @@ const GuestList = () => {
           <TextField
             fullWidth
             multiline
-            // rows={4}
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             label="Mensagem"
@@ -1476,7 +1475,7 @@ const GuestList = () => {
             <Button
               variant="contained"
               startIcon={<WhatsAppIcon />}
-              color="success"
+              color="primary"
               fullWidth
               onClick={handleSendMessage}
               sx={{ 

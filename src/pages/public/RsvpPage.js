@@ -264,21 +264,21 @@ const RsvpPage = () => {
   };
 
   // Monitorar mudanças no status de RSVP
-  const prevRsvpLoading = useRef(rsvpLoading);
-  useEffect(() => {
-    if (prevRsvpLoading.current && !rsvpLoading) {
-      if (rsvpError) {
-        setSnackbarMessage(`Erro ao registrar resposta: ${rsvpError}`);
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-      } else {
-        setSnackbarMessage(messageStatus || 'Sua resposta foi registrada com sucesso!');
-        setSnackbarSeverity('success');
-        setSnackbarOpen(true);
-      }
-    }
-    prevRsvpLoading.current = rsvpLoading;
-  }, [rsvpLoading, rsvpError, messageStatus]);
+  // const prevRsvpLoading = useRef(rsvpLoading);
+  // useEffect(() => {
+  //   if (prevRsvpLoading.current && !rsvpLoading) {
+  //     if (rsvpError) {
+  //       setSnackbarMessage(`Erro ao registrar resposta: ${rsvpError}`);
+  //       setSnackbarSeverity('error');
+  //       setSnackbarOpen(true);
+  //     } else {
+  //       setSnackbarMessage(messageStatus || 'Sua resposta foi registrada com sucesso!');
+  //       setSnackbarSeverity('success');
+  //       setSnackbarOpen(true);
+  //     }
+  //   }
+  //   prevRsvpLoading.current = rsvpLoading;
+  // }, [rsvpLoading, rsvpError, messageStatus]);
 
   // Lógica de renderização
 

@@ -245,99 +245,100 @@ const LocationSelector = ({
       
 
       <Box
-  sx={{
-    display: 'flex',
-    gap: 2,             // espaçamento entre os campos
-    flexWrap: 'nowrap', // força todos na mesma linha
-    width: '100%',
-    '& > div': {
-      flex: 1,          // cada filho ocupa igual espaço
-      minWidth: 0       // permite que encolha corretamente
-    }
-  }}
->
-  {/* Estado */}
-  <Box>
-    <SelectBrasil.Estados
-      placeholder="Selecione o estado"
-      value={selectedEstado}
-      onChange={handleEstadoChange}
-      styles={customStyles}
-      isClearable
-      isSearchable
-      noOptionsMessage={() => "Nenhum estado encontrado"}
-      loadingMessage={() => "Carregando..."}
-    />
-  </Box>
-
-  {/* Cidade */}
-  <Box>
-    <SelectBrasil.Cidades
-      placeholder="Selecione a cidade"
-      estado={selectedEstado?.value || ''}
-      value={selectedCidade}
-      onChange={handleCidadeChange}
-      styles={customStyles}
-      isDisabled={!selectedEstado}
-      isClearable
-      isSearchable
-      noOptionsMessage={() =>
-        selectedEstado ? "Nenhuma cidade encontrada" : "Selecione um estado primeiro"
-      }
-      loadingMessage={() => "Carregando..."}
-    />
-  </Box>
-
-  {/* Rua */}
-  <Box>
-    <TextField
-      fullWidth
-      label="Rua, número, bairro"
-      value={value.rua || ''}
-      onChange={handleRuaChange}
-      placeholder="Ex: Av. Brasil, 123 - Centro"
-      disabled={!selectedCidade}
-      required={required}
-      error={!!error}
-      helperText={error ? helperText : ''}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <HomeIcon color="primary" />
-          </InputAdornment>
-        ),
-      }}
-      sx={{
-        '& .MuiOutlinedInput-root': {
-          height: '56px',
-          borderRadius: theme.shape.borderRadius,
-          transition: 'all 0.2s ease',
-          backgroundColor: theme.palette.background.paper,
-          '&:hover': {
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            backgroundColor: alpha(theme.palette.background.paper, 0.9),
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: theme.palette.primary.main,
-            borderWidth: 2
-          },
-          '&:hover fieldset': {
-            borderColor: theme.palette.primary.main
-          },
-          '&.Mui-disabled': {
-            backgroundColor: alpha(theme.palette.background.paper, 0.7),
+        sx={{
+          flexDirection: { xs: 'column', sm: 'row' },
+          display: 'flex',
+          gap: 2,             // espaçamento entre os campos
+          flexWrap: 'nowrap', // força todos na mesma linha
+          width: '100%',
+          '& > div': {
+            flex: 1,          // cada filho ocupa igual espaço
+            minWidth: 0       // permite que encolha corretamente
           }
-        },
-        '& .MuiInputLabel-root': {
-          color: theme.palette.text.secondary,
-          '&.Mui-focused': {
-            color: theme.palette.primary.main,
-          }
-        }
-      }}
-    />
-  </Box>
-</Box>
+        }}
+      >
+        {/* Estado */}
+        <Box>
+          <SelectBrasil.Estados
+            placeholder="Selecione o estado"
+            value={selectedEstado}
+            onChange={handleEstadoChange}
+            styles={customStyles}
+            isClearable
+            isSearchable
+            noOptionsMessage={() => "Nenhum estado encontrado"}
+            loadingMessage={() => "Carregando..."}
+          />
+        </Box>
+
+        {/* Cidade */}
+        <Box>
+          <SelectBrasil.Cidades
+            placeholder="Selecione a cidade"
+            estado={selectedEstado?.value || ''}
+            value={selectedCidade}
+            onChange={handleCidadeChange}
+            styles={customStyles}
+            isDisabled={!selectedEstado}
+            isClearable
+            isSearchable
+            noOptionsMessage={() =>
+              selectedEstado ? "Nenhuma cidade encontrada" : "Selecione um estado primeiro"
+            }
+            loadingMessage={() => "Carregando..."}
+          />
+        </Box>
+
+        {/* Rua */}
+        <Box>
+          <TextField
+            fullWidth
+            label="Rua, número, bairro"
+            value={value.rua || ''}
+            onChange={handleRuaChange}
+            placeholder="Ex: Av. Brasil, 123 - Centro"
+            disabled={!selectedCidade}
+            required={required}
+            error={!!error}
+            helperText={error ? helperText : ''}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <HomeIcon color="primary" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                height: '56px',
+                borderRadius: theme.shape.borderRadius,
+                transition: 'all 0.2s ease',
+                backgroundColor: theme.palette.background.paper,
+                '&:hover': {
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  backgroundColor: alpha(theme.palette.background.paper, 0.9),
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: theme.palette.primary.main,
+                  borderWidth: 2
+                },
+                '&:hover fieldset': {
+                  borderColor: theme.palette.primary.main
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: alpha(theme.palette.background.paper, 0.7),
+                }
+              },
+              '& .MuiInputLabel-root': {
+                color: theme.palette.text.secondary,
+                '&.Mui-focused': {
+                  color: theme.palette.primary.main,
+                }
+              }
+            }}
+          />
+        </Box>
+      </Box>
       
       {error && (
         <FormHelperText error sx={{ ml: 2, mt: 0.5 }}>
