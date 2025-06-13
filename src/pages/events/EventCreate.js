@@ -290,7 +290,6 @@ const EventCreate = () => {
     
     // Preparar dados da localização
     const locationData = formData.location.completo;
-    console.log('Dados da localização:', formData);
     return {
       ...formData,
       image: imageData,
@@ -315,8 +314,6 @@ const EventCreate = () => {
       const eventData = prepareFormData();
       
       if (eventId) {
-        console.log('Dados do evento:', eventData);
-        console.log('ID do evento:', eventId);
         await dispatch(updateEvent({ id: eventId, eventData })).unwrap();
         setSnackbarMessage('Evento atualizado com sucesso!');
       } else {

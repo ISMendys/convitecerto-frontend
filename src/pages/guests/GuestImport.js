@@ -209,10 +209,8 @@ const GuestImport = ({ open, onClose, eventId, onSuccess }) => {
       // Preparar o FormData para envio
       const formData = new FormData();
       formData.append('file', file);
-      console.log('file ID:', file);
       formData.append('eventId', eventId);
       formData.append('mappings', JSON.stringify(mappings));
-      console.log('mappings:', formData);
       const response = await dispatch(importGuests(formData)).unwrap();
 
       const status = getImportStatus(response); 

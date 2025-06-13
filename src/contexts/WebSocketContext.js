@@ -29,7 +29,8 @@ export const WebSocketProvider = ({ children }) => {
 
     // URL do backend - ajuste conforme necessário
     const SOCKET_URL = process.env.REACT_APP_API_URL.replace('api/', '') || 'http://localhost:5000/';
-    
+    console.log(SOCKET_URL, 'SOCKET_URL')
+    console.log(process.env.REACT_APP_API_URL, 'REACT_APP_API_URL')
     console.log('Conectando ao WebSocket...', SOCKET_URL);
 
     const newSocket = io(SOCKET_URL, {
