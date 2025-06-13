@@ -75,7 +75,6 @@ const geocodeLocation = async (location) => {
   try {
     // Limpar e formatar o endereço
     const cleanLocation = location.trim();
-    console.log('minha loccc', cleanLocation)
     // Primeiro, tentar busca estruturada se possível
     const parts = cleanLocation.split(',').map(part => part.trim());
     

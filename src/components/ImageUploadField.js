@@ -69,7 +69,6 @@ const ImageUploadField = ({
       url: newType === 'url' ? value.url : '',
       base64: newType === 'file' ? value.base64 : ''
     });
-    console.log('Tipo de upload alterado:', value);
     // Atualizar preview
     if (newType === 'url') {
       setPreview(value.url);

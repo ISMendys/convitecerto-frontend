@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
-
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Container,
@@ -42,8 +42,7 @@ import {
   Cancel as CancelIcon
 } from '@mui/icons-material';
 import InvitePreviewCard from '../../components/InvitePreviewCard';
-import { ColorModeContext } from '../../theme/ThemeConfig';
-import LogoAnimation from '../../components/logoAnimation/AnimationLogo';
+import { setTheme } from '../../store/slices/configSlice';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 
@@ -361,8 +360,6 @@ const ModernLandingPage = () => {
   const howItWorksRef = useRef(null);
   const demoRef = useRef(null);
 
-  const colorMode = useContext(ColorModeContext);
-
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -475,7 +472,7 @@ const ModernLandingPage = () => {
             <IconButton
                 edge="end"
                 color="inherit"
-                onClick={colorMode.toggleColorMode}
+                onClick={() => dispatch(setTheme(theme.palette.mode === 'dark' ? 'light' : 'dark'))}
             >
                 {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
             </IconButton>

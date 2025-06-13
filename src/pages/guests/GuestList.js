@@ -150,7 +150,6 @@ const GuestList = () => {
 
   // Carregar convidados e convites quando o eventId estiver disponível
   useEffect(() => {
-    console.log(currentEventData, currentEvent, 'DATA AQUIIIIIIII')
     if (!eventId && !currentEventId && !currentEvent) {
       setShowEventSelector(true);
       return;

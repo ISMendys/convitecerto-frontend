@@ -21,7 +21,8 @@ export const updateUserConfig = createAsyncThunk(
   'config/updateUserConfig',
   async (configData, { rejectWithValue }) => {
     try {
-      const response = await api.put('/users/config', configData);
+      const { id, updatedAt, createdAt,userId, ...dataToSend } = configData;
+      const response = await api.put('/users/config', dataToSend);
       return response.data;
     } catch (error) {
       return rejectWithValue(

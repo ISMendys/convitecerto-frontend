@@ -99,7 +99,6 @@ export const guestService = {
 
   // Importa todos os convidados de um csv
   importGuests: async (formData) => {
-    console.log('Importando convidados...', formData);
     const response = await api.post(`/guest/import-csv`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

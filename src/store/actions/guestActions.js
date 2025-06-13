@@ -112,7 +112,6 @@ export const importGuests = createAsyncThunk(
   'guests/importGuests',
   async (formData, { rejectWithValue }) => {
     try {
-      console.log('Importando convidados...', formData);
       const response = await guestService.importGuests(formData);
       return response;
     } catch (error) {

@@ -33,6 +33,7 @@ import RestoreIcon from '@mui/icons-material/RestoreOutlined';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { 
   setTheme, 
+  setThemeStyle,
   setInterfaceDensity, 
   setFontSize, 
   setNotifications, 
@@ -43,6 +44,7 @@ import {
   resetConfig
 } from '../../store/slices/configSlice';
 import { updateUserConfig } from '../../store/actions/configActions';
+import NotificationSettings from '../notifications/NotificationSettings';
 
 // Componente TabPanel para as abas
 function TabPanel(props) {
@@ -116,6 +118,7 @@ const ConfigModal = ({ open, onClose }) => {
       setLoading(true);
       // Atualizar configurações no Redux
       dispatch(setTheme(localConfig.theme));
+      dispatch(setThemeStyle(localConfig.themeStyle));
       dispatch(setInterfaceDensity(localConfig.interfaceDensity));
       dispatch(setFontSize(localConfig.fontSize));
       dispatch(setNotifications(localConfig.notifications));
@@ -146,6 +149,7 @@ const ConfigModal = ({ open, onClose }) => {
     dispatch(resetConfig());
     setLocalConfig({
       theme: 'light',
+      themeStyle: 'purple',
       notifications: true,
       emailNotifications: true,
       interfaceDensity: 'default',
@@ -157,7 +161,7 @@ const ConfigModal = ({ open, onClose }) => {
   };
 
   return (
-    <Dialog 
+  <Dialog 
       open={open} 
       onClose={onClose}
       fullWidth
@@ -166,7 +170,8 @@ const ConfigModal = ({ open, onClose }) => {
         elevation: 5,
         sx: {
           borderRadius: 2,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          height: '700px' // <-- Defina uma altura fixa aqui (ajuste o valor conforme necessário)
         }
       }}
     >
@@ -225,8 +230,32 @@ const ConfigModal = ({ open, onClose }) => {
           <Box sx={{ mb: 3 }}>
             <FormControl component="fieldset">
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <FormLabel component="legend" sx={{ fontWeight: 500 }}>Tema</FormLabel>
-                <Tooltip title="Escolha o tema da interface">
+                <FormLabel component="legend" sx={{ fontWeight: 500 }}>Estilo do Tema</FormLabel>
+                <Tooltip title="Escolha o estilo visual da interface">
+                  <IconButton size="small" sx={{ ml: 1, opacity: 0.7 }}>
+                    <InfoOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <RadioGroup
+                row
+                name="themeStyle"
+                value={localConfig.themeStyle}
+                onChange={handleChange('themeStyle')}
+              >
+                <FormControlLabel value="purple" control={<Radio />} label="Roxo (Customizado)" />
+                <FormControlLabel value="blue" control={<Radio />} label="Azul (Material-UI)" />
+              </RadioGroup>
+            </FormControl>
+          </Box>
+          
+          <Divider sx={{ my: 2 }} />
+          
+          <Box sx={{ mb: 3 }}>
+            <FormControl component="fieldset">
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <FormLabel component="legend" sx={{ fontWeight: 500 }}>Modo do Tema</FormLabel>
+                <Tooltip title="Escolha entre claro, escuro ou seguir o sistema">
                   <IconButton size="small" sx={{ ml: 1, opacity: 0.7 }}>
                     <InfoOutlinedIcon fontSize="small" />
                   </IconButton>
@@ -247,7 +276,7 @@ const ConfigModal = ({ open, onClose }) => {
           
           <Divider sx={{ my: 2 }} />
           
-          <Box sx={{ mb: 3 }}>
+          {/* <Box sx={{ mb: 3 }}>
             <FormControl component="fieldset">
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <FormLabel component="legend" sx={{ fontWeight: 500 }}>Densidade da Interface</FormLabel>
@@ -296,7 +325,7 @@ const ConfigModal = ({ open, onClose }) => {
                 valueLabelDisplay="auto"
               />
             </Box>
-          </Box>
+          </Box> */}
           
           <Divider sx={{ my: 2 }} />
           
@@ -356,51 +385,7 @@ const ConfigModal = ({ open, onClose }) => {
         
         {/* Aba Notificações */}
         <TabPanel value={tabValue} index={1}>
-          <Box sx={{ mb: 3 }}>
-            <FormControl component="fieldset">
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <FormLabel component="legend" sx={{ fontWeight: 500 }}>Notificações</FormLabel>
-                <Tooltip title="Configurações de notificações no aplicativo">
-                  <IconButton size="small" sx={{ ml: 1, opacity: 0.7 }}>
-                    <InfoOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={localConfig.notifications}
-                    onChange={handleChange('notifications')}
-                  />
-                }
-                label="Ativar notificações no aplicativo"
-              />
-            </FormControl>
-          </Box>
-          
-          <Divider sx={{ my: 2 }} />
-          
-          <Box sx={{ mb: 3 }}>
-            <FormControl component="fieldset">
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <FormLabel component="legend" sx={{ fontWeight: 500 }}>Notificações por Email</FormLabel>
-                <Tooltip title="Configurações de notificações por email">
-                  <IconButton size="small" sx={{ ml: 1, opacity: 0.7 }}>
-                    <InfoOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={localConfig.emailNotifications}
-                    onChange={handleChange('emailNotifications')}
-                  />
-                }
-                label="Receber notificações por email"
-              />
-            </FormControl>
-          </Box>
+          <NotificationSettings />
         </TabPanel>
         
         {/* Aba Privacidade */}

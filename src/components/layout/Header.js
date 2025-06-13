@@ -11,7 +11,6 @@ import {
   Button,
   useMediaQuery,
   Tooltip,
-  Badge,
   Fade,
   Divider,
   ListItemIcon,
@@ -21,7 +20,6 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTheme, alpha } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
-import NotificationsIcon from '@mui/icons-material/NotificationsOutlined';
 import { logoutUser } from '../../store/actions/authActions';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
@@ -29,11 +27,10 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import SettingsIcon from '@mui/icons-material/Settings';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import { ColorModeContext } from '../../theme/ThemeConfig';
 import ConfigModal from '../config/ConfigModal';
-import LogoAnimation from '../logoAnimation/AnimationLogo';
-// Importação do logo (caminho relativo à raiz do projeto)
-// Nota: Ajuste o caminho conforme a estrutura do seu projeto
+import NotificationDropdown from '../notifications/NotificationDropdown';
+import { setTheme } from '../../store/slices/configSlice';
+
 import logoImage from '../../assets/logo.png';
 
 const Header = ({ onMobileNavOpen }) => {
@@ -41,8 +38,6 @@ const Header = ({ onMobileNavOpen }) => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const { user } = useSelector(state => state.auth);
-  
-  const colorMode = useContext(ColorModeContext);
   
   const [anchorEl, setAnchorEl] = useState(null);
   const [configModalOpen, setConfigModalOpen] = useState(false);
@@ -226,7 +221,7 @@ const Header = ({ onMobileNavOpen }) => {
               <IconButton
                 edge="end"
                 color="inherit"
-                onClick={colorMode.toggleColorMode}
+                onClick={() => dispatch(setTheme(theme.palette.mode === 'dark' ? 'light' : 'dark'))}
                 sx={{
                   borderRadius: '50%',
                   p: 1,
@@ -244,38 +239,8 @@ const Header = ({ onMobileNavOpen }) => {
               </IconButton>
             </Tooltip>
             
-            {/* Ícone de notificações */}
-            <Tooltip title="Notificações">
-              <IconButton 
-                color="inherit" 
-                sx={{
-                  borderRadius: '50%',
-                  p: 1,
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-              >
-                <Badge 
-                  badgeContent={3} 
-                  color="error"
-                  sx={{
-                    '& .MuiBadge-badge': {
-                      animation: 'pulse 2s infinite',
-                      '@keyframes pulse': {
-                        '0%': { transform: 'scale(0.95)' },
-                        '70%': { transform: 'scale(1)' },
-                        '100%': { transform: 'scale(0.95)' }
-                      }
-                    }
-                  }}
-                >
-                  <NotificationsIcon sx={{ color: theme.palette.primary.main }} />
-                </Badge>
-              </IconButton>
-            </Tooltip>
+            {/* Componente de notificações */}
+            <NotificationDropdown />
             
             {/* Perfil do usuário */}
             <Button
