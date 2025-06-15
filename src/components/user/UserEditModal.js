@@ -147,6 +147,7 @@ const UserEditModal = ({ open, onClose }) => {
     try {
       await dispatch(updateUserProfile(profileData)).unwrap();
       setSaveStatus({ success: true, error: null });
+      onClose()
       setTimeout(() => {
         setSaveStatus({ success: false, error: null });
       }, 3000);

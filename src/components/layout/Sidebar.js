@@ -170,7 +170,7 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
   const content = (
     <Box
       sx={{
-        mt: isMobile ? 9 : 0,
+        mt: 0, // Removendo margem top desnecessária
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -364,10 +364,15 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
               width: 280,
               borderRadius: '0 16px 16px 0',
               boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+              zIndex: theme.zIndex.drawer + 1,
+              height: '100vh'
             }
           }}
           ModalProps={{
-            keepMounted: true // Melhor desempenho em dispositivos móveis
+            keepMounted: true, // Melhor desempenho em dispositivos móveis
+            sx: {
+              zIndex: theme.zIndex.drawer
+            }
           }}
         >
           {content}
@@ -383,13 +388,13 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
           PaperProps={{
             sx: {
               width: 280,
+              position: 'fixed',
               top: 72, // Altura do header
-              height: 'calc(100% - 72px)',
-              borderRight: 'none',
-              boxShadow: '4px 0px 12px rgba(0,0,0,0.1)',
-              zIndex: (theme) => theme.zIndex.appBar - 1,
+              height: 'calc(100vh - 72px)', // Altura total menos header
               borderRight: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
               boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
+              zIndex: theme.zIndex.drawer,
+              overflow: 'hidden'
             }
           }}
         >

@@ -38,7 +38,7 @@ const Header = ({ onMobileNavOpen }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const theme = useTheme();
-  const { user } = useSelector(state => state.auth);
+
   const { profile } = useSelector((state) => state.user);
   
   const [anchorEl, setAnchorEl] = useState(null);
@@ -84,9 +84,9 @@ const Header = ({ onMobileNavOpen }) => {
             ? alpha(theme.palette.background.paper, 0.95)
             : alpha(theme.palette.background.paper, 0.98),
           color: 'text.primary',
-          position: 'sticky',
-          top: 0,
-          zIndex: theme.zIndex.drawer + 1,
+          position: 'static', // Mudança de sticky para static
+          width: '100%',
+          zIndex: theme.zIndex.appBar,
           backdropFilter: 'blur(10px)',
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
           boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
@@ -118,7 +118,7 @@ const Header = ({ onMobileNavOpen }) => {
               onClick={onMobileNavOpen}
               sx={{
                 mr: 2,
-                display: { md: 'none' },
+                display: { lg: 'none' }, // Mudança de md para lg
                 color: theme.palette.primary.main,
                 '&:hover': {
                   backgroundColor: alpha(theme.palette.primary.main, 0.1),

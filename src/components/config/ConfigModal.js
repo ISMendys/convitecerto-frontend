@@ -171,7 +171,7 @@ const ConfigModal = ({ open, onClose }) => {
       
       // Mostrar mensagem de sucesso
       setSaveStatus({ success: true, error: null });
-      
+      onClose()
       // Limpar mensagem após 3 segundos
       setTimeout(() => {
         setSaveStatus({ success: false, error: null });
