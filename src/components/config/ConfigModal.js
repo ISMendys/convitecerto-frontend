@@ -292,6 +292,7 @@ const ConfigModal = ({ open, onClose }) => {
         <AppBar 
           position="sticky" 
           sx={{ 
+            mt: 3,
             bgcolor: theme.palette.background.paper,
             color: theme.palette.text.primary,
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
