@@ -14,6 +14,7 @@ import EventList from './pages/events/EventList';
 import EventCreate from './pages/events/EventCreate';
 import EventDetail from './pages/events/EventDetail';
 import InviteCreate from './pages/invites/InviteCreate';
+import InviteCreate2 from './pages/invites2/InviteCreate';
 import InvitePreview from './pages/invites/InvitePreview';
 import GuestList from './pages/guests/GuestList';
 import GuestForm from './pages/guests/GuestForm';
@@ -85,6 +86,7 @@ const App = () => {
         <Route path="/events/:id/invite/preview" element={<InvitePreview />} />
         <Route path="/events/:eventId/invites/new" element={<InviteCreate />} />
         <Route path="/invites/new" element={<InviteCreate />} />
+        <Route path="/invites2/new" element={<InviteCreate2 />} />
         <Route path="/events/:eventId/invites/edit/:inviteId" element={<InviteCreate />} />
       </Route>
       
