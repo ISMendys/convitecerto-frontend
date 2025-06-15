@@ -99,7 +99,7 @@ const FeatureCard = styled(Card)(({ theme }) => ({
 
 const ScrollIndicator = styled(IconButton)(({ theme }) => ({
   position: 'absolute',
-  bottom: 40,
+  bottom: 60,
   left: '50%',
   transform: 'translateX(-50%)',
   color: theme.palette.common.white,
@@ -345,6 +345,7 @@ const ModernLandingPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [scrollY, setScrollY] = useState(0);
   const [isVisible, setIsVisible] = useState({
     hero: true,
@@ -496,7 +497,7 @@ const ModernLandingPage = () => {
         
         <ParallaxBox 
           offset={scrollY * -0.1} 
-          sx={{ 
+          sx={{
             bottom: '15%', 
             left: '10%', 
             width: '400px', 
@@ -519,43 +520,11 @@ const ModernLandingPage = () => {
             {/* ===== COLUNA 1: CONTEÚDO DE TEXTO E BOTÕES ===== */}
             <Box
                 sx={{
+                  mt: -9,
                   width: { xs: '100%', md: '70%' },
                   textAlign: { xs: 'center', md: 'left' },
                 }}
             >
-
-                <Box
-                  sx={{
-                      display: 'flex',
-                      flexDirection: 'column', 
-                      alignItems: { xs: 'center', md: 'flex-start' },
-                  }}
-                >
-                    {/* <Box sx={{
-                      ml: { xs: 0, sm: -6.5, md: -9.5 },
-                      mb: { xs: -12, sm: -8, md: 5},
-                      mt: { xs: -21, sm: -8, md: -12.5}
-                    }}>
-                      <LogoAnimation width={isMobile ? "50%" : "100%"} />
-                    </Box> */}
-{/*                     
-                    {!isMobile && (
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          color: 'common.white',
-                          opacity: 0.8,
-                          letterSpacing: 2,
-                          fontSize: { xs: '0.8rem', sm: '1rem', md: '1.2rem' },
-                          mt: 2,
-                        }}
-                      >
-                        CONVITECERTO
-                      </Typography>
-                    )} */}
-
-                </Box>
-
                 <Box sx={{ position: 'relative', mb: 3 }}>
                   <Typography
                       variant="h1"
