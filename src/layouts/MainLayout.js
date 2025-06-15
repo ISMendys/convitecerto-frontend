@@ -17,9 +17,7 @@ const MainLayoutRoot = styled('div')(({ theme }) => ({
   flexDirection: 'column',
   minHeight: '100vh',
   width: '100%',
-  backgroundColor: theme.palette.mode === 'dark' 
-    ? alpha(theme.palette.background.default, 0.98)
-    : alpha(theme.palette.background.default, 0.98),
+  backgroundColor: theme.palette.background.default, // Cor sólida ao invés de alpha
   overflow: 'hidden'
 }));
 
@@ -41,6 +39,7 @@ const ContentContainer = styled('div')(({ theme }) => ({
   marginTop: HEADER_HEIGHT,
   minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
   overflow: 'hidden',
+  backgroundColor: theme.palette.background.default, // Garantir fundo consistente
   
   // Desktop: margem para sidebar
   [theme.breakpoints.up('lg')]: {
@@ -59,17 +58,21 @@ const MainContent = styled('div')(({ theme }) => ({
 }));
 
 // Container scrollável do conteúdo
-const ScrollableContent = styled('div')({
+const ScrollableContent = styled('div')(({ theme }) => ({
   flex: 1,
   overflow: 'auto',
   WebkitOverflowScrolling: 'touch',
-  position: 'relative'
-});
+  position: 'relative',
+  backgroundColor: theme.palette.background.default, // Garantir fundo durante scroll
+  minHeight: '100%' // Garantir altura mínima
+}));
 
 // Container interno para padding e espaçamento
 const InnerContent = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
   minHeight: '100%',
+  backgroundColor: theme.palette.background.default, // Garantir fundo consistente
+  width: '100%', // Garantir largura total
   
   // Responsividade do padding
   [theme.breakpoints.down('sm')]: {
@@ -133,8 +136,22 @@ const MainLayout = () => {
           }}
         />
       )}
+      
+      {/* Fundo global para garantir consistência */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: theme.palette.background.default,
+          zIndex: -1 // Atrás de todos os elementos
+        }}
+      />
     </MainLayoutRoot>
   );
 };
 
 export default MainLayout;
+

@@ -292,9 +292,7 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
       {/* Seção de suporte */}
       <Box
         sx={{
-          p: 3,
-          mx: 2,
-          mb: 2,
+          padding: 2,
           borderRadius: 2,
           background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)}, ${alpha(theme.palette.secondary.main, 0.05)})`,
           boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
@@ -320,13 +318,13 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
             Precisa de ajuda?
           </Typography>
         </Box>
-        <Typography
+        {/* <Typography
           variant="body2"
           color="textSecondary"
           sx={{ mb: 2 }}
         >
           Nossa equipe está pronta para ajudar com qualquer dúvida.
-        </Typography>
+        </Typography> */}
         <Button
           component={NavLink}
           to="/support"
