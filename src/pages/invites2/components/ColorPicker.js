@@ -236,7 +236,7 @@ const ColorPicker = ({
           
           {/* Chip com cor selecionada */}
           <Chip
-            label={selectedColor.toUpperCase()}
+            label={selectedColor?.toUpperCase()}
             size="small"
             sx={{
               bgcolor: theme.palette.background.paper,
@@ -264,7 +264,7 @@ const ColorPicker = ({
           mb: 2
         }}>
           {presetColors.map((color, index) => (
-            <Tooltip key={index} title={color.toUpperCase()}>
+            <Tooltip key={index} title={color?.toUpperCase()}>
               <IconButton
                 onClick={() => applyColor(color)}
                 sx={{
