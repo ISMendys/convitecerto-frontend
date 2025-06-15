@@ -1,5 +1,4 @@
-// Arquivo InviteCreate.js com responsividade para mobile e correções de layout
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -25,7 +24,8 @@ import {
   Drawer,
   IconButton,
   AppBar,
-  Toolbar
+  Toolbar,
+  Fab
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import SaveIcon from '@mui/icons-material/Save';
@@ -38,6 +38,7 @@ import LaptopIcon from '@mui/icons-material/Laptop';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit';
 import PageTitle from '../../components/PageTitle';
 // Importando componentes
 import LoadingIndicator from '../../components/LoadingIndicator';
@@ -45,6 +46,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import ColorPicker from './components/ColorPicker';
 import FontPicker from './components/FontPicker';
 import InvitePreview from './components/InvitePreview';
+import FormContent from './components/FormContent';
 
 // Importando actions do Redux
 import { fetchEvents } from '../../store/actions/eventActions';
@@ -86,58 +88,79 @@ const StyledTabs = styled(Tabs)(({ theme }) => ({
   }
 }));
 
-// Componente FontPicker otimizado
-const OptimizedFontPicker = ({ value, onChange }) => {
-  const theme = useTheme();
+// Container para o formulário com tamanho fixo
+const FormContainer = styled(Paper)(({ theme }) => ({
+  borderRadius: 12,
+  border: `1px solid ${theme.palette.divider}`,
+  padding: theme.spacing(3),
+  width: '100%',
+  maxWidth: '450px', // Largura fixa para o formulário
+  height: 'fit-content',
+  maxHeight: '80vh', // Altura máxima
+  overflow: 'auto',
+  position: 'sticky',
+  top: theme.spacing(2),
+  [theme.breakpoints.down('md')]: {
+    maxWidth: '100%',
+    position: 'relative',
+    maxHeight: 'none'
+  },
+  '&::-webkit-scrollbar': {
+    width: '8px',
+  },
+  '&::-webkit-scrollbar-track': {
+    background: theme.palette.grey[100],
+    borderRadius: '4px',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: theme.palette.grey[300],
+    borderRadius: '4px',
+    '&:hover': {
+      background: theme.palette.grey[400],
+    },
+  },
+}));
 
-  // Lista de fontes disponíveis
-  const fonts = [
-    { id: 'Roboto, sans-serif', name: 'Roboto' },
-    { id: 'Montserrat, sans-serif', name: 'Montserrat' },
-    { id: 'Open Sans, sans-serif', name: 'Open Sans' },
-    { id: 'Lato, sans-serif', name: 'Lato' },
-    { id: 'Poppins, sans-serif', name: 'Poppins' },
-    { id: 'Playfair Display, serif', name: 'Playfair Display' },
-    { id: 'Merriweather, serif', name: 'Merriweather' },
-    { id: 'Raleway, sans-serif', name: 'Raleway' },
-    { id: 'Ubuntu, sans-serif', name: 'Ubuntu' },
-    { id: 'Dancing Script, cursive', name: 'Dancing Script' }
-  ];
+// Container para o preview com largura fixa e altura livre
+const PreviewContainer = styled(Paper)(({ theme }) => ({
+  borderRadius: 12,
+  border: `1px solid ${theme.palette.divider}`,
+  padding: theme.spacing(3),
+  width: '100%',
+  maxWidth: '600px', // Largura fixa para o preview
+  minHeight: '400px', // Altura mínima
+  height: 'auto', // Altura livre
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'visible', // Permite altura livre
+  [theme.breakpoints.down('md')]: {
+    maxWidth: '100%',
+    minHeight: 'auto'
+  }
+}));
 
-  const handleFontChange = (e) => {
-    onChange(e.target.value);
-  };
-
-  return (
-    <FormControl fullWidth variant="outlined" sx={{ mb: 2 }}>
-      <InputLabel id="font-select-label">Fonte</InputLabel>
-      <Select
-        labelId="font-select-label"
-        value={value || fonts[0].id}
-        onChange={handleFontChange}
-        label="Fonte"
-        inputProps={{ style: { fontFamily: value } }}
-        sx={{
-          '& .MuiSelect-select': {
-            fontFamily: value
-          }
-        }}
-      >
-        {fonts.map((font) => (
-          <MenuItem
-            key={font.id}
-            value={font.id}
-            sx={{
-              fontFamily: font.id
-            }}
-          >
-            {font.name}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
-};
+// Container para os botões flutuantes
+const FloatingButtonsContainer = styled(Box)(({ theme }) => ({
+  position: 'fixed',
+  bottom: theme.spacing(3),
+  right: theme.spacing(3),
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(2),
+  zIndex: 1000,
+  [theme.breakpoints.down('md')]: {
+    position: 'sticky',
+    bottom: 0,
+    right: 'auto',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: theme.palette.background.paper,
+    padding: theme.spacing(2),
+    borderTop: `1px solid ${theme.palette.divider}`,
+    margin: 0,
+    width: '100%'
+  }
+}));
 
 const InviteCreate = () => {
   const theme = useTheme();
@@ -162,6 +185,7 @@ const InviteCreate = () => {
   // Estado para controlar o drawer mobile
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
+  const [showPreviewFullscreen, setShowPreviewFullscreen] = useState(false);
 
   // Configurações de tamanho para cada dispositivo - dimensões reais
   const deviceSizes = {
@@ -250,7 +274,7 @@ const InviteCreate = () => {
         bgColor: currentInvite.bgColor || '#6a1b9a',
         accentColor: currentInvite.accentColor || '#e91e63',
         textColor: currentInvite.textColor || '#ffffff',
-        fontFamily: currentInvite.fontFamily || 'Roboto, sans-serif'
+        fontFamily: currentInvite?.fontFamily || 'Roboto, sans-serif'
       });
 
       // Encontrar o evento atual
@@ -284,9 +308,9 @@ const InviteCreate = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleColorChange = (color, type) => {
+  const handleColorChange = useCallback((color, type) => {
     setFormData(prev => ({ ...prev, [type]: color }));
-  };
+  }, []);
 
   const handleFontChange = (font) => {
     setFormData(prev => ({ ...prev, fontFamily: font }));
@@ -349,547 +373,347 @@ const InviteCreate = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
-  };
+  };  
 
-  // Altura fixa para o conteúdo das abas - reduzida para ficar mais compacta
-  const tabContentHeight = isMobile ? 'auto' : 600;
-
-  // Calcular escala para o dispositivo atual
-  const calculateScale = () => {
-    // Largura disponível para o preview (estimativa)
-    const availableWidth = isMobile ? 280 : 500;
-
-    // Calcular escala baseada na largura do dispositivo
-    return Math.min(1, availableWidth / deviceSizes[deviceType].width);
-  };
-
-  // Componente do formulário
-  const FormContent = () => (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: isMobile ? 0 : 2,
-        border: isMobile ? 'none' : `1px solid ${theme.palette.divider}`,
-        overflow: 'hidden',
-        height: '100%',
-        width: isMobile ? '100%' : 400,
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
-      {/* Abas com altura fixa */}
-      <Box sx={{
-        borderBottom: `1px solid ${theme.palette.divider}`,
-        bgcolor: alpha(theme.palette.background.paper, 0.8),
-        height: '48px',
-        display: 'flex',
-        alignItems: 'center'
-      }}>
-        <StyledTabs
-          value={tabValue}
-          onChange={handleTabChange}
-          variant="fullWidth"
-          sx={{ width: '100%' }}
-        >
-          <Tab
-            icon={<InfoIcon />}
-            label="Informações"
-            iconPosition="start"
-          />
-          <Tab
-            icon={<ColorLensIcon />}
-            label="Personalização"
-            iconPosition="start"
-          />
-        </StyledTabs>
-      </Box>
-
-      {/* Conteúdo das abas com altura fixa */}
-      <Box sx={{
-        height: tabContentHeight,
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Aba de Informações */}
-        <Box
-          sx={{
-            p: 3,
-            overflow: 'auto',
-            display: tabValue === 0 ? 'block' : 'none'
-          }}
-        >
-          <TextField
-            fullWidth
-            label="Título do Convite"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            margin="normal"
-            required
-            helperText="Ex: Aniversário de 30 anos"
-          />
-
-          <FormControl fullWidth margin="normal" required>
-            <InputLabel>Evento</InputLabel>
-            <Select
-              name="eventId"
-              value={formData.eventId}
-              onChange={handleChange}
-              label="Evento"
-            >
-              <MenuItem value="">Selecione ou crie um novo evento</MenuItem>
-              {events.map(event => (
-                <MenuItem key={event.id} value={event.id}>
-                  {event.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <TextField
-            fullWidth
-            label="Descrição (opcional)"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            margin="normal"
-            helperText="Uma breve descrição do convite"
-          />
-
-          <TextField
-            fullWidth
-            label="Mensagem Personalizada"
-            name="customText"
-            value={formData.customText}
-            onChange={handleChange}
-            margin="normal"
-            multiline
-            rows={isMobile ? 3 : 4}
-            helperText="Mensagem que será exibida no convite"
-          />
-        </Box>
-
-        {/* Aba de Personalização */}
-        <Box
-          sx={{
-            p: 3,
-            overflow: 'auto',
-            display: tabValue === 1 ? 'block' : 'none'
-          }}
-        >
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{
-              fontWeight: 600,
-              mb: 2
-            }}
-          >
-            Cores
-          </Typography>
-
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <ColorPicker
-                label="Cor de Fundo"
-                color={formData.bgColor}
-                onChange={(color) => handleColorChange(color, 'bgColor')}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <ColorPicker
-                label="Cor de Destaque"
-                color={formData.accentColor}
-                onChange={(color) => handleColorChange(color, 'accentColor')}
-              />
-            </Grid>
-          </Grid>
-
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{
-              fontWeight: 600,
-              mb: 2,
-              mt: 3
-            }}
-          >
-            Tipografia
-          </Typography>
-
-          <OptimizedFontPicker
-            value={formData.fontFamily}
-            onChange={handleFontChange}
-          />
-
-          {/* Amostra da fonte selecionada */}
-          <Box sx={{
-            mt: 2,
-            p: 2,
-            borderRadius: 1,
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-            bgcolor: alpha(theme.palette.background.paper, 0.7),
-            fontFamily: formData.fontFamily,
-            textAlign: 'center'
-          }}>
-            <Typography variant="body1" sx={{
-              fontWeight: 500
-            }}>
-              Amostra da fonte: Aa Bb Cc 123
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-    </Paper>
-  );
-
-  // Componente do preview
+  // Componente do preview com largura fixa e altura livre
   const PreviewContent = () => (
-    <Paper
-      elevation={0}
-      sx={{
-        borderRadius: isMobile ? 0 : 2,
-        border: isMobile ? 'none' : `1px solid ${theme.palette.divider}`,
-        p: isMobile ? 2 : 3,
-        width: isMobile ? '100%' : 750,
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: isMobile ? 'auto' : tabContentHeight + 48
-      }}
-    >
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        mb: 2,
-        flexShrink: 0,
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? 2 : 0
-      }}>
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 600,
-            display: isMobile ? 'none' : 'block'
-          }}
-        >
-          Pré-visualização do Convite
-        </Typography>
-
-        {/* Seletor de dispositivos dentro da aba de pré-visualização */}
-        <ButtonGroup
-          variant="outlined"
-          size="small"
-          aria-label="device selection"
-          sx={{
-            '& .MuiButton-root': {
-              fontSize: isMobile ? '0.75rem' : '0.875rem',
-              padding: isMobile ? '4px 8px' : '6px 16px'
-            }
-          }}
-        >
-          {Object.keys(deviceSizes).map((type) => (
-            <Button
-              key={type}
-              variant={deviceType === type ? "contained" : "outlined"}
-              startIcon={isMobile ? null : deviceSizes[type].icon}
-              onClick={() => handleDeviceChange(type)}
-              sx={{
-                textTransform: 'capitalize',
-                backgroundColor: deviceType === type ? theme.palette.primary.main : 'transparent',
-                color: deviceType === type ? '#fff' : theme.palette.primary.main,
-                '&:hover': {
-                  backgroundColor: deviceType === type
-                    ? alpha(theme.palette.primary.main, 0.9)
-                    : alpha(theme.palette.primary.main, 0.1)
-                }
-              }}
-            >
-              {type}
-            </Button>
-          ))}
-        </ButtonGroup>
-      </Box>
-
-      {/* Preview com diferenciação clara entre dispositivos */}
-      <Box sx={{
-        flexGrow: 1,
-        position: 'relative',
-        overflow: 'hidden',
-        height: isMobile ? '400px' : tabContentHeight - 10
-      }}>
-        {/* Container do dispositivo com moldura */}
+    <PreviewContainer elevation={0}>
+      {/* Header do preview */}
+      {!isMobile && (
         <Box sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
           display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          overflow: 'auto',
-          pt: 1
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 3,
+          pb: 2,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          flexShrink: 0
         }}>
-          <Box sx={{
-            width: isMobile ? '100%' : `${deviceSizes[deviceType].width}px`,
-            height: isMobile ? '100%' : `${deviceSizes[deviceType].height}px`,
-            transform: isMobile ? 'none' : `scale(${calculateScale()})`,
-            transformOrigin: 'top center',
-            border: isMobile ? 'none' : `12px solid ${alpha('#000', 0.8)}`,
-            borderRadius: isMobile ? '8px' : (deviceType === 'mobile' ? '20px' : '8px'),
-            boxShadow: isMobile ? 'none' : `0 10px 30px ${alpha('#000', 0.2)}`,
-            overflow: 'hidden',
-            position: 'relative',
-            transition: 'all 0.3s ease',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: '-12px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: deviceType === 'mobile' ? '60px' : '100px',
-              height: '12px',
-              backgroundColor: alpha('#000', 0.9),
-              borderRadius: '8px 8px 0 0',
-              display: (deviceType !== 'mobile' && !isMobile) ? 'block' : 'none'
-            },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: '-20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: deviceType === 'mobile' ? '40px' : '0',
-              height: '8px',
-              backgroundColor: alpha('#000', 0.9),
-              borderRadius: '0 0 10px 10px',
-              display: (deviceType === 'mobile' && !isMobile) ? 'block' : 'none'
-            }
-          }}>
-            <Box sx={{
-              width: '100%',
-              height: '100%',
-              overflow: 'auto',
-              backgroundColor: '#fff'
-            }}>
-              <InvitePreview
-                title={formData.title}
-                eventTitle={currentEvent?.title}
-                customText={formData.customText}
-                bgColor={formData.bgColor}
-                accentColor={formData.accentColor}
-                fontFamily={formData.fontFamily}
-                showActions={false}
-                onWhatsAppTest={handleWhatsAppTest}
-                deviceViewMode={deviceType}
-              />
-            </Box>
-          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+            Visualização do Convite
+          </Typography>
+          
+          <ButtonGroup size="small" variant="outlined">
+            {Object.entries(deviceSizes).map(([key, device]) => (
+              <Button
+                key={key}
+                onClick={() => handleDeviceChange(key)}
+                variant={deviceType === key ? 'contained' : 'outlined'}
+                sx={{
+                  minWidth: 'auto',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1
+                }}
+              >
+                {device.icon}
+              </Button>
+            ))}
+          </ButtonGroup>
         </Box>
-      </Box>
-    </Paper>
-  );
-
-  return (
-    <Box sx={{ py: isMobile ? 1 : 3, height: '100%' }}>
-      {/* AppBar para mobile */}
-      {isMobile && (
-        <AppBar
-          position="sticky"
-          elevation={1}
-          sx={{
-            bgcolor: theme.palette.background.paper,
-            color: theme.palette.text.primary,
-            borderBottom: `1px solid ${theme.palette.divider}`
-          }}
-        >
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="menu"
-              onClick={() => setMobileDrawerOpen(true)}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              {inviteId ? 'Editar Convite' : 'Criar Convite'}
-            </Typography>
-            <IconButton
-              color="inherit"
-              aria-label="preview"
-              onClick={() => setPreviewDrawerOpen(true)}
-            >
-              <VisibilityIcon />
-            </IconButton>
-          </Toolbar>
-        </AppBar>
       )}
 
-      <Container maxWidth="lg" sx={{ px: isMobile ? 1 : 3 }}>
-        {!isMobile && (
-          <PageTitle
-            title={inviteId ? 'Editar Convite' : 'Criar Novo Convite'}
-            subtitle={'Crie convites, personalize do seu jeito.'}
-            alignRight={false}
-            mb={2}
-          />
-        )}
+      {/* Preview do convite com altura livre */}
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        minHeight: '300px', // Altura mínima para o conteúdo
+        width: '100%'
+      }}>
+        <InvitePreview
+          title={formData.title}
+          eventTitle={currentEvent?.title}
+          customText={formData.customText}
+          bgColor={formData.bgColor}
+          accentColor={formData.accentColor}
+          fontFamily={formData.fontFamily}
+          showActions={!isMobile}
+          deviceViewMode={isMobile ? 'mobile' : deviceType}
+          onWhatsAppTest={handleWhatsAppTest}
+        />
+      </Box>
+    </PreviewContainer>
+  );
 
-        {/* Layout Desktop/Tablet */}
-        {!isMobile && (
-          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 3}}>
-            {/* Lado esquerdo - Formulário com abas */}
-            <Box>
-              <FormContent />
-            </Box>
+  // Layout para mobile
+  if (isMobile) {
+    return (
+      <Box sx={{ 
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}>
+        {/* Loading indicator */}
+        {isLoading && <LoadingIndicator message={messageLoading} />}
 
-            {/* Lado direito - Preview sempre visível */}
-            <Box>
-              <PreviewContent />
-            </Box>
-          </Box>
-        )}
-
-        {/* Layout Mobile - O conteúdo do formulário agora será exibido em um Drawer */}
-        {isMobile && (
-          <Box sx={{ p: 2, display: 'none' }}>
-            {/* O FormContent não é mais renderizado diretamente aqui, mas sim no Drawer */}
-          </Box>
-        )}
-
-        {/* Botões de ação */}
-        <Box
-          sx={{
+        {/* Preview em tela cheia no mobile */}
+        {showPreviewFullscreen ? (
+          <Box sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            bgcolor: 'background.default',
+            zIndex: 1300,
             display: 'flex',
-            gap: 2,
-            justifyContent: isMobile ? 'center' : 'end',
-            mt: 3,
-            px: isMobile ? 2 : 0,
-            flexDirection: isMobile ? 'column' : 'row'
-          }}
-        >
-          <StyledButton
+            flexDirection: 'column'
+          }}>
+            {/* Preview content ocupando tela inteira */}
+            <Box sx={{ 
+              flex: 1, 
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              {/* Botão de fechar flutuante */}
+              <IconButton
+                onClick={() => setShowPreviewFullscreen(false)}
+                sx={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  zIndex: 1000,
+                  bgcolor: 'rgba(0,0,0,0.5)',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'rgba(0,0,0,0.7)'
+                  }
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+              
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: 0,
+                  border: 'none',
+                  p: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden'
+                }}
+              >
+                <Box sx={{
+                  flex: 1,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'flex-start',
+                  overflow: 'auto',
+                  height: '100%'
+                }}>
+                  <InvitePreview
+                    title={formData.title}
+                    eventTitle={currentEvent?.title}
+                    customText={formData.customText}
+                    bgColor={formData.bgColor}
+                    accentColor={formData.accentColor}
+                    fontFamily={formData.fontFamily}
+                    showActions={false}
+                    deviceViewMode="mobile"
+                    onWhatsAppTest={handleWhatsAppTest}
+                  />
+                </Box>
+              </Paper>
+            </Box>
+          </Box>
+        ) : (
+          <>
+            {/* Header principal */}
+            <AppBar position="static" elevation={0} sx={{ bgcolor: 'background.paper', color: 'text.primary' }}>
+              <Toolbar>
+                <IconButton
+                  edge="start"
+                  onClick={() => navigate('/events')}
+                  sx={{ mr: 2 }}
+                >
+                  <CloseIcon />
+                </IconButton>
+                <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                  {inviteId ? 'Editar Convite' : 'Criar Convite'}
+                </Typography>
+                <IconButton
+                  onClick={() => setShowPreviewFullscreen(true)}
+                  sx={{ mr: 1 }}
+                >
+                  <VisibilityIcon />
+                </IconButton>
+              </Toolbar>
+            </AppBar>
+
+            {/* Conteúdo principal */}
+            <Box sx={{ flex: 1, overflow: 'hidden' }}>
+            <FormContent
+              formData={formData}
+              setFormData={setFormData}
+              tabValue={tabValue}
+              handleTabChange={handleTabChange}
+              handleFontChange={handleFontChange}
+              events={events}
+            />
+            </Box>
+          </>
+        )}
+
+        {/* Botões flutuantes para mobile */}
+        <FloatingButtonsContainer>
+          <Button
             variant="outlined"
-            color="inherit"
             onClick={handleCancelConfirm}
-            fullWidth={isMobile}
+            sx={{ flex: 1 }}
           >
             Cancelar
-          </StyledButton>
-
-          <StyledButton
+          </Button>
+          <Button
             variant="contained"
-            color="primary"
-            startIcon={<SaveIcon />}
             onClick={handleSave}
-            disabled={!formData.title || !formData.eventId || isLoading || inviteLoading}
-            fullWidth={isMobile}
+            startIcon={<SaveIcon />}
+            sx={{ flex: 1 }}
+            disabled={isLoading}
           >
-            {inviteId ? 'Atualizar Convite' : 'Criar Convite'}
-          </StyledButton>
-        </Box>
-      </Container>
+            {inviteId ? 'Atualizar' : 'Criar'}
+          </Button>
+        </FloatingButtonsContainer>
 
-      {/* Drawer para formulário mobile */}
-      <Drawer
-        anchor="left"
-        open={mobileDrawerOpen}
-        onClose={() => setMobileDrawerOpen(false)}
-        sx={{
-          '& .MuiDrawer-paper': {
-            width: '90%',
-            maxWidth: 400,
-          },
-        }}
-      >
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          p: 2,
-          borderBottom: `1px solid ${theme.palette.divider}`
-        }}>
-          <Typography variant="h6">
-            Configurações
-          </Typography>
-          <IconButton onClick={() => setMobileDrawerOpen(false)}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        <Box sx={{ height: '100%', overflow: 'auto' }}>
-          <FormContent />
-        </Box>
-      </Drawer>
+        {/* Snackbar */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity}>
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
 
-      {/* Drawer para preview mobile */}
-      <Drawer
-        anchor="right"
-        open={previewDrawerOpen}
-        onClose={() => setPreviewDrawerOpen(false)}
-        sx={{
-          '& .MuiDrawer-paper': {
-            width: '95%',
-          },
-        }}
-      >
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          p: 2,
-          borderBottom: `1px solid ${theme.palette.divider}`
-        }}>
-          <Typography variant="h6">
-            Pré-visualização
-          </Typography>
-          <IconButton onClick={() => setPreviewDrawerOpen(false)}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        <Box sx={{ height: '100%', overflow: 'auto' }}>
-          <PreviewContent />
-        </Box>
-      </Drawer>
+        {/* Dialog de confirmação */}
+        <ConfirmDialog
+          open={confirmDialogOpen}
+          title="Cancelar edição"
+          message="Tem certeza que deseja cancelar? Todas as alterações não salvas serão perdidas."
+          onConfirm={handleCancel}
+          onCancel={() => setConfirmDialogOpen(false)}
+        />
+      </Box>
+    );
+  }
 
-      <LoadingIndicator
-        open={isLoading || inviteLoading}
-        type="overlay"
-        message={messageLoading}
+  // Layout para desktop/tablet com containers fixos
+  return (
+    <Container maxWidth="xl" sx={{ py: 3, pb: 12 }}>
+      {/* Loading indicator */}
+      {isLoading && <LoadingIndicator message={messageLoading} />}
+
+      {/* Título da página */}
+      <PageTitle 
+        title={inviteId ? 'Editar Convite' : 'Criar Convite'}
+        subtitle="Personalize seu convite e visualize em tempo real"
       />
 
-      {/* Diálogo de confirmação para cancelamento */}
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        onConfirm={handleCancel}
-        title={`Cancelar ${inviteId ? 'Edição' : 'Criação'}`}
-        message="Tem certeza que deseja cancelar? Todas as alterações não salvas serão perdidas."
-        cancelText="Voltar"
-        confirmText={`Cancelar ${inviteId ? 'Edição' : 'Criação'}`}
-        confirmColor="error"
-      />
+      {/* Layout principal com containers fixos */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 4, 
+        mt: 3,
+        justifyContent: 'center',
+        alignItems: 'flex-start'
+      }}>
+        {/* Formulário com tamanho fixo */}
+        <FormContainer elevation={0}>
+          <FormContent
+            formData={formData}
+            setFormData={setFormData}
+            tabValue={tabValue}
+            handleTabChange={handleTabChange}
+            handleFontChange={handleFontChange}
+            events={events}
+          />
+        </FormContainer>
 
-      {/* Snackbar para feedback */}
+        {/* Preview com largura fixa e altura livre */}
+        <PreviewContent />
+      </Box>
+
+      {/* Botões flutuantes para desktop */}
+      <FloatingButtonsContainer>
+        <StyledButton
+          variant="contained"
+          onClick={handleSave}
+          startIcon={<SaveIcon />}
+          size="large"
+          disabled={isLoading}
+          sx={{
+            minWidth: 180,
+            boxShadow: theme.shadows[8],
+            '&:hover': {
+              boxShadow: theme.shadows[12]
+            }
+          }}
+        >
+          {inviteId ? 'Atualizar Convite' : 'Criar Convite'}
+        </StyledButton>
+
+        <StyledButton
+          variant="outlined"
+          color="success"
+          startIcon={<WhatsAppIcon />}
+          onClick={handleWhatsAppTest}
+          size="large"
+          sx={{
+            minWidth: 180,
+            bgcolor: 'background.paper',
+            boxShadow: theme.shadows[4],
+            '&:hover': {
+              boxShadow: theme.shadows[8]
+            }
+          }}
+        >
+          Testar no WhatsApp
+        </StyledButton>
+
+        <Button
+          variant="outlined"
+          onClick={handleCancelConfirm}
+          size="large"
+          sx={{
+            minWidth: 180,
+            bgcolor: 'background.paper',
+            boxShadow: theme.shadows[2],
+            '&:hover': {
+              boxShadow: theme.shadows[4]
+            }
+          }}
+        >
+          Cancelar
+        </Button>
+      </FloatingButtonsContainer>
+
+      {/* Snackbar */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbarSeverity}
-          variant="filled"
-          sx={{ width: '100%', borderRadius: 1, color: theme.palette.primary.contrastText }}
-        >
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity}>
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </Box>
+
+      {/* Dialog de confirmação */}
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        title="Cancelar edição"
+        message="Tem certeza que deseja cancelar? Todas as alterações não salvas serão perdidas."
+        onConfirm={handleCancel}
+        onCancel={() => setConfirmDialogOpen(false)}
+      />
+    </Container>
   );
 };
 

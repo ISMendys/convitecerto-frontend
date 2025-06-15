@@ -158,10 +158,6 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
       href: '/invites/new',
       icon: MailIcon,
       title: 'Criar Convite'
-    },    {
-      href: '/invites2/new',
-      icon: MailIcon,
-      title: 'Criar Convite2'
     },
     {
       href: '/events/:id/guests',
