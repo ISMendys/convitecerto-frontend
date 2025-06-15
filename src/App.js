@@ -1,6 +1,6 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -22,11 +22,20 @@ import RsvpPage from './pages/public/RsvpPage';
 import NotFound from './pages/PageNotFound';
 import SupportPage from './pages/support/SupportPage';
 import LoadingIndicator from './components/LoadingIndicator';
+import { fetchUserProfile } from './store/actions/userActions';
 
 // Componente para rotas protegidas
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useSelector(state => state.auth);
-  
+  const { profile } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (!profile) {
+      dispatch(fetchUserProfile());
+    }
+  }, [profile, dispatch]);
+
   if (loading) {
     return (
       <LoadingIndicator

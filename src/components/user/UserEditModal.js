@@ -252,8 +252,8 @@ const UserEditModal = ({ open, onClose }) => {
         sx: {
           borderRadius: isMobile ? 0 : 2,
           overflow: 'hidden',
-          height: isMobile ? '100vh' : 'auto',
-          maxHeight: isMobile ? '100vh' : '90vh',
+          height: isMobile ? 'auto' : 'auto',
+          maxHeight: isMobile ? '120vh' : '120vh',
           bgcolor: isMobile ? theme.palette.background.default : theme.palette.background.paper
         }
       }}
