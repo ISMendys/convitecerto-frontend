@@ -6,6 +6,7 @@ import guestReducer from './slices/guestSlice';
 import dashboardReducer from './actions/dashboardActions';
 import whatsappReducer from './slices/whatsappSlice';
 import configReducer from './slices/configSlice';
+import userReducer from './slices/userSlice';
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ const store = configureStore({
     dashboard: dashboardReducer,
     whatsapp: whatsappReducer,
     config: configReducer,
+    user: userReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

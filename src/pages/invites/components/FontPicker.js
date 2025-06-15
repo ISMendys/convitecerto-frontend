@@ -7,7 +7,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Tooltip
+  Tooltip,
+  useMediaQuery
 } from '@mui/material';
 import Zoom from '@mui/material/Zoom';
 import { useTheme, alpha } from '@mui/material/styles';
@@ -23,6 +24,8 @@ const FontPicker = ({
   showPreview = true
 }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   const handleFontChange = (event) => {
     onChange(event.target.value);
@@ -35,7 +38,7 @@ const FontPicker = ({
       <Paper
         elevation={0}
         sx={{
-          p: 2,
+          p: isMobile ? 1.5 : 2,
           borderRadius: 2,
           border: '1px solid #e0e0e0',
           boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
@@ -54,34 +57,50 @@ const FontPicker = ({
         }}
       >
         {/* Cabeçalho */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-          <Box
-            sx={{
-              mr: 1,
-              color: theme.palette.primary.main,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              bgcolor: alpha(theme.palette.primary.main, 0.1)
-            }}
-          >
-            <TextFieldsIcon fontSize="small" />
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          mb: isMobile ? 1 : 1.5,
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'center'
+        }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            mb: isMobile ? 0.5 : 0
+          }}>
+            <Box
+              sx={{
+                mr: 1,
+                color: theme.palette.primary.main,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: isMobile ? 28 : 32,
+                height: isMobile ? 28 : 32,
+                borderRadius: '50%',
+                bgcolor: alpha(theme.palette.primary.main, 0.1)
+              }}
+            >
+              <TextFieldsIcon fontSize={isMobile ? "small" : "medium"} />
+            </Box>
+            <Typography 
+              variant={isMobile ? "body1" : "subtitle1"} 
+              fontWeight={600}
+            >
+              {label}
+            </Typography>
           </Box>
-          <Typography variant="subtitle1" fontWeight={600}>
-            {label}
-          </Typography>
         </Box>
 
         {/* Select no topo */}
-        <Box sx={{ mb: showPreview ? 2 : 0 }}>
+        <Box sx={{ mb: showPreview ? (isMobile ? 1.5 : 2) : 0 }}>
           <FormControl fullWidth variant="outlined">
             <InputLabel
               id="font-select-label"
               sx={{
                 fontWeight: 500,
+                fontSize: isMobile ? '0.875rem' : undefined,
                 '&.Mui-focused': { color: theme.palette.primary.main }
               }}
             >
@@ -89,16 +108,18 @@ const FontPicker = ({
             </InputLabel>
             <Select
               labelId="font-select-label"
-              value={value || fonts[0].id}
+              value={value || (fonts && fonts[0] ? fonts[0].id : '')}
               onChange={handleFontChange}
               label={label}
               inputProps={{ style: { fontFamily: value } }}
               sx={{
                 borderRadius: 1,
                 bgcolor: theme.palette.background.default,
-                height: '56px',
+                height: isMobile ? '48px' : '56px',
+                fontSize: isMobile ? '0.875rem' : undefined,
                 '& .MuiSelect-select': {
-                  fontFamily: value
+                  fontFamily: value,
+                  padding: isMobile ? '12px 14px' : undefined
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: alpha(theme.palette.primary.main, 0.2)
@@ -121,7 +142,7 @@ const FontPicker = ({
               MenuProps={{
                 PaperProps: {
                   style: {
-                    maxHeight: 300,
+                    maxHeight: isMobile ? 250 : 300,
                     borderRadius: 12,
                     boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
                   }
@@ -129,13 +150,14 @@ const FontPicker = ({
                 slots: transitionComponent
               }}
             >
-              {/* {fonts.map((font) => (
+              {fonts && fonts.map((font) => (
                 <MenuItem
                   key={font.id}
                   value={font.id}
                   sx={{
                     fontFamily: font.id,
-                    py: 1,
+                    py: isMobile ? 0.75 : 1,
+                    fontSize: isMobile ? '0.875rem' : undefined,
                     '&:hover': {
                       bgcolor: alpha(theme.palette.primary.main, 0.08)
                     },
@@ -148,13 +170,21 @@ const FontPicker = ({
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <FormatSizeIcon sx={{ mr: 1, color: alpha(theme.palette.primary.main, 0.7), fontSize: 20 }} />
-                    <Typography variant="body1" fontWeight={500}>
+                    <FormatSizeIcon sx={{ 
+                      mr: 1, 
+                      color: alpha(theme.palette.primary.main, 0.7), 
+                      fontSize: isMobile ? 18 : 20 
+                    }} />
+                    <Typography 
+                      variant="body1" 
+                      fontWeight={500}
+                      sx={{ fontSize: isMobile ? '0.875rem' : undefined }}
+                    >
                       {font.name}
                     </Typography>
                   </Box>
-                </MenuItem> */}
-              {/* ))} */}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>
@@ -170,8 +200,8 @@ const FontPicker = ({
             <Box
               sx={{
                 width: '100%',
-                p: 2,
-                mt: '30%',
+                p: isMobile ? 1.5 : 2,
+                mt: isMobile ? '20%' : '30%',
                 borderRadius: 1,
                 bgcolor: alpha(theme.palette.background.paper, 0.7),
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.15)}`,
@@ -190,28 +220,41 @@ const FontPicker = ({
                   background: `linear-gradient(to right, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.light, 0.5)})`
                 },
                 '&:hover': {
-                  transform: 'translateY(-5px) scale(1.02)',
+                  transform: isMobile ? 'scale(1.02)' : 'translateY(-5px) scale(1.02)',
                   boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
                   bgcolor: theme.palette.background.paper
                 },
                 transition: 'all 0.3s ease'
               }}
             >
-              <Typography variant="h5" sx={{ mb: 1, fontWeight: 500 }}>
+              <Typography 
+                variant={isMobile ? "h6" : "h5"} 
+                sx={{ 
+                  mb: isMobile ? 0.5 : 1, 
+                  fontWeight: 500 
+                }}
+              >
                 Aa Bb Cc
               </Typography>
-              <Typography variant="body1" sx={{ mb: 1.5 }}>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  mb: isMobile ? 1 : 1.5,
+                  fontSize: isMobile ? '0.875rem' : undefined
+                }}
+              >
                 0123456789
               </Typography>
               <Typography
                 variant="caption"
                 sx={{
-                  px: 2,
+                  px: isMobile ? 1.5 : 2,
                   py: 0.5,
                   borderRadius: 10,
                   bgcolor: alpha(theme.palette.primary.main, 0.1),
                   color: theme.palette.primary.main,
-                  fontWeight: 500
+                  fontWeight: 500,
+                  fontSize: isMobile ? '0.7rem' : undefined
                 }}
               >
                 {value}
@@ -225,3 +268,4 @@ const FontPicker = ({
 };
 
 export default FontPicker;
+

@@ -15,6 +15,13 @@ import {
   CircularProgress,
   useMediaQuery,
   TextField,
+  Fab,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Collapse,
+  Divider
 } from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
@@ -29,7 +36,9 @@ import {
   ArrowBack as ArrowBackIcon,
   Person as PersonIcon,
   Notes as NotesIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
 import { createEvent, updateEvent, fetchEvent } from '../../store/actions/eventActions';
 
@@ -72,6 +81,13 @@ const EventCreate = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  
+  // Estados para seções colapsáveis em mobile
+  const [expandedSections, setExpandedSections] = useState({
+    basic: true,
+    details: !isMobile,
+    image: !isMobile
+  });
   
   // Carregar dados do evento se estiver editando
   useEffect(() => {
@@ -242,6 +258,14 @@ const EventCreate = () => {
     }
   };
   
+  // Manipular expansão de seções
+  const handleSectionToggle = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+  
   // Validar formulário
   const validateForm = () => {
     const errors = {};
@@ -393,252 +417,418 @@ const EventCreate = () => {
     );
   }
   
+  // Componente de seção colapsável para mobile
+  const CollapsibleSection = ({ title, icon, children, sectionKey, defaultExpanded = false }) => {
+    const isExpanded = expandedSections[sectionKey];
+    
+    return (
+      <Paper 
+        sx={{ 
+          mb: 2,
+          borderRadius: 3,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+          border: '1px solid #e0e0e0',
+          overflow: 'hidden'
+        }}
+      >
+        {isMobile ? (
+          <>
+            <Box
+              onClick={() => handleSectionToggle(sectionKey)}
+              sx={{
+                p: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                bgcolor: alpha(theme.palette.primary.main, 0.02),
+                borderBottom: isExpanded ? `1px solid ${alpha(theme.palette.divider, 0.1)}` : 'none',
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.05)
+                }
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {icon}
+                <Typography variant="h6" fontWeight={600}>
+                  {title}
+                </Typography>
+              </Box>
+              {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </Box>
+            <Collapse in={isExpanded}>
+              <Box sx={{ p: 3 }}>
+                {children}
+              </Box>
+            </Collapse>
+          </>
+        ) : (
+          <Box sx={{ p: 3 }}>
+            <FormSection title={title} icon={icon}>
+              {children}
+            </FormSection>
+          </Box>
+        )}
+      </Paper>
+    );
+  };
+  
   return (
     <Box 
       sx={{ 
         minHeight: '100vh',
-        pt: 3,
-        pb: 6,
-        display: 'flex',
-        justifyContent: 'center' // Centraliza todo o conteúdo horizontalmente
+        pt: isMobile ? 0 : 3,
+        pb: isMobile ? 10 : 6, 
+        width: '100%',
+        overflow: 'hidden',
       }}
     >
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Box sx={{ 
-          mb: 4,
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            bottom: -16,
-            left: 0,
-            right: 0,
-            height: '1px',
-            background: `linear-gradient(to right, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(theme.palette.primary.main, 0.3)}, ${alpha(theme.palette.primary.main, 0.1)})`
-          }
-        }}>
-          {/* Botão Voltar à esquerda */}
-          <StyledButton
-            variant="outlined"
-            color="primary"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/events')}
-            sx={{ 
-              borderRadius: 10,
-              px: 2,
-              py: 1,
-              '&:hover': {
-                transform: 'translateX(-4px)'
-              }
-            }}
-          >
-            Voltar
-          </StyledButton>
-          
-          {/* Título e subtítulo à direita */}
-          <PageTitle 
-            title={eventId ? 'Editar Evento' : 'Criar Novo Evento'}
-            subtitle={eventId 
-              ? 'Atualize as informações do seu evento' 
-              : 'Preencha os detalhes para criar um novo evento'}
-            alignRight={true}
-            mb={0}
-          />
-        </Box>
-        
-        <Paper 
+      {/* Header mobile */}
+      {isMobile && (
+        <AppBar 
+          position="fixed" 
           sx={{ 
-            p: 3, 
-            mb: 3,
-            borderRadius: 3,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            border: '1px solid #e0e0e0'
+            bgcolor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            width: '100%',
+            left: 0,
+            mb: -5,
+            right: 0,
+            zIndex: theme.zIndex.appBar
           }}
         >
-          <FormSection
-            title="Informações Básicas"
-            icon={<EventIcon />}
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                <StyledTextField
-                  label="Título do Evento"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                  error={!!formErrors.title}
-                  helperText={formErrors.title}
-                  startIcon={<EventIcon />}
-                  sx={{maxWidth: 600}}
-                />
-                
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                  <DateTimePicker
-                    label="Data e Hora"
-                    value={formData.date}
-                    onChange={handleDateChange}
-                    renderInput={(params) => (
-                      <TextField 
-                        {...params} 
-                        fullWidth 
-                        required
-                        error={!!formErrors.date}
-                        helperText={formErrors.date}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            transition: 'all 0.2s ease',
-                            '&:hover': { 
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.08)' 
-                            },
-                            '&.Mui-focused': {
-                              boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
-                            }
-                          }
-                        }}
-                      />
-                    )}
-                  />
-                </LocalizationProvider>
-              </Box>
-              
-              {/* Componente de seleção de localização com tema escuro */}
-              <LocationSelector
-                value={formData.location}
-                onChange={handleLocationChange}
-                error={!!formErrors.location}
-                helperText={formErrors.location}
-                required
-              />
-              
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
-                <FormControl 
-                  fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      transition: 'all 0.2s ease',
-                      '&:hover': { 
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)' 
-                      },
-                      '&.Mui-focused': {
-                        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
-                      }
-                    }
-                  }}
-                >
-                  <InputLabel>Tipo de Evento</InputLabel>
-                  <Select
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    label="Tipo de Evento"
-                    startAdornment={
-                      <Box sx={{ mr: 1, color: theme.palette.primary.main }}>
-                        <CategoryIcon />
-                      </Box>
-                    }
-                  >
-                    {eventTypes.map(type => (
-                      <MenuItem key={type.id} value={type.id}>
-                        {type.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                
-                <StyledTextField
-                  label="Número Máximo de Convidados"
-                  name="maxGuests"
-                  type="number"
-                  value={formData.maxGuests}
-                  onChange={handleChange}
-                  error={!!formErrors.maxGuests}
-                  helperText={formErrors.maxGuests}
-                  startIcon={<PersonIcon />}
-                />
-              </Box>
-              
-              {/* Campo de upload de imagem com base64 */}
-              <ImageUploadFieldBase64
-                value={formData.image}
-                onChange={handleImageChange}
-                error={!!formErrors.image}
-                helperText={formErrors.image}
-              />
-              
-              <StyledTextField
-                label="Descrição"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                multiline
-                rows={4}
-                startIcon={<DescriptionIcon />}
-              />
-              
-              <StyledTextField
-                label="Observações"
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                multiline
-                // rows={3}
-                startIcon={<NotesIcon />}
-              />
-            </Box>
-          </FormSection>
-        </Paper>
-        
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between',
-          mt: 4
-        }}>
-          <Box>
-            {eventId && (
-              <StyledButton
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                Excluir Evento
-              </StyledButton>
-            )}
-          </Box>
-          
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Toolbar sx={{ width: '100%', px: 2 }}>
+            <IconButton
+              edge="start"
+              onClick={() => navigate('/events')}
+              sx={{ mr: 2 }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
+              {eventId ? 'Editar Evento' : 'Criar Evento'}
+            </Typography>
+          </Toolbar>
+        </AppBar>
+      )}
+
+      <Container 
+        maxWidth="md" 
+        sx={{ 
+          py: isMobile ? 2 : 4,
+          mt: isMobile ? 8 : 0, // Margem para compensar AppBar em mobile
+          px: isMobile ? 2 : 3,
+          width: '100%', // Garantir largura total
+          maxWidth: isMobile ? '100%' : 'md' // Usar largura total em mobile
+        }}
+      >
+        {/* Header desktop */}
+        {!isMobile && (
+          <Box sx={{ 
+            mb: 4,
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: -16,
+              left: 0,
+              right: 0,
+              height: '1px',
+              background: `linear-gradient(to right, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(theme.palette.primary.main, 0.3)}, ${alpha(theme.palette.primary.main, 0.1)})`
+            }
+          }}>
             <StyledButton
               variant="outlined"
-              color="inherit"
-              onClick={handleCancelConfirm}
+              color="primary"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate('/events')}
+              sx={{ 
+                borderRadius: 10,
+                px: 2,
+                py: 1,
+                '&:hover': {
+                  transform: 'translateX(-4px)'
+                }
+              }}
             >
-              Cancelar
+              Voltar
             </StyledButton>
             
-            <StyledButton
-              variant="contained"
-              color="primary"
-              startIcon={<SaveIcon />}
-              onClick={handleSave}
-            >
-              {eventId ? 'Atualizar' : 'Criar'} Evento
-            </StyledButton>
+            <PageTitle 
+              title={eventId ? 'Editar Evento' : 'Criar Novo Evento'}
+              subtitle={eventId 
+                ? 'Atualize as informações do seu evento' 
+                : 'Preencha os detalhes para criar um novo evento'}
+              alignRight={true}
+              mb={0}
+            />
           </Box>
-        </Box>
+        )}
+        
+        {/* Seção: Informações Básicas */}
+        <CollapsibleSection
+          title="Informações Básicas"
+          icon={<EventIcon />}
+          sectionKey="basic"
+          defaultExpanded={true}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' }, 
+              gap: 2 
+            }}>
+              <StyledTextField
+                label="Título do Evento"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+                error={!!formErrors.title}
+                helperText={formErrors.title}
+                startIcon={<EventIcon />}
+                sx={{ flex: 1 }}
+              />
+              
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                <DateTimePicker
+                  label="Data e Hora"
+                  value={formData.date}
+                  onChange={handleDateChange}
+                  renderInput={(params) => (
+                    <TextField 
+                      {...params} 
+                      fullWidth 
+                      required
+                      error={!!formErrors.date}
+                      helperText={formErrors.date}
+                      sx={{
+                        flex: 1,
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          transition: 'all 0.2s ease',
+                          '&:hover': { 
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)' 
+                          },
+                          '&.Mui-focused': {
+                            boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
+                          }
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </LocalizationProvider>
+            </Box>
+            
+            <LocationSelector
+              value={formData.location}
+              onChange={handleLocationChange}
+              error={!!formErrors.location}
+              helperText={formErrors.location}
+              required
+            />
+            
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' }, 
+              gap: 2 
+            }}>
+              <FormControl 
+                fullWidth
+                sx={{
+                  flex: 1,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
+                    '&:hover': { 
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)' 
+                    },
+                    '&.Mui-focused': {
+                      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`
+                    }
+                  }
+                }}
+              >
+                <InputLabel>Tipo de Evento</InputLabel>
+                <Select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  label="Tipo de Evento"
+                  startAdornment={
+                    <Box sx={{ mr: 1, color: theme.palette.primary.main }}>
+                      <CategoryIcon />
+                    </Box>
+                  }
+                >
+                  {eventTypes.map(type => (
+                    <MenuItem key={type.id} value={type.id}>
+                      {type.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <StyledTextField
+                label="Máximo de Convidados"
+                name="maxGuests"
+                type="number"
+                value={formData.maxGuests}
+                onChange={handleChange}
+                error={!!formErrors.maxGuests}
+                helperText={formErrors.maxGuests}
+                startIcon={<PersonIcon />}
+                sx={{ flex: 1 }}
+              />
+            </Box>
+          </Box>
+        </CollapsibleSection>
+
+        {/* Seção: Imagem */}
+        <CollapsibleSection
+          title="Imagem do Evento"
+          icon={<ImageIcon />}
+          sectionKey="image"
+        >
+          <ImageUploadFieldBase64
+            value={formData.image}
+            onChange={handleImageChange}
+            error={!!formErrors.image}
+            helperText={formErrors.image}
+          />
+        </CollapsibleSection>
+
+        {/* Seção: Detalhes Adicionais */}
+        <CollapsibleSection
+          title="Detalhes Adicionais"
+          icon={<DescriptionIcon />}
+          sectionKey="details"
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <StyledTextField
+              label="Descrição"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              multiline
+              rows={4}
+              startIcon={<DescriptionIcon />}
+            />
+            
+            <StyledTextField
+              label="Observações"
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              multiline
+              rows={3}
+              startIcon={<NotesIcon />}
+            />
+          </Box>
+        </CollapsibleSection>
+        
+        {/* Botões desktop */}
+        {!isMobile && (
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            mt: 4
+          }}>
+            <Box>
+              {eventId && (
+                <StyledButton
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  Excluir Evento
+                </StyledButton>
+              )}
+            </Box>
+            
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <StyledButton
+                variant="outlined"
+                color="inherit"
+                onClick={handleCancelConfirm}
+              >
+                Cancelar
+              </StyledButton>
+              
+              <StyledButton
+                variant="contained"
+                color="primary"
+                startIcon={<SaveIcon />}
+                onClick={handleSave}
+              >
+                {eventId ? 'Atualizar' : 'Criar'} Evento
+              </StyledButton>
+            </Box>
+          </Box>
+        )}
       </Container>
+      
+      {/* FAB para salvar em mobile */}
+      {isMobile && (
+        <Fab
+          color="primary"
+          onClick={handleSave}
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 1000,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+            '&:hover': {
+              transform: 'scale(1.1)',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.2)'
+            }
+          }}
+        >
+          <SaveIcon />
+        </Fab>
+      )}
+
+      {/* Botão de excluir em mobile (se editando) */}
+      {isMobile && eventId && (
+        <Fab
+          color="error"
+          onClick={() => setDeleteDialogOpen(true)}
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            left: 24,
+            zIndex: 1000,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+            '&:hover': {
+              transform: 'scale(1.1)',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.2)'
+            }
+          }}
+        >
+          <DeleteIcon />
+        </Fab>
+      )}
       
       {/* Snackbar de feedback */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ 
+          vertical: 'bottom', 
+          horizontal: 'center' 
+        }}
+        sx={{ 
+          mb: isMobile ? 10 : 0 // Margem para não sobrepor FAB
+        }}
       >
         <Alert 
           onClose={handleCloseSnackbar} 
@@ -684,3 +874,4 @@ const EventCreate = () => {
 };
 
 export default EventCreate;
+

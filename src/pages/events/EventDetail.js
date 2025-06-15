@@ -48,6 +48,13 @@ import StatCard from '../../components/StatCard';
 import EmptyState from '../../components/EmptyState';
 import ActionButton from '../../components/ActionButton';
 
+// Componentes mobile corrigidos
+import MobileEventDetailHeader from './componets/MobileEventDetailHeader';
+import MobileActionBar from './componets/MobileActionBar';
+import MobileEventInfo from './componets/MobileEventInfo';
+import MobileEventStatsGrid from './componets/MobileEventStatsGrid';
+import MobileTabs from './componets/MobileTabs';
+
 const EventDetail = () => {
   const { id } = useParams();
   const theme = useTheme();
@@ -123,6 +130,17 @@ const EventDetail = () => {
       minute: '2-digit'
     });
   };
+
+  // Formatar hora
+  const formatTime = (dateString) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
   
   // Renderizar tela de carregamento
   if (eventLoading || !currentEvent) {
@@ -138,11 +156,53 @@ const EventDetail = () => {
     );
   }
   
-  // Configuração das abas
+  // Configuração das abas para desktop
   const tabsConfig = [
     { label: 'Detalhes', icon: <EventIcon />, iconPosition: 'start' },
     { label: 'Convidados', icon: <PeopleIcon />, iconPosition: 'start' },
     { label: 'Convites', icon: <MailIcon />, iconPosition: 'start' }
+  ];
+
+  // Estatísticas para mobile
+  const stats = [
+    {
+      label: 'Status',
+      icon: EventIcon,
+      value: new Date(currentEvent.date) > new Date() ? 'Ativo' : 'Finalizado',
+      color: new Date(currentEvent.date) > new Date() ? 'success' : 'default',
+      bgAlpha: 0.1,
+      secondaryIcon: LocationOnIcon,
+      secondaryText: currentEvent.location || 'Sem local'
+    },
+    {
+      label: 'Convidados',
+      icon: PeopleIcon,
+      value: guests.length,
+      color: 'primary',
+      bgAlpha: 0.1,
+      secondaryIcon: PeopleIcon,
+      secondaryText: 'total de convidados'
+    },
+    {
+      label: 'Confirmados',
+      icon: WhatsAppIcon,
+      value: guests.filter(g => g.status === 'confirmed').length,
+      color: 'success',
+      bgAlpha: 0.1,
+      secondaryIcon: WhatsAppIcon,
+      secondaryText: `${guests.length > 0 
+        ? Math.round((guests.filter(g => g.status === 'confirmed').length / guests.length) * 100) 
+        : 0}% do total`
+    },
+    {
+      label: 'Pendentes',
+      icon: MailIcon,
+      value: guests.filter(g => g.status === 'pending').length,
+      color: 'warning',
+      bgAlpha: 0.1,
+      secondaryIcon: MailIcon,
+      secondaryText: 'aguardando resposta'
+    }
   ];
   
   return (
@@ -150,150 +210,167 @@ const EventDetail = () => {
       sx={{ 
         minHeight: '100vh',
         display: 'flex',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        pb: isMobile ? 10 : 4, // Extra padding bottom para mobile action bar
+        bgcolor: isMobile ? alpha(theme.palette.primary.main, 0.01) : 'transparent'
       }}
     >
-      <Container maxWidth="lg" sx={{ py: 2 }}> {/* Reduzido de py: 4 para py: 2 */}
+      <Container maxWidth="lg" sx={{ py: 2 }}>
         
-        <Box sx={{ 
-          mb: 3, // Reduzido de 4 para 3
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            bottom: -12, // Reduzido de -16 para -12
-            left: 0,
-            right: 0,
-            height: '1px',
-            background: `linear-gradient(to right, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(theme.palette.primary.main, 0.3)}, ${alpha(theme.palette.primary.main, 0.1)})`
-          }
-        }}>
-          {/* Botão Voltar à esquerda */}
-          <StyledButton
-            variant="outlined"
-            color="primary"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/events')}
-            sx={{ 
-              borderRadius: 10,
-              px: 2,
-              py: 0.75, // Reduzido de 1 para 0.75
-              '&:hover': {
-                transform: 'translateX(-4px)'
-              }
-            }}
-          >
-            Voltar
-          </StyledButton>
-          
-          {/* Título e data à direita */}
-          <PageTitle
-            title={currentEvent.title}
-            subtitle={
-              <Box sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-end'
-              }}>
-                <CalendarIcon sx={{ fontSize: 16, mr: 0.5, color: theme.palette.primary.main }} />
-                {formatDate(currentEvent.date)}
-              </Box>
-            }
-            alignRight={true}
-            mb={0}
+        {/* Header - Condicional para mobile */}
+        {isMobile ? (
+          <MobileEventDetailHeader 
+            event={currentEvent}
+            onBack={() => navigate('/events')}
+            formatDate={formatDate}
+            formatTime={formatTime}
           />
-        </Box>
-        
-        <Box
-          sx={{
+        ) : (
+          <Box sx={{ 
+            mb: 3,
+            position: 'relative',
             display: 'flex',
-            flexWrap: 'wrap',
-            gap: 3,               // espaçamento entre os cards
-            mb: 3,                // margem inferior
-            justifyContent: 'center'
-          }}
-        >
-          {/* Status */}
-          <Box
-            sx={{
-              flexBasis: { xs: '100%', sm: '48%', md: '23%' },
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <StatCard
-              icon={<EventIcon />}
-              title="Status"
-              value={new Date(currentEvent.date) > new Date() ? 'Ativo' : 'Finalizado'}
-              subtitle={currentEvent.location}
-              subtitleIcon={<LocationOnIcon />}
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: -12,
+              left: 0,
+              right: 0,
+              height: '1px',
+              background: `linear-gradient(to right, ${alpha(theme.palette.primary.main, 0.1)}, ${alpha(theme.palette.primary.main, 0.3)}, ${alpha(theme.palette.primary.main, 0.1)})`
+            }
+          }}>
+            {/* Botão Voltar à esquerda */}
+            <StyledButton
+              variant="outlined"
               color="primary"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate('/events')}
+              sx={{ 
+                borderRadius: 10,
+                px: 2,
+                py: 0.75,
+                '&:hover': {
+                  transform: 'translateX(-4px)'
+                }
+              }}
+            >
+              Voltar
+            </StyledButton>
+            
+            {/* Título e data à direita */}
+            <PageTitle
+              title={currentEvent.title}
+              subtitle={
+                <Box sx={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end'
+                }}>
+                  <CalendarIcon sx={{ fontSize: 16, mr: 0.5, color: theme.palette.primary.main }} />
+                  {formatDate(currentEvent.date)}
+                </Box>
+              }
+              alignRight={true}
+              mb={0}
             />
           </Box>
-
-          {/* Convidados */}
+        )}
+        
+        {/* Cards de estatísticas - Condicional para mobile */}
+        {isMobile ? (
+          <MobileEventStatsGrid stats={stats} />
+        ) : (
           <Box
             sx={{
-              flexBasis: { xs: '100%', sm: '48%', md: '23%' },
               display: 'flex',
+              flexWrap: 'wrap',
+              gap: 3,
+              mb: 3,
               justifyContent: 'center'
             }}
           >
-            <StatCard
-              icon={<PeopleIcon />}
-              title="Convidados"
-              value={guests.length}
-              subtitle="total de convidados"
-              subtitleIcon={<PeopleIcon />}
-              color="primary"
-            />
-          </Box>
+            {/* Status */}
+            <Box
+              sx={{
+                flexBasis: { xs: '100%', sm: '48%', md: '23%' },
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <StatCard
+                icon={<EventIcon />}
+                title="Status"
+                value={new Date(currentEvent.date) > new Date() ? 'Ativo' : 'Finalizado'}
+                subtitle={currentEvent.location}
+                subtitleIcon={<LocationOnIcon />}
+                color="primary"
+              />
+            </Box>
 
-          {/* Confirmados */}
-          <Box
-            sx={{
-              flexBasis: { xs: '100%', sm: '48%', md: '23%' },
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <StatCard
-              icon={<WhatsAppIcon />}
-              title="Confirmados"
-              value={guests.filter(g => g.status === 'confirmed').length}
-              subtitle={`${guests.length > 0 
-                ? Math.round((guests.filter(g => g.status === 'confirmed').length / guests.length) * 100) 
-                : 0}% do total`}
-              subtitleIcon={<WhatsAppIcon />}
-              color="success"
-            />
-          </Box>
+            {/* Convidados */}
+            <Box
+              sx={{
+                flexBasis: { xs: '100%', sm: '48%', md: '23%' },
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <StatCard
+                icon={<PeopleIcon />}
+                title="Convidados"
+                value={guests.length}
+                subtitle="total de convidados"
+                subtitleIcon={<PeopleIcon />}
+                color="primary"
+              />
+            </Box>
 
-          {/* Pendentes */}
-          <Box
-            sx={{
-              flexBasis: { xs: '100%', sm: '48%', md: '23%' },
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <StatCard
-              icon={<MailIcon />}
-              title="Pendentes"
-              value={guests.filter(g => g.status === 'pending').length}
-              subtitle="aguardando resposta"
-              subtitleIcon={<MailIcon />}
-              color="warning"
-            />
+            {/* Confirmados */}
+            <Box
+              sx={{
+                flexBasis: { xs: '100%', sm: '48%', md: '23%' },
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <StatCard
+                icon={<WhatsAppIcon />}
+                title="Confirmados"
+                value={guests.filter(g => g.status === 'confirmed').length}
+                subtitle={`${guests.length > 0 
+                  ? Math.round((guests.filter(g => g.status === 'confirmed').length / guests.length) * 100) 
+                  : 0}% do total`}
+                subtitleIcon={<WhatsAppIcon />}
+                color="success"
+              />
+            </Box>
+
+            {/* Pendentes */}
+            <Box
+              sx={{
+                flexBasis: { xs: '100%', sm: '48%', md: '23%' },
+                display: 'flex',
+                justifyContent: 'center'
+              }}
+            >
+              <StatCard
+                icon={<MailIcon />}
+                title="Pendentes"
+                value={guests.filter(g => g.status === 'pending').length}
+                subtitle="aguardando resposta"
+                subtitleIcon={<MailIcon />}
+                color="warning"
+              />
+            </Box>
           </Box>
-        </Box>
+        )}
         
         <Paper 
           sx={{ 
-            mb: 3, // Reduzido de 4 para 3
+            mb: 3,
             borderRadius: 3,
             overflow: 'hidden',
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
@@ -304,253 +381,202 @@ const EventDetail = () => {
           }}
         >
           {/* Header das abas com botões de editar e excluir */}
-          <StyledTabs
-            value={tabValue}
-            onChange={handleTabChange}
-            tabs={tabsConfig}
-            variant={isMobile ? "fullWidth" : "standard"}
-            endComponent={(
-              <Box sx={{ display: 'flex', gap: 1 }}>
-              <StyledButton
-                variant="outlined"
-                startIcon={<EditIcon />}
-                onClick={() => navigate(`/events/edit/${id}`)}
-                sx={{ 
-                  borderRadius: 10,
-                  px: 2,
-                  py: 0.5,
-                  '&:hover': {
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-                
-              >
-                Editar
-              </StyledButton>
-              <StyledButton
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={() => setDeleteDialogOpen(true)}
-                sx={{
-                  mr: 2,
-                  borderRadius: 10,
-                  px: 2,
-                  py: 0.5,
-                  '&:hover': {
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-              >
-                Excluir
-              </StyledButton>
-            </Box>
-            )}
-          />
+          {isMobile ? (
+            <MobileTabs
+              value={tabValue}
+              onChange={handleTabChange}
+              guestsCount={guests.length}
+              invitesCount={invites.length}
+            />
+          ) : (
+            <StyledTabs
+              value={tabValue}
+              onChange={handleTabChange}
+              tabs={tabsConfig}
+              variant="standard"
+              endComponent={(
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                <StyledButton
+                  variant="outlined"
+                  startIcon={<EditIcon />}
+                  onClick={() => navigate(`/events/edit/${id}`)}
+                  sx={{ 
+                    borderRadius: 10,
+                    px: 2,
+                    py: 0.5,
+                    '&:hover': {
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                  
+                >
+                  Editar
+                </StyledButton>
+                <StyledButton
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => setDeleteDialogOpen(true)}
+                  sx={{
+                    mr: 2,
+                    borderRadius: 10,
+                    px: 2,
+                    py: 0.5,
+                    '&:hover': {
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                >
+                  Excluir
+                </StyledButton>
+              </Box>
+              )}
+            />
+          )}
           
           <TabPanel value={tabValue} index={0}>
-            <Box container spacing={4}>
-                {/* Título da seção com margem adequada */}
-                {/* <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  mb: 3,
-                  pb: 2,
-                  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
-                  px: 2 // Adiciona margem horizontal
-                }}>
-                    <Avatar
-                      sx={{
-                        bgcolor: alpha(theme.palette.primary.main, 0.1),
-                        color: theme.palette.primary.main,
-                        mr: 2
-                      }}
-                    >
-                      <EventIcon />
-                    </Avatar>
-                    <Typography 
-                      variant="h6" 
-                      sx={{ 
-                        fontWeight: 600,
-                        color: theme.palette.primary.main
-                      }}
-                    >
-                      Informações do Evento
-                    </Typography>
-                </Box> */}
-                
-                {/* Informações do evento distribuídas na tela, sem card */}
-                <Box sx={{ px: 2 }}>
-                  <Box sx={{ mb: 4 }}>
-                    <CardMedia
-                      component="img"
-                      height="180"
-                      image={currentEvent?.image || 'https://picsum.photos/400/200?random=1'}
-                      alt={currentEvent.title}
-                      sx={{ 
-                        borderRadius: 3,
-                        transition: 'transform 0.5s ease',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                        mb: 5,
-                        mt: 5,
-                        '&:hover': {
-                          transform: 'scale(1.02)'
-                        }
-                      }}
-                    />
-                    
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'flex-start', 
-                          mb: 3
-                        }}>
-                          <Avatar
-                            sx={{
-                              bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              color: theme.palette.primary.main,
-                              mr: 2
-                            }}
-                          >
-                            <EventIcon />
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                              Título
-                            </Typography>
-                            <Typography variant="h6" fontWeight={600}>
-                              {currentEvent.title}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                      
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'flex-start', 
-                          mb: 3
-                        }}>
-                          <Avatar
-                            sx={{
-                              bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              color: theme.palette.primary.main,
-                              mr: 2
-                            }}
-                          >
-                            <CalendarIcon />
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                              Data e Hora
-                            </Typography>
-                            <Typography variant="h6" fontWeight={600}>
-                              {formatDate(currentEvent.date)}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                      
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'flex-start', 
-                          mb: 3
-                        }}>
-                          <Avatar
-                            sx={{
-                              bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              color: theme.palette.primary.main,
-                              mr: 2
-                            }}
-                          >
-                            <LocationOnIcon />
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                              Local
-                            </Typography>
-                            <Typography variant="h6" fontWeight={600}>
-                              {currentEvent.location || 'Não especificado'}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                      
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'flex-start', 
-                          mb: 3
-                        }}>
-                          <Avatar
-                            sx={{
-                              bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              color: theme.palette.primary.main,
-                              mr: 2
-                            }}
-                          >
-                            <CategoryIcon />
-                          </Avatar>
-                          <Box>
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                              Tipo
-                            </Typography>
-                            <Typography variant="h6" fontWeight={600}>
-                              {
-                                currentEvent.type === 'birthday' ? 'Aniversário' :
-                                currentEvent.type === 'wedding' ? 'Casamento' :
-                                currentEvent.type === 'corporate' ? 'Corporativo' :
-                                currentEvent.type === 'party' ? 'Festa' : 'Outro'
-                              }
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                    
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'flex-start',
-                      mt: 2
-                    }}>
-                      <Avatar
-                        sx={{
-                          bgcolor: alpha(theme.palette.primary.main, 0.1),
-                          color: theme.palette.primary.main,
-                          mr: 2
+            {isMobile ? (
+              <MobileEventInfo 
+                event={currentEvent}
+                formatDate={formatDate}
+              />
+            ) : (
+              <Box container spacing={4}>
+                  {/* Informações do evento distribuídas na tela, sem card */}
+                  <Box sx={{ px: 2 }}>
+                    <Box sx={{ mb: 4 }}>
+                      <CardMedia
+                        component="img"
+                        height="180"
+                        image={currentEvent?.image || 'https://picsum.photos/400/200?random=1'}
+                        alt={currentEvent.title}
+                        sx={{ 
+                          borderRadius: 3,
+                          transition: 'transform 0.5s ease',
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                          mb: 5,
+                          mt: 5,
+                          '&:hover': {
+                            transform: 'scale(1.02)'
+                          }
                         }}
-                      >
-                        <DescriptionIcon />
-                      </Avatar>
-                      <Box sx={{ width: '100%' }}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          Descrição
-                        </Typography>
-                        <Paper
-                          elevation={0}
-                          sx={{ 
-                            p: 2, 
-                            borderRadius: 2,
-                            bgcolor: theme.palette.mode === 'dark' 
-                              ? alpha(theme.palette.background.paper, 0.6) 
-                              : alpha(theme.palette.background.paper, 0.6),
-                            border: `1px solid ${theme.palette.mode === 'dark' ? alpha(theme.palette.divider, 0.7) : '#e0e0e0'}`
-                          }}
-                        >
-                          <Typography variant="body1">
-                            {currentEvent.description || 'Sem descrição'}
-                          </Typography>
-                        </Paper>
-                      </Box>
-                    </Box>
-                    
-                    {currentEvent.notes && (
+                      />
+                      
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} sm={6}>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'flex-start', 
+                            mb: 3
+                          }}>
+                            <Avatar
+                              sx={{
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                                mr: 2
+                              }}
+                            >
+                              <EventIcon />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Título
+                              </Typography>
+                              <Typography variant="h6" fontWeight={600}>
+                                {currentEvent.title}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Grid>
+                        
+                        <Grid item xs={12} sm={6}>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'flex-start', 
+                            mb: 3
+                          }}>
+                            <Avatar
+                              sx={{
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                                mr: 2
+                              }}
+                            >
+                              <CalendarIcon />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Data e Hora
+                              </Typography>
+                              <Typography variant="h6" fontWeight={600}>
+                                {formatDate(currentEvent.date)}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Grid>
+                        
+                        <Grid item xs={12} sm={6}>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'flex-start', 
+                            mb: 3
+                          }}>
+                            <Avatar
+                              sx={{
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                                mr: 2
+                              }}
+                            >
+                              <LocationOnIcon />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Local
+                              </Typography>
+                              <Typography variant="h6" fontWeight={600}>
+                                {currentEvent.location || 'Não especificado'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Grid>
+                        
+                        <Grid item xs={12} sm={6}>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'flex-start', 
+                            mb: 3
+                          }}>
+                            <Avatar
+                              sx={{
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: theme.palette.primary.main,
+                                mr: 2
+                              }}
+                            >
+                              <CategoryIcon />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Tipo
+                              </Typography>
+                              <Typography variant="h6" fontWeight={600}>
+                                {
+                                  currentEvent.type === 'birthday' ? 'Aniversário' :
+                                  currentEvent.type === 'wedding' ? 'Casamento' :
+                                  currentEvent.type === 'corporate' ? 'Corporativo' :
+                                  currentEvent.type === 'party' ? 'Festa' : 'Outro'
+                                }
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                      
                       <Box sx={{ 
                         display: 'flex', 
                         alignItems: 'flex-start',
-                        mt: 3
+                        mt: 2
                       }}>
                         <Avatar
                           sx={{
@@ -563,7 +589,7 @@ const EventDetail = () => {
                         </Avatar>
                         <Box sx={{ width: '100%' }}>
                           <Typography variant="body2" color="text.secondary" gutterBottom>
-                            Observações
+                            Descrição
                           </Typography>
                           <Paper
                             elevation={0}
@@ -577,15 +603,53 @@ const EventDetail = () => {
                             }}
                           >
                             <Typography variant="body1">
-                              {currentEvent.notes}
+                              {currentEvent.description || 'Sem descrição'}
                             </Typography>
                           </Paper>
                         </Box>
                       </Box>
-                    )}
+                      
+                      {currentEvent.notes && (
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'flex-start',
+                          mt: 3
+                        }}>
+                          <Avatar
+                            sx={{
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              color: theme.palette.primary.main,
+                              mr: 2
+                            }}
+                          >
+                            <DescriptionIcon />
+                          </Avatar>
+                          <Box sx={{ width: '100%' }}>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                              Observações
+                            </Typography>
+                            <Paper
+                              elevation={0}
+                              sx={{ 
+                                p: 2, 
+                                borderRadius: 2,
+                                bgcolor: theme.palette.mode === 'dark' 
+                                  ? alpha(theme.palette.background.paper, 0.6) 
+                                  : alpha(theme.palette.background.paper, 0.6),
+                                border: `1px solid ${theme.palette.mode === 'dark' ? alpha(theme.palette.divider, 0.7) : '#e0e0e0'}`
+                              }}
+                            >
+                              <Typography variant="body1">
+                                {currentEvent.notes}
+                              </Typography>
+                            </Paper>
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
                   </Box>
-                </Box>
-            </Box>
+              </Box>
+            )}
           </TabPanel>
           
           <TabPanel value={tabValue} index={1}>
@@ -594,43 +658,46 @@ const EventDetail = () => {
                 display: 'flex', 
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                mb: 2
+                mb: 2,
+                px: isMobile ? 2 : 0
               }}>
                 <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
                   {/* Lista de Convidados */}
                 </Typography>
                 
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  {/* Novo botão para acessar a tela de listagem de convidados */}
-                  <StyledButton
-                    variant="outlined"
-                    color="primary"
-                    startIcon={<ListIcon />}
-                    onClick={() => navigate(`/events/${id}/guests`)}
-                    sx={{ 
-                      borderRadius: 10,
-                      px: 2,
-                      py: 0.75,
-                      fontWeight: 600,
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                        transform: 'translateY(-2px)'
-                      }
-                    }}
-                  >
-                    Gerenciar Convidados
-                  </StyledButton>
-                  
-                  <StyledButton
-                    variant="contained"
-                    color="primary"
-                    startIcon={<AddIcon />}
-                    onClick={() => navigate(`/events/${id}/guests/new`)}
-                  >
-                    Adicionar Convidado
-                  </StyledButton>
-                </Box>
+                {!isMobile && (
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    {/* Novo botão para acessar a tela de listagem de convidados */}
+                    <StyledButton
+                      variant="outlined"
+                      color="primary"
+                      startIcon={<ListIcon />}
+                      onClick={() => navigate(`/events/${id}/guests`)}
+                      sx={{ 
+                        borderRadius: 10,
+                        px: 2,
+                        py: 0.75,
+                        fontWeight: 600,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                          transform: 'translateY(-2px)'
+                        }
+                      }}
+                    >
+                      Gerenciar Convidados
+                    </StyledButton>
+                    
+                    <StyledButton
+                      variant="contained"
+                      color="primary"
+                      startIcon={<AddIcon />}
+                      onClick={() => navigate(`/events/${id}/guests/new`)}
+                    >
+                      Adicionar Convidado
+                    </StyledButton>
+                  </Box>
+                )}
               </Box>
               
               {guests.length === 0 ? (
@@ -641,7 +708,7 @@ const EventDetail = () => {
                   onButtonClick={() => navigate(`/events/${id}/guests/new`)}
                 />
               ) : (
-                <Grid container spacing={2}>
+                <Grid container spacing={2} sx={{ px: isMobile ? 2 : 0 }}>
                   {guests.map((guest) => (
                     <Grid item xs={12} sm={6} md={4} key={guest.id}>
                       <Card 
@@ -755,20 +822,23 @@ const EventDetail = () => {
                 display: 'flex', 
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                mb: 2
+                mb: 2,
+                px: isMobile ? 2 : 0
               }}>
                 <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
                   {/* Convites */}
                 </Typography>
                 
-                <StyledButton
-                  variant="contained"
-                  color="primary"
-                  startIcon={<AddIcon />}
-                  onClick={() => navigate(`/events/${id}/invites/new`)}
-                >
-                  Criar Convite
-                </StyledButton>
+                {!isMobile && (
+                  <StyledButton
+                    variant="contained"
+                    color="primary"
+                    startIcon={<AddIcon />}
+                    onClick={() => navigate(`/events/${id}/invites/new`)}
+                  >
+                    Criar Convite
+                  </StyledButton>
+                )}
               </Box>
               
               {invites.length === 0 ? (
@@ -779,7 +849,7 @@ const EventDetail = () => {
                   onButtonClick={() => navigate(`/events/${id}/invites/new`)}
                 />
               ) : (
-                <Grid container spacing={2}>
+                <Grid container spacing={2} sx={{ px: isMobile ? 2 : 0 }}>
                   {invites.map((invite) => (
                     <Grid item xs={12} sm={6} md={4} key={invite.id}>
                       <Card 
@@ -848,44 +918,57 @@ const EventDetail = () => {
           </TabPanel>
         </Paper>
         
-        {/* Botões de ação flutuantes */}
-        <Box sx={{ 
-          position: 'fixed', 
-          bottom: 24, 
-          right: 24,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2
-        }}>
-          {/* Novo botão de ação para acessar a tela de listagem de convidados */}
-          <ActionButton
-            icon={<PeopleIcon />}
-            color="secondary"
-            tooltip="Gerenciar Convidados"
-            onClick={() => navigate(`/events/${id}/guests`)}
+        {/* Botões de ação flutuantes - Apenas para desktop */}
+        {!isMobile && (
+          <Box sx={{ 
+            position: 'fixed', 
+            bottom: 24, 
+            right: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2
+          }}>
+            {/* Novo botão de ação para acessar a tela de listagem de convidados */}
+            <ActionButton
+              icon={<PeopleIcon />}
+              color="secondary"
+              tooltip="Gerenciar Convidados"
+              onClick={() => navigate(`/events/${id}/guests`)}
+            />
+            
+            <ActionButton
+              icon={<EditIcon />}
+              color="primary"
+              tooltip="Editar Evento"
+              onClick={() => navigate(`/events/edit/${id}`)}
+            />
+            
+            <ActionButton
+              icon={<DeleteIcon />}
+              color="error"
+              tooltip="Excluir Evento"
+              onClick={() => setDeleteDialogOpen(true)}
+            />
+            
+            <ActionButton
+              icon={<ShareIcon />}
+              color="info"
+              tooltip="Compartilhar Evento"
+              onClick={() => {/* Lógica para compartilhar */}}
+            />
+          </Box>
+        )}
+
+        {/* Action Bar Mobile */}
+        {isMobile && (
+          <MobileActionBar
+            eventId={id}
+            onEdit={() => navigate(`/events/edit/${id}`)}
+            onDelete={() => setDeleteDialogOpen(true)}
+            onManageGuests={() => navigate(`/events/${id}/guests`)}
+            onShare={() => {/* Lógica para compartilhar */}}
           />
-          
-          <ActionButton
-            icon={<EditIcon />}
-            color="primary"
-            tooltip="Editar Evento"
-            onClick={() => navigate(`/events/edit/${id}`)}
-          />
-          
-          <ActionButton
-            icon={<DeleteIcon />}
-            color="error"
-            tooltip="Excluir Evento"
-            onClick={() => setDeleteDialogOpen(true)}
-          />
-          
-          <ActionButton
-            icon={<ShareIcon />}
-            color="info"
-            tooltip="Compartilhar Evento"
-            onClick={() => {/* Lógica para compartilhar */}}
-          />
-        </Box>
+        )}
       </Container>
       
       {/* Snackbar de feedback */}

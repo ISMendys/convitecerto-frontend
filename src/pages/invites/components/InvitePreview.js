@@ -7,7 +7,9 @@ import {
   Paper,
   Tabs,
   Tab,
-  Divider
+  Divider,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -24,7 +26,7 @@ import DetailCard from '../../public/components/DetailCard';
 import CountdownRenderer from '../../public/components/CountdownRenderer';
 import { generateMinimalThemeConfig } from '../../public/components/themes';
 
-const   InvitePreview = ({ 
+const InvitePreview = ({ 
   title, 
   eventTitle, 
   customText, 
@@ -35,6 +37,9 @@ const   InvitePreview = ({
   deviceViewMode,
   onWhatsAppTest
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   // Estado para controlar a visualização em diferentes dispositivos
   const [deviceView, setDeviceView] = useState(deviceViewMode);
 
@@ -50,7 +55,7 @@ const   InvitePreview = ({
     fontFamily
   });
   
-  const theme = createTheme(themeConfig);
+  const previewTheme = createTheme(themeConfig);
   
   // Data fictícia para o evento (30 dias a partir de hoje)
   const eventDate = new Date();
@@ -78,19 +83,22 @@ const   InvitePreview = ({
   // Configurações de escala e tamanho para diferentes dispositivos
   const deviceSettings = {
     mobile: {
-      width: '320px',
-      height: '580px',
-      scale: 0.8
+      width: isMobile ? '100%' : '320px',
+      height: isMobile ? 'auto' : '580px',
+      scale: isMobile ? 1 : 0.8,
+      containerHeight: isMobile ? 'auto' : '2500px'
     },
     tablet: {
-      width: '600px',
-      height: '800px',
-      scale: 0.5
+      width: isMobile ? '100%' : '600px',
+      height: isMobile ? 'auto' : '800px',
+      scale: isMobile ? 1 : 0.5,
+      containerHeight: isMobile ? 'auto' : '2500px'
     },
     desktop: {
-      width: '1024px',
-      height: '768px',
-      scale: 0.4
+      width: isMobile ? '100%' : '1024px',
+      height: isMobile ? 'auto' : '768px',
+      scale: isMobile ? 1 : 0.4,
+      containerHeight: isMobile ? 'auto' : '2500px'
     }
   };
   
@@ -107,33 +115,20 @@ const   InvitePreview = ({
       flexDirection: 'column', 
       alignItems: 'center',
       width: '100%',
-      mb: 4
+      mb: isMobile ? 2 : 4
     }}>
-      {/* Controles de visualização de dispositivo */}
-      <Paper sx={{ mb: 3, width: 'fit-content' }}>
-          {/* <Tabs
-            value={deviceView}
-            onChange={handleDeviceChange}
-            aria-label="device view tabs"
-          >
-            <Tab icon={<SmartphoneIcon />} label="Mobile" value="mobile" />
-            <Tab icon={<TabletIcon />} label="Tablet" value="tablet" />
-            <Tab icon={<LaptopIcon />} label="Desktop" value="desktop" />
-          </Tabs> */}
-      </Paper>
-      
       {/* Preview da página RSVP */}
       <Box
         sx={{
-          width: deviceViewMode == 'mobile' ? 350 : 1500,
-          height: 2500,
-          transform: `scale(${currentDevice.scale})`,
+          width: currentDevice.width,
+          height: currentDevice.containerHeight,
+          transform: isMobile ? 'none' : `scale(${currentDevice.scale})`,
           transformOrigin: 'top center',
-          border: '1px solid #ddd',
-          borderRadius: '8px',
+          border: isMobile ? 'none' : '1px solid #ddd',
+          borderRadius: isMobile ? 0 : '8px',
           overflow: 'hidden',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-          mb: 4,
+          boxShadow: isMobile ? 'none' : '0 4px 20px rgba(0,0,0,0.15)',
+          mb: isMobile ? 2 : 4,
           position: 'relative',
           bgcolor: '#fff'
         }}
@@ -152,13 +147,13 @@ const   InvitePreview = ({
             }
           }}
         >
-          <ThemeProvider theme={theme}>
+          <ThemeProvider theme={previewTheme}>
             {/* Cabeçalho com fundo gradiente */}
             <Box
               sx={{
                 background: `linear-gradient(135deg, ${bgColor} 30%, ${alpha(accentColor, 0.8)} 90%)`,
                 color: '#fff',
-                py: 8,
+                py: isMobile ? 4 : 8,
                 textAlign: 'center',
                 position: 'relative',
                 overflow: 'hidden',
@@ -174,27 +169,29 @@ const   InvitePreview = ({
                 }
               }}
             >
-              <Container maxWidth="md">
+              <Container maxWidth="md" sx={{ px: isMobile ? 2 : 3 }}>
                 <Typography 
-                  variant="h2" 
+                  variant={isMobile ? "h4" : "h2"}
                   component="h1"
                   sx={{ 
                     fontFamily: 'inherit',
                     fontWeight: 'bold',
                     mb: 2,
-                    textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    fontSize: isMobile ? '1.75rem' : undefined
                   }}
                 >
                   {title || 'Título do Convite'}
                 </Typography>
                 
                 <Typography 
-                  variant="h4" 
+                  variant={isMobile ? "h6" : "h4"}
                   sx={{ 
-                    mb: 4,
+                    mb: isMobile ? 3 : 4,
                     fontFamily: 'inherit',
                     opacity: 0.9,
-                    textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                    textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                    fontSize: isMobile ? '1.25rem' : undefined
                   }}
                 >
                   {eventTitle || 'Nome do Evento'}
@@ -202,7 +199,7 @@ const   InvitePreview = ({
                 
                 <Box 
                   sx={{ 
-                    p: 3,
+                    p: isMobile ? 2 : 3,
                     bgcolor: 'rgba(255,255,255,0.15)', 
                     borderRadius: 2,
                     backdropFilter: 'blur(5px)',
@@ -217,7 +214,8 @@ const   InvitePreview = ({
                     sx={{ 
                       fontFamily: 'inherit',
                       fontStyle: 'italic',
-                      lineHeight: 1.6
+                      lineHeight: 1.6,
+                      fontSize: isMobile ? '0.9rem' : undefined
                     }}
                   >
                     {customText || 'Mensagem personalizada do convite...'}
@@ -227,8 +225,14 @@ const   InvitePreview = ({
             </Box>
             
             {/* Contagem regressiva */}
-            <Container maxWidth="md" sx={{ py: 6 }}>
-              <Typography variant="h3" align="center" sx={{ mb: 4 }}>Contagem Regressiva</Typography>
+            <Container maxWidth="md" sx={{ py: isMobile ? 3 : 6, px: isMobile ? 2 : 3 }}>
+              <Typography 
+                variant={isMobile ? "h5" : "h3"} 
+                align="center" 
+                sx={{ mb: isMobile ? 3 : 4 }}
+              >
+                Contagem Regressiva
+              </Typography>
               <Box sx={{ maxWidth: '600px', mx: 'auto' }}>
                 <CountdownRenderer 
                   days={days}
@@ -236,53 +240,69 @@ const   InvitePreview = ({
                   minutes={minutes}
                   seconds={seconds}
                   completed={timeRemaining <= 0}
-                  theme={theme}
+                  theme={previewTheme}
+                  isMobile={isMobile}
                 />
               </Box>
               
-              <Divider sx={{ my: 6 }} />
+              <Divider sx={{ my: isMobile ? 4 : 6 }} />
               
               {/* Detalhes do evento */}
-              <Typography variant="h3" align="center" sx={{ mb: 4 }}>Detalhes do Evento</Typography>
+              <Typography 
+                variant={isMobile ? "h5" : "h3"} 
+                align="center" 
+                sx={{ mb: isMobile ? 3 : 4 }}
+              >
+                Detalhes do Evento
+              </Typography>
               <Box sx={{ 
                 display: 'grid', 
-                gridTemplateColumns: deviceView === 'mobile' ? '1fr' : 'repeat(3, 1fr)', 
-                gap: 4, 
-                mb: 6 
+                gridTemplateColumns: (deviceView === 'mobile' || isMobile) ? '1fr' : 'repeat(3, 1fr)', 
+                gap: isMobile ? 2 : 4, 
+                mb: isMobile ? 4 : 6 
               }}>
                 <DetailCard 
                   icon={EventIcon} 
                   title="Data" 
                   value={formattedDate} 
-                  theme={theme} 
-                  index={1} 
+                  theme={previewTheme} 
+                  index={1}
+                  isMobile={isMobile}
                 />
                 <DetailCard 
                   icon={AccessTimeIcon} 
                   title="Horário" 
                   value={formattedTime} 
-                  theme={theme} 
-                  index={2} 
+                  theme={previewTheme} 
+                  index={2}
+                  isMobile={isMobile}
                 />
                 <DetailCard 
                   icon={LocationOnIcon} 
                   title="Local" 
                   value="Local do Evento" 
-                  theme={theme} 
-                  index={3} 
+                  theme={previewTheme} 
+                  index={3}
+                  isMobile={isMobile}
                 />
               </Box>
               
-              <Divider sx={{ my: 6 }} />
+              <Divider sx={{ my: isMobile ? 4 : 6 }} />
               
               {/* Mapa (simulado) */}
-              <Typography variant="h3" align="center" sx={{ mb: 4 }}>Como Chegar</Typography>
+              <Typography 
+                variant={isMobile ? "h5" : "h3"} 
+                align="center" 
+                sx={{ mb: isMobile ? 3 : 4 }}
+              >
+                Como Chegar
+              </Typography>
               <Box sx={{
-                height: 300,
-                mb: 6,
-                borderRadius: theme.shape.borderRadius,
+                height: isMobile ? 200 : 300,
+                mb: isMobile ? 4 : 6,
+                borderRadius: previewTheme.shape.borderRadius,
                 overflow: 'hidden',
-                border: `1px solid ${theme.palette.divider}`,
+                border: `1px solid ${previewTheme.palette.divider}`,
                 bgcolor: alpha(bgColor, 0.1),
                 display: 'flex',
                 alignItems: 'center',
@@ -293,27 +313,56 @@ const   InvitePreview = ({
                 </Typography>
               </Box>
               
-              <Divider sx={{ my: 6 }} />
+              <Divider sx={{ my: isMobile ? 4 : 6 }} />
               
               {/* Seção de RSVP */}
-              <Paper sx={{ p: { xs: 4, sm: 6 }, textAlign: 'center' }}>
-                <Typography variant="h3" sx={{ mb: 3 }}>Confirmar Presença</Typography>
-                <Typography variant="body1" sx={{ mb: 5, color: 'text.secondary', maxWidth: 600, mx: 'auto' }}>
+              <Paper sx={{ 
+                p: isMobile ? 3 : { xs: 4, sm: 6 }, 
+                textAlign: 'center' 
+              }}>
+                <Typography 
+                  variant={isMobile ? "h5" : "h3"} 
+                  sx={{ mb: isMobile ? 2 : 3 }}
+                >
+                  Confirmar Presença
+                </Typography>
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    mb: isMobile ? 3 : 5, 
+                    color: 'text.secondary', 
+                    maxWidth: 600, 
+                    mx: 'auto',
+                    fontSize: isMobile ? '0.9rem' : undefined
+                  }}
+                >
                   Sua resposta é muito importante para nós! Por favor, confirme se poderemos contar com sua presença neste dia especial.
                 </Typography>
-                <Box sx={{ display: 'flex', flexDirection: deviceView === 'mobile' ? 'column' : 'row', gap: 2, justifyContent: 'center' }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: (deviceView === 'mobile' || isMobile) ? 'column' : 'row', 
+                  gap: 2, 
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}>
                   <Button
                     variant="contained"
-                    size="large"
-                    sx={{ minWidth: 200 }}
+                    size={isMobile ? "medium" : "large"}
+                    sx={{ 
+                      minWidth: isMobile ? '100%' : 200,
+                      maxWidth: isMobile ? 300 : 'none'
+                    }}
                     disabled
                   >
                     Confirmar Presença
                   </Button>
                   <Button
                     variant="outlined"
-                    size="large"
-                    sx={{ minWidth: 200 }}
+                    size={isMobile ? "medium" : "large"}
+                    sx={{ 
+                      minWidth: isMobile ? '100%' : 200,
+                      maxWidth: isMobile ? 300 : 'none'
+                    }}
                     disabled
                   >
                     Não Poderei Comparecer
@@ -333,15 +382,17 @@ const   InvitePreview = ({
             color="success"
             startIcon={<WhatsAppIcon />}
             onClick={onWhatsAppTest}
+            size={isMobile ? "medium" : "large"}
             sx={{ 
               borderRadius: 10,
-              px: 3,
-              py: 0.8,
+              px: isMobile ? 2 : 3,
+              py: isMobile ? 0.6 : 0.8,
               color: '#25D366',
               borderColor: '#25D366',
               fontWeight: 600,
               boxShadow: '0 4px 12px rgba(37, 211, 102, 0.15)',
               transition: 'all 0.2s ease',
+              fontSize: isMobile ? '0.875rem' : undefined,
               '&:hover': {
                 borderColor: '#25D366',
                 backgroundColor: 'rgba(37, 211, 102, 0.1)',
@@ -359,3 +410,4 @@ const   InvitePreview = ({
 };
 
 export default InvitePreview;
+

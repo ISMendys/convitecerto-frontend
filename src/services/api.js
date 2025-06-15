@@ -61,6 +61,27 @@ export const authService = {
   }
 };
 
+// Serviço de usuário
+export const userService = {
+  // Buscar perfil do usuário
+  getProfile: async () => {
+    const response = await api.get('/users/profile');
+    return response.data;
+  },
+  
+  // Atualizar perfil do usuário
+  updateProfile: async (profileData) => {
+    const response = await api.put('/users/profile', profileData);
+    return response.data;
+  },
+  
+  // Alterar senha do usuário
+  changePassword: async (passwordData) => {
+    const response = await api.put('/users/change-password', passwordData);
+    return response.data;
+  }
+};
+
 // Serviço de eventos
 export const eventService = {
   // Buscar todos os eventos do usuário

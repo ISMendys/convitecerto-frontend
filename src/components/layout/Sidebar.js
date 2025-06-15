@@ -13,7 +13,9 @@ import {
   Avatar,
   Chip,
   alpha,
-  useTheme
+  useMediaQuery,
+  useTheme,
+  Tooltip
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -22,9 +24,11 @@ import {
   Celebration as CelebrationIcon,
   Settings as SettingsIcon,
   PeopleOutline as PeopleOutlineIcon,
-  QuestionMark as QuestionMarkIcon
+  QuestionMark as QuestionMarkIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 import ConfigModal from '../config/ConfigModal';
+import UserEditModal from '../user/UserEditModal';
 
 // Componente para o item do menu
 const NavItem = ({ href, icon: Icon, title, isNew, onClick }) => {
@@ -114,9 +118,11 @@ const NavItem = ({ href, icon: Icon, title, isNew, onClick }) => {
 
 const Sidebar = ({ onMobileClose, openMobile }) => {
   const location = useLocation();
-  const { user } = useSelector(state => state.auth);
+  const { profile } = useSelector((state) => state.user);
   const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [userEditModalOpen, setUserEditModalOpen] = useState(false);
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     if (onMobileClose) {
@@ -126,6 +132,10 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
 
   const handleSettings = () => {
     setConfigModalOpen(true);
+  };
+
+  const handleEditProfile = () => {
+    setUserEditModalOpen(true);
   };
 
   const items = [
@@ -160,6 +170,7 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
   const content = (
     <Box
       sx={{
+        mt: isMobile ? 9 : 0,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -179,28 +190,59 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         }}
       >
-        <Avatar
-          sx={{
-            width: 80,
-            height: 80,
-            mb: 2,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            border: `3px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-            backgroundColor: alpha(theme.palette.primary.main, 0.1),
-            color: theme.palette.primary.main,
-            fontSize: '2rem',
-            fontWeight: 700,
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              transform: 'scale(1.05)',
-              borderColor: theme.palette.primary.main,
-              boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
-            }
-          }}
-          src={user?.avatar || ''}
-        >
-          {user?.name?.charAt(0).toUpperCase() || 'U'}
-        </Avatar>
+        <Box sx={{ position: 'relative', display: 'inline-block' }}>
+          <Avatar
+            onClick={handleEditProfile}
+            sx={{
+              width: 80,
+              height: 80,
+              mb: 2,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              border: `3px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+              backgroundColor: alpha(theme.palette.primary.main, 0.1),
+              color: theme.palette.primary.main,
+              fontSize: '2rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.05)',
+                borderColor: theme.palette.primary.main,
+                boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+              }
+            }}
+            src={profile?.avatar || ''}
+          >
+            {profile?.name?.charAt(0).toUpperCase() || 'U'}
+          </Avatar>
+          <Tooltip title="Editar perfil">
+            <Box
+              onClick={handleEditProfile}
+              sx={{
+                position: 'absolute',
+                bottom: 8,
+                right: -4,
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                backgroundColor: theme.palette.primary.main,
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  transform: 'scale(1.1)',
+                  backgroundColor: theme.palette.primary.dark,
+                }
+              }}
+            >
+              <EditIcon sx={{ fontSize: 16 }} />
+            </Box>
+          </Tooltip>
+        </Box>
         <Typography
           variant="h6"
           sx={{ 
@@ -209,7 +251,7 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
             mb: 0.5
           }}
         >
-          {user?.name || 'Usuário'}
+          {profile?.name || 'Usuário'}
         </Typography>
         <Typography
           variant="body2"
@@ -222,7 +264,7 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
             whiteSpace: 'nowrap'
           }}
         >
-          {user?.email || 'usuario@exemplo.com'}
+          {profile?.email || 'usuario@exemplo.com'}
         </Typography>
       </Box>
       
@@ -359,6 +401,12 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
       <ConfigModal 
         open={configModalOpen} 
         onClose={() => setConfigModalOpen(false)} 
+      />
+      
+      {/* Modal de Edição de Usuário */}
+      <UserEditModal 
+        open={userEditModalOpen} 
+        onClose={() => setUserEditModalOpen(false)} 
       />
     </>
   );

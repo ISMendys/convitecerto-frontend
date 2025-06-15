@@ -28,6 +28,7 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import SettingsIcon from '@mui/icons-material/Settings';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ConfigModal from '../config/ConfigModal';
+import UserEditModal from '../user/UserEditModal';
 import NotificationDropdown from '../notifications/NotificationDropdown';
 import { setTheme } from '../../store/slices/configSlice';
 
@@ -38,9 +39,11 @@ const Header = ({ onMobileNavOpen }) => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const { user } = useSelector(state => state.auth);
+  const { profile } = useSelector((state) => state.user);
   
   const [anchorEl, setAnchorEl] = useState(null);
   const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [userEditModalOpen, setUserEditModalOpen] = useState(false);
   const open = Boolean(anchorEl);
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -58,7 +61,7 @@ const Header = ({ onMobileNavOpen }) => {
   };
   
   const handleProfile = () => {
-    navigate('/profile');
+    setUserEditModalOpen(true);
     handleClose();
   };
 
@@ -126,92 +129,6 @@ const Header = ({ onMobileNavOpen }) => {
             >
               <MenuIcon />
             </IconButton>
-            
-            {/* Logo e nome da aplicação */}
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center',
-                '&:hover': {
-                  '& .logo-image': {
-                    transform: 'scale(1.05)',
-                  },
-                  '& .logo-text': {
-                    letterSpacing: '0px',
-                  }
-                }
-              }}
-            >
-              {/* Logo */}
-              <Box
-                component="img"
-                src={logoImage}
-                alt="Logo"
-                sx={{
-                  height: 40,
-                  width: 40,
-                  cursor: 'pointer',
-                  transition: 'transform 0.3s ease',
-                  '&:hover': {
-                    transform: 'scale(1.1)',
-                  },
-                }}
-                onClick={() => navigate('/dashboard')}
-              />
-              {!isMobile && 
-                <Box
-                  onClick={() => navigate('/dashboard')}
-                  sx={{
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    '&:hover': {
-                    '& .logo-image': {
-                      transform: 'scale(1.05)',
-                    },
-                    '& .logo-text': {
-                      letterSpacing: '0px',
-                    }
-                    }
-                  }}
-                  >
-                    {/* <LogoAnimation width={"40%"} color={'black'} /> */}
-                </Box>
-              }
-              {/* <Box 
-                sx={{ 
-                  height: 80,
-                  width: 150,
-                  backgroundColor: theme.palette.primary.main,
-                  maskImage: `url(${logoImage})`,
-                  maskSize: 'contain',
-                  maskRepeat: 'no-repeat',
-                  maskPosition: 'center',
-                  // Estilos anteriores
-                  ml: 2.5,
-                  mr: 1.5,
-                  transition: 'transform 0.3s ease',
-                }}
-              /> */}
-              
-              {/* Nome da aplicação */}
-              {/* <Typography
-                variant="h5"
-                color="primary"
-                className="logo-text"
-                sx={{ 
-                  fontWeight: 600,
-                  letterSpacing: '-0.5px',
-                  display: { xs: 'none', sm: 'block' },
-                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                Digital Invites
-              </Typography> */}
-            </Box>
           </Box>
           
           {/* Seção direita: Tema, Notificações e Perfil */}
@@ -274,9 +191,9 @@ const Header = ({ onMobileNavOpen }) => {
                     borderColor: theme.palette.primary.main,
                   }
                 }}
-                src={user?.avatar || ''}
+                src={profile?.avatar || ''}
               >
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
+                {profile?.name?.charAt(0).toUpperCase() || 'U'}
               </Avatar>
               
               {!isMobile && (
@@ -288,7 +205,7 @@ const Header = ({ onMobileNavOpen }) => {
                       lineHeight: 1.2
                     }}
                   >
-                    {user?.name || 'Usuário'}
+                    {profile?.name || 'Usuário'}
                   </Typography>
                   <Typography
                     variant="body2"
@@ -297,7 +214,7 @@ const Header = ({ onMobileNavOpen }) => {
                       fontSize: '0.75rem'
                     }}
                   >
-                    {user?.email || 'usuario@email.com'}
+                    {profile?.email || 'usuario@email.com'}
                   </Typography>
                 </Box>
               )}
@@ -330,10 +247,10 @@ const Header = ({ onMobileNavOpen }) => {
                 background: `linear-gradient(to right, ${alpha(theme.palette.primary.main, 0.05)}, ${alpha(theme.palette.background.paper, 0.01)})`,
               }}>
                 <Typography variant="subtitle1" fontWeight={600}>
-                  {user?.name || 'Usuário'}
+                  {profile?.name || 'Usuário'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" fontSize="0.75rem">
-                  {user?.email || 'usuario@email.com'}
+                  {profile?.email || 'usuario@email.com'}
                 </Typography>
               </Box>
               
@@ -415,6 +332,12 @@ const Header = ({ onMobileNavOpen }) => {
       <ConfigModal 
         open={configModalOpen} 
         onClose={() => setConfigModalOpen(false)} 
+      />
+      
+      {/* Modal de Edição de Usuário */}
+      <UserEditModal 
+        open={userEditModalOpen} 
+        onClose={() => setUserEditModalOpen(false)} 
       />
     </>
   );

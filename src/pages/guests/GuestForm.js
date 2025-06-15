@@ -52,7 +52,7 @@ import RsvpDetailsCard from '../../components/guests/RsvpDetailsCard';
 import InviteSelector from '../../components/guests/InviteSelector';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 
-const GuestForm = () => {
+const GuestForm = ({ eventPassedID }) => {
   const { eventId, guestId } = useParams();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -242,22 +242,23 @@ const GuestForm = () => {
     }
 
     // Verificar se um convite foi selecionado
-    if (!formData.inviteId) {
-      setIsLoading(false);
-      setInviteError(true);
-      setSnackbarMessage('Por favor, selecione um convite para este convidado');
-      setSnackbarSeverity('warning');
-      setSnackbarOpen(true);
-      return;
-    }
+    // if (!formData.inviteId) {
+    //   setIsLoading(false);
+    //   setInviteError(true);
+    //   setSnackbarMessage('Por favor, selecione um convite para este convidado');
+    //   setSnackbarSeverity('warning');
+    //   setSnackbarOpen(true);
+    //   return;
+    // }
     
     try {
+
       let guestData = {
         ...formData,
         imageUrl: imageData,
-        eventId: currentEvent?.id,
+        eventId: eventId || currentEvent?.id || eventPassedID,
       };
-      
+      console.log(guestData, 'guestData')
       if (guestId) {
         await dispatch(updateGuest({ id: guestId, ...guestData })).unwrap();
         setSnackbarMessage('Convidado atualizado com sucesso!');

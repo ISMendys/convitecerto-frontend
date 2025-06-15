@@ -33,6 +33,12 @@ const createPurpleLightTheme = () => {
   let theme = createTheme({
     palette: {
       mode: 'light',
+      default: {
+        main: purplePrimaryColor,
+        light: purpleSecondaryColor,
+        dark: '#3c1f80',
+        contrastText: '#ffffff',
+      },
       primary: {
         main: purplePrimaryColor,
         light: purpleSecondaryColor,

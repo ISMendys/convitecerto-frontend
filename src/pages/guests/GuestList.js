@@ -76,6 +76,12 @@ import LoadingIndicator from '../../components/LoadingIndicator';
 // Componente de importação
 import GuestImport from './GuestImport';
 
+// Componentes mobile melhorados
+import MobileFilterDrawer from './MobileFilterDrawer';
+import MobileGuestCard from './MobileGuestCard';
+import MobileStatsGrid from './MobileStatsGrid';
+import MobileTabs from './MobileTabs';
+
 // Função para gerar cor baseada em string
 const stringToColor = (string) => {
   if (!string) return '#5e35b1'; // Cor padrão se não houver string
@@ -91,8 +97,6 @@ const stringToColor = (string) => {
   }
   return color;
 };
-
-// Componente de card de convidado
 
 const GuestList = () => {
   const { eventId } = useParams() || currentEventId;
@@ -111,7 +115,7 @@ const GuestList = () => {
   const [currentEventId, setCurrentEventId] = useState(eventId);
   const [currentEventData, setCurrentEventData] = useState();
 
-  setCurrentEventData
+  // Estados existentes
   const [tabValue, setTabValue] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGroup, setFilterGroup] = useState('all');
@@ -129,26 +133,23 @@ const GuestList = () => {
   const [actionMenuGuest, setActionMenuGuest] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
-  
   const [linkInviteDialogOpen, setLinkInviteDialogOpen] = useState(false);
   const [selectedInviteId, setSelectedInviteId] = useState('');
-  
   const [sendMessageDialogOpen, setSendMessageDialogOpen] = useState(false);
   const [messageText, setMessageText] = useState('');
-  
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
+  // Novo estado para controle do drawer mobile
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  // Todos os useEffects e funções existentes permanecem inalterados
   useEffect(() => {
-    // Verificamos se bulkAction tem um valor para evitar rodar na montagem inicial
     if (bulkAction) {
       handleBulkAction();
-      
-      // Opcional: Limpar a ação depois de executada
       setBulkAction(''); 
     }
   }, [bulkAction]);
 
-  // Carregar convidados e convites quando o eventId estiver disponível
   useEffect(() => {
     if (!eventId && !currentEventId && !currentEvent) {
       setShowEventSelector(true);
@@ -167,13 +168,10 @@ const GuestList = () => {
       }
     };
     fetchData();
-    
   }, [dispatch, currentEventId]);
 
-  // Função para lidar com a seleção de evento no modal
   const handleEventSelect = (selectedEventId, eventData) => {
     console.log('Evento selecionado:', selectedEventId, eventData);
-
     setShowEventSelector(false);
     setCurrentEventId(selectedEventId);
     setCurrentEventData(eventData);
@@ -191,13 +189,10 @@ const GuestList = () => {
     fetchData();
   };
 
-
-  // Função para mostrar o modal de seleção novamente (pode ser útil para trocar de evento)
   const handleChangeEvent = () => {
     setShowEventSelector(true);
   };
 
-  // Exibir erro se houver
   useEffect(() => {
     if (error) {
       setSnackbarMessage(error);
@@ -206,7 +201,6 @@ const GuestList = () => {
     }
   }, [error]);
   
-  // Exibir mensagem de sucesso após vincular convidados
   useEffect(() => {
     if (linkingSuccess) {
       setSnackbarMessage(`Convidados vinculados com sucesso ao convite!`);
@@ -214,22 +208,18 @@ const GuestList = () => {
       setSnackbarOpen(true);
       setSelectedGuests([]);
       setLinkInviteDialogOpen(false);
-      // Recarregar a lista de convidados para mostrar as atualizações
       dispatch(fetchGuests(eventId || currentEventId || currentEvent?.id));
     }
   }, [linkingSuccess, dispatch, eventId || currentEventId || currentEvent?.id]);
   
-  // Manipular mudança de aba
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
   
-  // Manipular busca
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
   
-  // Abrir menu de ações
   const handleMenuOpen = (event, guest) => {
     event.preventDefault();
     event.stopPropagation();
@@ -237,13 +227,11 @@ const GuestList = () => {
     setActionMenuGuest(guest);
   };
   
-  // Fechar menu de ações
   const handleMenuClose = () => {
     setMenuAnchorEl(null);
     setActionMenuGuest(null);
   };
   
-  // Excluir convidado
   const handleDeleteGuest = async () => {
     if (!guestToDelete || !guestToDelete?.id) {
       setSnackbarMessage('Erro: Convidado não selecionado corretamente');
@@ -270,7 +258,6 @@ const GuestList = () => {
     }
   };
   
-  // Atualizar status do convidado
   const handleUpdateStatus = async (guestId, newStatus) => {
     setIsLoading(true);
     try {
@@ -288,7 +275,6 @@ const GuestList = () => {
     }
   };
   
-  // Abrir diálogo de vinculação de convites
   const handleOpenLinkInviteDialog = () => {
     if (selectedGuests.length === 0) {
       setSnackbarMessage('Selecione pelo menos um convidado para vincular a um convite');
@@ -309,7 +295,6 @@ const GuestList = () => {
     setSpeedDialOpen(false);
   };
   
-  // Vincular convidados ao convite selecionado
   const handleLinkGuestsToInvite = async () => {
     if (!selectedInviteId) {
       setSnackbarMessage('Selecione um convite para vincular aos convidados');
@@ -334,7 +319,6 @@ const GuestList = () => {
     }
   };
   
-  // Abrir diálogo de envio de mensagens
   const handleOpenSendMessageDialog = (unique = false) => {
     if (selectedGuests.length === 0 && !unique) {
       setSnackbarMessage('Selecione pelo menos um convidado para enviar mensagem');
@@ -343,7 +327,6 @@ const GuestList = () => {
       return;
     }
     
-    // Verificar se todos os convidados selecionados têm convites vinculados
     const guestsWithoutInvite = selectedGuests.filter(
       guestId => !guests.find(g => g?.id === guestId)?.inviteId
     );
@@ -360,7 +343,6 @@ const GuestList = () => {
     setSpeedDialOpen(false);
   };
   
-  // Enviar mensagens para os convidados selecionados (individual ou em massa)
   const handleSendMessage = async () => {
     if (!messageText || selectedGuests.length === 0) {
       setSnackbarMessage("Erro: Mensagem ou convidados não definidos.");
@@ -375,35 +357,25 @@ const GuestList = () => {
     const errors = [];
 
     try {
-      // Iterar sobre os convidados selecionados e enviar mensagem individualmente
-      // Usamos sendWhatsappReminder que aceita guestId e message
       const sendPromises = selectedGuests.map(guestId => {
-        // Encontrar o objeto convidado completo para obter o ID
         const guest = guests.find(g => g?.id === guestId);
         if (!guest) {
           console.error(`Convidado com ID ${guestId} não encontrado na lista.`);
-          // Retorna uma promessa rejeitada para que seja contada como erro
           return Promise.reject(`Convidado ${guestId} não encontrado.`);
         }
         
-        // Construir a URL RSVP
-        // Usar window.location.origin para obter a base da URL atual
         const rsvpUrl = `${window.location.origin}/rsvp/${guest?.id}`;
-        
-        // Montar a mensagem final com o link RSVP
         const finalMessage = `${messageText}\n\nResponda aqui:\n ${rsvpUrl}`;
         
         const payload = {
-          guestId: guest?.id, // Usar guest?.id que já temos
-          message: finalMessage // Usar a mensagem com o link
+          guestId: guest?.id,
+          message: finalMessage
         };
         return dispatch(sendWhatsappReminder(payload)).unwrap();
       });
 
-      // Aguardar todas as promessas de envio
       const results = await Promise.allSettled(sendPromises);
 
-      // Processar resultados
       results.forEach((result, index) => {
         if (result.status === 'fulfilled') {
           successCount++;
@@ -415,7 +387,6 @@ const GuestList = () => {
         }
       });
 
-      // Lidar com o resultado geral
       if (errorCount === 0) {
         setSnackbarMessage(`Mensagem enviada com sucesso para ${successCount} convidado(s)!`);
         setSnackbarSeverity("success");
@@ -430,13 +401,11 @@ const GuestList = () => {
       setSnackbarOpen(true);
       setSendMessageDialogOpen(false);
       setMessageText("");
-      // Limpar seleção apenas se todos os envios foram bem-sucedidos
       if (errorCount === 0) {
          setSelectedGuests([]);
       }
 
     } catch (err) {
-      // Erro inesperado (não deveria acontecer com Promise.allSettled)
       console.error("Erro inesperado no handleSendMessage:", err);
       setSnackbarMessage(err?.message || "Erro inesperado ao processar envio de mensagens.");
       setSnackbarSeverity("error");
@@ -446,20 +415,17 @@ const GuestList = () => {
     }
   };
   
-  // Executar ação em massa
   const handleBulkAction = async () => {
     if (!bulkAction) return;
     
     setIsLoading(true);
     try {
       if (bulkAction === 'delete') {
-        // Implementar exclusão em massa
         for (const guestId of selectedGuests) {
           await dispatch(deleteGuest(guestId)).unwrap();
         }
         setSnackbarMessage(`${selectedGuests.length} convidados excluídos com sucesso!`);
       } else if (bulkAction === 'status') {
-        // Implementar atualização de status em massa
         for (const guestId of selectedGuests) {
           await dispatch(updateGuestStatus({ id: guestId, status: 'confirmed' })).unwrap();
         }
@@ -495,13 +461,11 @@ const GuestList = () => {
     }
   };
   
-  // Cancelar ação em massa
   const handleCancelBulkAction = () => {
     setBulkActionDialogOpen(false);
     setBulkAction('');
   };
   
-  // Selecionar/deselecionar convidado
   const handleSelectGuest = (guestId) => {
     setSelectedGuests(prev => {
       if (prev.includes(guestId)) {
@@ -512,7 +476,6 @@ const GuestList = () => {
     });
   };
   
-  // Selecionar/deselecionar todos os convidados
   const handleSelectAllGuests = () => {
     if (selectedGuests.length === filteredGuests.length) {
       setSelectedGuests([]);
@@ -521,30 +484,23 @@ const GuestList = () => {
     }
   };
   
-  // Alternar direção de ordenação
   const handleToggleSortDirection = () => {
     setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
   };
   
-  // Fechar snackbar
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
   
-  // Exportar CSV
   const handleExportCsv = () => {
-    // Determinar quais convidados exportar
     const guestsToExport = selectedGuests.length > 0
       ? guests.filter(guest => selectedGuests.includes(guest?.id))
       : guests;
     
-    // Definir cabeçalhos
     const headers = ['id', 'name', 'email', 'phone', 'whatsapp', 'group', 'status', 'inviteId'];
     
-    // Criar linhas de dados
     const rows = guestsToExport.map(guest => {
       return headers.map(header => {
-        // Tratar valores especiais
         if (header === 'whatsapp') {
           return guest[header] ? 'true' : 'false';
         }
@@ -552,10 +508,8 @@ const GuestList = () => {
       }).join(',');
     });
     
-    // Montar conteúdo CSV
     const csvContent = [headers.join(','), ...rows].join('\n');
     
-    // Criar blob e link para download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -565,43 +519,35 @@ const GuestList = () => {
     link.click();
     document.body.removeChild(link);
     
-    // Mostrar mensagem de sucesso
     setSnackbarMessage(`${guestsToExport.length} convidados exportados com sucesso!`);
     setSnackbarSeverity('success');
     setSnackbarOpen(true);
   };
   
-  // Manipular sucesso na importação
   const handleImportSuccess = (results) => {
     setSnackbarMessage(`${results.imported} convidados importados com sucesso!`);
     setSnackbarSeverity('success');
     setSnackbarOpen(true);
-    
-    // Recarregar a lista de convidados
     dispatch(fetchGuests(eventId || currentEventId || currentEvent?.id));
   };
   
-  // Filtrar convidados
+  // Filtrar e ordenar convidados (lógica existente)
   const filteredGuests = guests.filter(guest => {
-    // Filtrar por termo de busca
     const matchesSearch = guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (guest.email && guest.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
                          (guest.phone && guest.phone.includes(searchTerm));
     
-    // Filtrar por grupo
     const matchesGroup = filterGroup === 'all' || guest.group === filterGroup;
     
-    // Filtrar por status (aba)
     const matchesStatus = 
-      (tabValue === 0) || // Todos
-      (tabValue === 1 && guest.status === 'confirmed') || // Confirmados
-      (tabValue === 2 && guest.status === 'pending') || // Pendentes
-      (tabValue === 3 && guest.status === 'declined'); // Recusados
+      (tabValue === 0) ||
+      (tabValue === 1 && guest.status === 'confirmed') ||
+      (tabValue === 2 && guest.status === 'pending') ||
+      (tabValue === 3 && guest.status === 'declined');
     
     return matchesSearch && matchesGroup && matchesStatus;
   });
   
-  // Ordenar convidados
   const sortedGuests = [...filteredGuests].sort((a, b) => {
     let comparison = 0;
     
@@ -616,7 +562,7 @@ const GuestList = () => {
     return sortDirection === 'asc' ? comparison : -comparison;
   });
   
-  // Grupos disponíveis
+  // Dados de configuração (existentes)
   const groups = [
     { id: 'all', name: 'Todos os Grupos' },
     { id: 'default', name: 'Geral' },
@@ -626,14 +572,12 @@ const GuestList = () => {
     { id: 'vip', name: 'VIP' }
   ];
   
-  // Opções de ordenação
   const sortOptions = [
     { id: 'name', name: 'Nome' },
     { id: 'status', name: 'Status' },
     { id: 'group', name: 'Grupo' }
   ];
   
-  // Configuração das abas
   const tabsConfig = [
     { label: `Todos (${guests.length})`, icon: <PersonIcon />, iconPosition: 'start' },
     { label: `Confirmados (${guests.filter(guest => guest.status === 'confirmed').length})`, icon: <CheckCircleIcon />, iconPosition: 'start' },
@@ -641,12 +585,12 @@ const GuestList = () => {
     { label: `Recusados (${guests.filter(guest => guest.status === 'declined').length})`, icon: <CancelIcon />, iconPosition: 'start' }
   ];
   
-  // Ações do menu de convidado
   const getGuestMenuActions = (guest) => [
     {
       label: 'Editar',
       icon: <EditIcon fontSize="small" />,
-      onClick: () => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/edit/${guest?.id}`)
+      onClick: () => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/edit/${guest?.id}`),
+      color: 'primary'
     },
     {
       label: 'Marcar como Confirmado',
@@ -699,7 +643,6 @@ const GuestList = () => {
     }
   ];
   
-  // Ações do SpeedDial
   const speedDialActions = [
     { 
       icon: <AddIcon />, 
@@ -750,6 +693,27 @@ const GuestList = () => {
     { message: 'Nenhum pendente',                icon: <HelpOutlineIcon/>,    color: 'warning' },
     { message: 'Nenhum recusado',                icon: <CancelIcon/>,         color: 'error' },
   ];
+
+  // Handlers para o drawer mobile
+  const handleMobileAddGuest = () => {
+    navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/new`);
+    setMobileFilterOpen(false);
+  };
+
+  const handleMobileImport = () => {
+    setImportDialogOpen(true);
+    setMobileFilterOpen(false);
+  };
+
+  const handleMobileBulkMessage = () => {
+    setBulkAction('message');
+    setMobileFilterOpen(false);
+  };
+
+  const handleMobileBulkActions = () => {
+    setBulkActionDialogOpen(true);
+    setMobileFilterOpen(false);
+  };
   
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -759,39 +723,57 @@ const GuestList = () => {
         onSelectEvent={handleEventSelect}
         apiEndpoint="/api/events" 
       />
-        <Box sx={{ display: 'flex' }}>
 
-          <Box sx={{ mb: 2, mr: 3 }}>
-            <Button 
-              variant="outlined" 
-              onClick={() => navigate(`/events/${eventId || currentEventId || currentEvent?.id}`)}
-              startIcon={<ArrowBackIcon />}
-            >
-              Voltar ao Evento
-            </Button>
-          </Box>
-          <Box>
-            {/* Botão para trocar de evento */}
-            <Box sx={{ mb: 2 }}>
-              <Button 
-                variant="outlined" 
-                onClick={handleChangeEvent}
-                startIcon={<SwapHorizIcon />}
-              >
-                Trocar Evento
-              </Button>
-            </Box>
-          </Box>
-          {/* Título e subtítulo à direita */}
-          <PageTitle
-            title={currentEventData?.title || currentEvent?.title || 'Lista de Convidados'}
-            subtitle={`${currentEventData?.title || currentEvent?.title || 'Evento'} - ${guests.length} convidados`}
-            alignRight={true}
-            sx={{mb: 5, ml:'35%'}}
-          />
+      {/* Header - Adaptado para mobile */}
+      <Box sx={{ 
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? 2 : 0
+      }}>
+        <Box sx={{ 
+          display: 'flex',
+          gap: 2,
+          mb: 2,
+          flexDirection: isMobile ? 'column' : 'row'
+        }}>
+          <Button 
+            variant="outlined" 
+            onClick={() => navigate(`/events/${eventId || currentEventId || currentEvent?.id}`)}
+            startIcon={<ArrowBackIcon />}
+            size={isMobile ? 'small' : 'medium'}
+            fullWidth={isMobile}
+          >
+            Voltar ao Evento
+          </Button>
+          
+          <Button 
+            variant="outlined" 
+            onClick={handleChangeEvent}
+            startIcon={<SwapHorizIcon />}
+            size={isMobile ? 'small' : 'medium'}
+            fullWidth={isMobile}
+          >
+            Trocar Evento
+          </Button>
         </Box>
-        <>
-        {/* Cards de estatísticas */}
+
+        {/* Título */}
+        <PageTitle
+          title={currentEventData?.title || currentEvent?.title || 'Lista de Convidados'}
+          subtitle={`${currentEventData?.title || currentEvent?.title || 'Evento'} - ${guests.length} convidados`}
+          alignRight={!isMobile}
+          sx={{
+            mb: isMobile ? 3 : 5,
+            ml: isMobile ? 0 : '35%',
+            textAlign: isMobile ? 'center' : 'right'
+          }}
+        />
+      </Box>
+
+      {/* Cards de estatísticas - Condicional para mobile */}
+      {isMobile ? (
+        <MobileStatsGrid guests={guests} />
+      ) : (
         <Box
           sx={{
             display: 'flex',
@@ -801,7 +783,6 @@ const GuestList = () => {
             justifyContent: 'center'
           }}
         >
-          {/* Convidados */}
           <Box sx={{
             flexBasis: { xs: '100%', sm: '48%', md: '23%' },
             display: 'flex',
@@ -816,7 +797,6 @@ const GuestList = () => {
             />
           </Box>
 
-          {/* Confirmados */}
           <Box sx={{
             flexBasis: { xs: '100%', sm: '48%', md: '23%' },
             display: 'flex',
@@ -833,7 +813,6 @@ const GuestList = () => {
             />
           </Box>
 
-          {/* Pendentes */}
           <Box sx={{
             flexBasis: { xs: '100%', sm: '48%', md: '23%' },
             display: 'flex',
@@ -848,7 +827,6 @@ const GuestList = () => {
             />
           </Box>
 
-          {/* Recusados */}
           <Box sx={{
             flexBasis: { xs: '100%', sm: '48%', md: '23%' },
             display: 'flex',
@@ -863,8 +841,10 @@ const GuestList = () => {
             />
           </Box>
         </Box>
+      )}
         
-        {/* Barra de pesquisa e filtros */}
+      {/* Barra de pesquisa e filtros - Oculta no mobile */}
+      {!isMobile && (
         <Paper 
           sx={{ 
             mb: 4,
@@ -972,7 +952,6 @@ const GuestList = () => {
               
               <Grid item xs={12} sm={12} md={4}>
                 <Box sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-                  {/* Botão Selecionar Todos */}
                   <Tooltip title={selectedGuests.length === filteredGuests.length && filteredGuests.length > 0 ? "Desmarcar todos" : "Selecionar todos"}>
                     <Button
                       variant="outlined"
@@ -992,7 +971,6 @@ const GuestList = () => {
                     </Button>
                   </Tooltip>
                   
-                  {/* Botão Importar */}
                   <Button
                     variant="contained"
                     color="primary"
@@ -1013,7 +991,6 @@ const GuestList = () => {
                     Importar
                   </Button>
                   
-                  {/* Botão Adicionar Convidado */}
                   <Button
                     variant="contained"
                     color="primary"
@@ -1034,7 +1011,6 @@ const GuestList = () => {
                     Adicionar
                   </Button>
 
-                  {/* Botão Convidar */}
                   <Button
                     variant="contained"
                     color="primary"
@@ -1083,61 +1059,126 @@ const GuestList = () => {
             </Grid>
           </Box>
           
-          {/* Abas */}
+          {/* Abas desktop */}
           <StyledTabs
             value={tabValue}
             onChange={handleTabChange}
             tabs={tabsConfig}
-            variant={isMobile ? "fullWidth" : "standard"}
+            variant="standard"
           />
-          
-          {/* Conteúdo das abas */}
-          {statusFilters.map((status, index) => (
-            <TabPanel value={tabValue} index={index} key={index}>
-              {filteredGuests.length === 0 ? (
-                <EmptyState 
-                  message={emptyConfigs[index].message}
-                  icon={emptyConfigs[index].icon}
-                  color={emptyConfigs[index].color}
-                  actionText={index === 0 ? "Adicionar Convidado" : null}
-                  actionIcon={<AddIcon />}
-                  onAction={index === 0 ? () => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/new`) : null}
-                />
-              ) : (
-                <Box sx={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    sm: '1fr 1fr',
-                    md: '1fr 1fr 1fr',
-                    lg: '1fr 1fr 1fr 1fr'
-                  },
-                  gap: 3,
-                  p: 2
-                }}>
-                  {sortedGuests.map(guest => (
-                    <GuestCard
-                      key={guest?.id}
-                      guest={guest}
-                      selected={selectedGuests.includes(guest?.id)}
-                      onSelect={handleSelectGuest}
-                      onMenuOpen={handleMenuOpen}
-                      handleOpenSendMessageDialog={handleOpenSendMessageDialog}
-                      onDelete={(guest) => {
-                        setGuestToDelete(guest);
-                        setDeleteDialogOpen(true);
-                      }}
-                      groups={groups}
-                      event={currentEvent || currentEventData}
-                      navigate={navigate}
-                    />
-                  ))}
-                </Box>
-              )}
-            </TabPanel>
-          ))}
         </Paper>
+      )}
 
+      {/* Abas para mobile (melhoradas) */}
+      {isMobile && (
+        <Paper 
+          sx={{ 
+            mb: 2,
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            border: '1px solid #e0e0e0'
+          }}
+        >
+          <MobileTabs
+            value={tabValue}
+            onChange={handleTabChange}
+            guests={guests}
+          />
+        </Paper>
+      )}
+          
+      {/* Conteúdo das abas - Lista de convidados */}
+      {statusFilters.map((status, index) => (
+        <TabPanel value={tabValue} index={index} key={index}>
+          {filteredGuests.length === 0 ? (
+            <EmptyState 
+              message={emptyConfigs[index].message}
+              icon={emptyConfigs[index].icon}
+              color={emptyConfigs[index].color}
+              actionText={index === 0 ? "Adicionar Convidado" : null}
+              actionIcon={<AddIcon />}
+              onAction={index === 0 ? () => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/new`) : null}
+            />
+          ) : (
+            <Box sx={{ 
+              display: isMobile ? 'block' : 'grid', 
+              gridTemplateColumns: {
+                sm: '1fr 1fr',
+                md: '1fr 1fr 1fr',
+                lg: '1fr 1fr 1fr 1fr'
+              },
+              gap: isMobile ? 0 : 3,
+              p: isMobile ? 0 : 2
+            }}>
+              {sortedGuests.map(guest => (
+                isMobile ? (
+                  <MobileGuestCard
+                    key={guest?.id}
+                    guest={guest}
+                    selected={selectedGuests.includes(guest?.id)}
+                    onSelect={handleSelectGuest}
+                    onMenuOpen={handleMenuOpen}
+                    onDelete={(guest) => {
+                      setGuestToDelete(guest);
+                      setDeleteDialogOpen(true);
+                    }}
+                    groups={groups}
+                    event={currentEvent || currentEventData}
+                    navigate={navigate}
+                  />
+                ) : (
+                  <GuestCard
+                    key={guest?.id}
+                    guest={guest}
+                    selected={selectedGuests.includes(guest?.id)}
+                    onSelect={handleSelectGuest}
+                    onMenuOpen={handleMenuOpen}
+                    handleOpenSendMessageDialog={handleOpenSendMessageDialog}
+                    onDelete={(guest) => {
+                      setGuestToDelete(guest);
+                      setDeleteDialogOpen(true);
+                    }}
+                    groups={groups}
+                    event={currentEvent || currentEventData}
+                    navigate={navigate}
+                  />
+                )
+              ))}
+            </Box>
+          )}
+        </TabPanel>
+      ))}
+
+      {/* Drawer de filtros mobile */}
+      {isMobile && (
+        <MobileFilterDrawer
+          open={mobileFilterOpen}
+          onClose={() => setMobileFilterOpen(!mobileFilterOpen)}
+          searchTerm={searchTerm}
+          onSearchChange={handleSearchChange}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          sortDirection={sortDirection}
+          onToggleSortDirection={handleToggleSortDirection}
+          filterGroup={filterGroup}
+          setFilterGroup={setFilterGroup}
+          groups={groups}
+          sortOptions={sortOptions}
+          selectedGuests={selectedGuests}
+          filteredGuests={filteredGuests}
+          onSelectAllGuests={handleSelectAllGuests}
+          onAddGuest={handleMobileAddGuest}
+          onImport={handleMobileImport}
+          onBulkMessage={handleMobileBulkMessage}
+          onBulkActions={handleMobileBulkActions}
+          eventId={eventId}
+          currentEventId={currentEventId}
+          currentEvent={currentEvent}
+        />
+      )}
+
+      {/* Todos os diálogos existentes permanecem inalterados */}
       <Menu
         anchorEl={menuAnchorEl}
         open={Boolean(menuAnchorEl)}
@@ -1194,7 +1235,6 @@ const GuestList = () => {
         ))}
       </Menu>
       
-      {/* Diálogo de confirmação de exclusão */}
       <ConfirmDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
@@ -1206,7 +1246,6 @@ const GuestList = () => {
         confirmColor="error"
       />
       
-      {/* Diálogo de ação em massa */}
       <Dialog
         open={bulkActionDialogOpen}
         onClose={handleCancelBulkAction}
@@ -1356,7 +1395,6 @@ const GuestList = () => {
         </DialogActions>
       </Dialog>
       
-      {/* Diálogo de vinculação de convites */}
       <Dialog
         open={linkInviteDialogOpen}
         onClose={() => setLinkInviteDialogOpen(false)}
@@ -1432,7 +1470,6 @@ const GuestList = () => {
         </DialogActions>
       </Dialog>
       
-      {/* Diálogo de envio de mensagens */}
       <Dialog
         open={sendMessageDialogOpen}
         onClose={() => setSendMessageDialogOpen(false)}
@@ -1522,7 +1559,6 @@ const GuestList = () => {
         </DialogActions>
       </Dialog>
       
-      {/* Diálogo de importação de CSV */}
       <GuestImport
         open={importDialogOpen}
         onClose={() => setImportDialogOpen(false)}
@@ -1530,7 +1566,6 @@ const GuestList = () => {
         onSuccess={handleImportSuccess}
       />
       
-      {/* Snackbar para mensagens */}
       <Snackbar 
         open={snackbarOpen} 
         autoHideDuration={6000} 
@@ -1552,64 +1587,67 @@ const GuestList = () => {
         </Alert>
       </Snackbar>
       
-      {/* SpeedDial para ações */}
-      <SpeedDial
-        ariaLabel="Ações"
-        sx={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-        }}
-        icon={<SpeedDialIcon />}
-        onClose={() => setSpeedDialOpen(false)}
-        onOpen={() => setSpeedDialOpen(true)}
-        open={speedDialOpen}
-        direction="up"
-        FabProps={{
-          sx: {
-            bgcolor: theme.palette.primary.main,
-            '&:hover': {
-              bgcolor: theme.palette.primary.dark,
-            },
-            boxShadow: '0 4px 20px rgba(94, 53, 177, 0.3)',
-          }
-        }}
-      >
-        {speedDialActions.map((action) => (
-          <SpeedDialAction
-            key={action.name}
-            icon={action.icon}
-            tooltipTitle={action.name}
-            tooltipOpen={isMobile}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              action.action();
-            }}
-            FabProps={{
-              sx: {
-                bgcolor: action.color,
-                color: '#fff',
-                '&:hover': {
-                  bgcolor: alpha(action.color, 0.8),
+      {/* SpeedDial - Oculto no mobile */}
+      {!isMobile && (
+        <SpeedDial
+          ariaLabel="Ações"
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+          }}
+          icon={<SpeedDialIcon />}
+          onClose={() => setSpeedDialOpen(false)}
+          onOpen={() => setSpeedDialOpen(true)}
+          open={speedDialOpen}
+          direction="up"
+          FabProps={{
+            sx: {
+              bgcolor: theme.palette.primary.main,
+              '&:hover': {
+                bgcolor: theme.palette.primary.dark,
+              },
+              boxShadow: '0 4px 20px rgba(94, 53, 177, 0.3)',
+            }
+          }}
+        >
+          {speedDialActions.map((action) => (
+            <SpeedDialAction
+              key={action.name}
+              icon={action.icon}
+              tooltipTitle={action.name}
+              tooltipOpen={isMobile}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                action.action();
+              }}
+              FabProps={{
+                sx: {
+                  bgcolor: action.color,
+                  color: '#fff',
+                  '&:hover': {
+                    bgcolor: alpha(action.color, 0.8),
+                  }
                 }
-              }
-            }}
-          />
-        ))}
-      </SpeedDial>
+              }}
+            />
+          ))}
+        </SpeedDial>
+      )}
 
-      </>
       {!eventId || !currentEventId || !currentEvent?.id || isLoading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-              <LoadingIndicator
-                open={loading}
-                type="fullscreen"
-                message="Carregando..."
-              />
-          </Box>
-        ) : (null)}
-  </Container>
-)}
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <LoadingIndicator
+            open={loading}
+            type="fullscreen"
+            message="Carregando..."
+          />
+        </Box>
+      ) : null}
+    </Container>
+  );
+};
 
 export default GuestList;
+

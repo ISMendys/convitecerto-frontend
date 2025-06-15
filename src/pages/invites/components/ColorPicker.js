@@ -4,7 +4,8 @@ import {
   Typography,
   TextField,
   InputAdornment,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   ColorLens as ColorLensIcon
@@ -18,6 +19,7 @@ const ColorPicker = ({
   fullWidth = true
 }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const canvasRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   
@@ -97,6 +99,35 @@ const ColorPicker = ({
   const handleCanvasMouseUp = () => {
     setIsDragging(false);
   };
+
+  // Manipular eventos de toque para dispositivos móveis
+  const handleCanvasTouchStart = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+    const rect = canvasRef.current.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    const color = getColorFromCanvas(x, y);
+    onChange(color);
+  };
+  
+  const handleCanvasTouchMove = (e) => {
+    e.preventDefault();
+    if (!isDragging) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    const color = getColorFromCanvas(x, y);
+    onChange(color);
+  };
+  
+  const handleCanvasTouchEnd = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
   
   // Manipular mudança direta no campo HEX
   const handleHexChange = (event) => {
@@ -109,23 +140,42 @@ const ColorPicker = ({
   
   return (
     <Box sx={{ width: fullWidth ? '100%' : 'auto' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-        <Box sx={{ mr: 1, color: theme.palette.primary.main }}>
-          {icon}
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        mb: 1,
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'center'
+      }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          mb: isMobile ? 1 : 0,
+          width: isMobile ? '100%' : 'auto'
+        }}>
+          <Box sx={{ mr: 1, color: theme.palette.primary.main }}>
+            {icon}
+          </Box>
+          <Typography variant="subtitle2" fontWeight="500">
+            {label}
+          </Typography>
         </Box>
-        <Typography variant="subtitle2" fontWeight="500">
-          {label}
-        </Typography>
         
-        <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ 
+          ml: isMobile ? 0 : 'auto', 
+          display: 'flex', 
+          alignItems: 'center',
+          alignSelf: isMobile ? 'flex-end' : 'auto'
+        }}>
           <Box
             sx={{
-              width: 24,
-              height: 24,
+              width: isMobile ? 32 : 24,
+              height: isMobile ? 32 : 24,
               borderRadius: '50%',
               bgcolor: value,
-              border: `1px solid ${theme.palette.divider}`,
-              mr: 1
+              border: `2px solid ${theme.palette.divider}`,
+              mr: 1,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}
           />
         </Box>
@@ -136,7 +186,7 @@ const ColorPicker = ({
         value={value}
         onChange={handleHexChange}
         variant="outlined"
-        size="small"
+        size={isMobile ? "medium" : "small"}
         sx={{ mb: 1 }}
         InputProps={{
           startAdornment: (
@@ -148,26 +198,48 @@ const ColorPicker = ({
       <Box
         sx={{
           width: '100%',
-          height: 100,
+          height: isMobile ? 120 : 100,
           borderRadius: 1,
           overflow: 'hidden',
           cursor: 'crosshair',
-          border: `1px solid ${theme.palette.divider}`
+          border: `1px solid ${theme.palette.divider}`,
+          touchAction: 'none' // Previne scroll durante o toque
         }}
       >
         <canvas
           ref={canvasRef}
           width={300}
-          height={100}
+          height={isMobile ? 120 : 100}
           onMouseDown={handleCanvasMouseDown}
           onMouseMove={handleCanvasMouseMove}
           onMouseUp={handleCanvasMouseUp}
           onMouseLeave={handleCanvasMouseUp}
-          style={{ width: '100%', height: '100%' }}
+          onTouchStart={handleCanvasTouchStart}
+          onTouchMove={handleCanvasTouchMove}
+          onTouchEnd={handleCanvasTouchEnd}
+          style={{ 
+            width: '100%', 
+            height: '100%',
+            display: 'block' // Remove espaço extra abaixo do canvas
+          }}
         />
       </Box>
+      
+      {isMobile && (
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            mt: 1, 
+            color: theme.palette.text.secondary,
+            fontSize: '0.75rem'
+          }}
+        >
+          Toque e arraste para selecionar uma cor
+        </Typography>
+      )}
     </Box>
   );
 };
 
 export default ColorPicker;
+

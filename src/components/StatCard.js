@@ -73,7 +73,7 @@ const StatCard = ({
             sx={{
               bgcolor: alpha(themeColor.main, theme.palette.mode === 'dark' ? 0.2 : 0.1),
               color: themeColor.main,
-              mr: 1.5
+              mr: 0.7
             }}
           >
             {icon}
