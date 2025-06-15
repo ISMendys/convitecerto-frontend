@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme, alpha } from '@mui/material/styles';
@@ -38,19 +38,62 @@ import {
   Notes as NotesIcon,
   Image as ImageIcon,
   ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon
+  ExpandLess as ExpandLessIcon,
+  CheckCircle as CheckCircleIcon 
 } from '@mui/icons-material';
+
 import { createEvent, updateEvent, fetchEvent } from '../../store/actions/eventActions';
 
-// Componentes reutilizáveis
 import StyledButton from '../../components/StyledButton';
 import StyledTextField from '../../components/StyledTextField';
 import PageTitle from '../../components/PageTitle';
 import FormSection from '../../components/FormSection';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import ImageUploadFieldBase64 from '../../components/ImageUploadField';
-import LocationSelector from '../../components/LocationSelector';
+import MapboxLocationField from '../../components/MapboxLocationField'; // Importar o novo componente
 import { LoadingIndicator } from '../../components/LoadingIndicator';
+
+// Componente de seção colapsável para mobile
+const CollapsibleSection = ({ title, icon, children, isExpanded, onToggle, isMobile, theme }) => {
+  return (
+    <Paper
+      sx={{
+        mb: 2,
+        borderRadius: 3,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+        border: '1px solid #e0e0e0',
+        overflow: 'hidden'
+      }}
+    >
+      {isMobile ? (
+        <>
+          <Box
+            onClick={onToggle}
+            sx={{
+              p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              cursor: 'pointer', bgcolor: alpha(theme.palette.primary.main, 0.02),
+              borderBottom: isExpanded ? `1px solid ${alpha(theme.palette.divider, 0.1)}` : 'none',
+              '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.05) }
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {icon}
+              <Typography variant="h6" fontWeight={600}>{title}</Typography>
+            </Box>
+            {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </Box>
+          <Collapse in={isExpanded}>
+            <Box sx={{ p: 3 }}>{children}</Box>
+          </Collapse>
+        </>
+      ) : (
+        <Box sx={{ p: 3 }}>
+          <FormSection title={title} icon={icon}>{children}</FormSection>
+        </Box>
+      )}
+    </Paper>
+  );
+};
 
 const EventCreate = () => {
   const { eventId, inviteId } = useParams()
@@ -74,6 +117,8 @@ const EventCreate = () => {
   });
   const [messageLoading, setMessageLoading] = useState('Carregando dados...');
   const [isLoading, setIsLoading] = useState(false);
+  // Sua chave de acesso do Mapbox
+  const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiaXNtZW5keSIsImEiOiJjbWJsa2s1OWQxMmkwMmxwd2dwZnZsZWo1In0.TZRgfgztitfE4_RDo6IA6g';
 
   const [formErrors, setFormErrors] = useState({});
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -81,14 +126,14 @@ const EventCreate = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  
+  const [errors, setErrors] = useState({});
   // Estados para seções colapsáveis em mobile
   const [expandedSections, setExpandedSections] = useState({
     basic: true,
     details: !isMobile,
     image: !isMobile
   });
-  
+
   // Carregar dados do evento se estiver editando
   useEffect(() => {
     const fetchData = async () => {
@@ -112,7 +157,7 @@ const EventCreate = () => {
   useEffect(() => {
     if (eventId && currentEvent) {
       // Processar a localização para o novo formato
-      let locationData = { estado: '', cidade: '', rua: '', completo: '' };
+      var locationData = { estado: '', cidade: '', rua: '', completo: '' };
       
       if (currentEvent.location) {
         // Se for uma string, tentar extrair informações
@@ -178,7 +223,7 @@ const EventCreate = () => {
         description: currentEvent.description || '',
         type: currentEvent.type || 'party',
         maxGuests: currentEvent.maxGuests || '50',
-        notes: currentEvent.notes || '',
+        notes: '',
         image: imageData
       });
     }
@@ -211,52 +256,61 @@ const EventCreate = () => {
   };
   
   // Manipular mudança de data
-  const handleDateChange = (newDate) => {
+  const handleDateChange = useCallback((newDate) => {
     setFormData(prev => ({
       ...prev,
       date: newDate
     }));
     
-    // Limpar erro do campo
     if (formErrors.date) {
       setFormErrors(prev => ({
         ...prev,
         date: null
       }));
     }
-  };
+  }, [formErrors]);
   
   // Manipular mudança na imagem
-  const handleImageChange = (imageData) => {
+  const handleImageChange = useCallback((imageData) => {
     setFormData(prev => ({
       ...prev,
       image: imageData
     }));
     
-    // Limpar erro do campo
     if (formErrors.image) {
       setFormErrors(prev => ({
         ...prev,
         image: null
       }));
     }
-  };
+  }, [formErrors]);
   
-  // Manipular mudança na localização
-  const handleLocationChange = (locationData) => {
+  const handleLocationChange = useCallback((event) => {
+    const { value } = event.target;
+    // A única responsabilidade dela é invalidar a seleção.
     setFormData(prev => ({
       ...prev,
-      location: locationData
+      location: {
+        completo: value,
+        rua: '',
+        cidade: '',
+        estado: '',
+        cep: '',
+        coordinates: null,
+        mapbox_id: null
+      }
     }));
-    
-    // Limpar erro do campo
-    if (formErrors.location) {
-      setFormErrors(prev => ({
-        ...prev,
-        location: null
-      }));
-    }
-  };
+  }, []); // Sem dependências, super estável.
+
+
+  // Esta função é chamada APENAS quando o usuário seleciona um item da lista.
+  const handleLocationSelect = useCallback((selectedLocation) => {
+    // A única responsabilidade dela é definir a localização como válida.
+    setFormData(prev => ({
+      ...prev,
+      location: selectedLocation
+    }));
+  }, []);
   
   // Manipular expansão de seções
   const handleSectionToggle = (section) => {
@@ -280,21 +334,17 @@ const EventCreate = () => {
       errors.date = 'A data não pode ser no passado';
     }
     
-    if (!formData.location.completo) {
-      errors.location = 'A localização é obrigatória';
+    // Agora validamos a presença do mapbox_id em vez do texto.
+    if (!formData.location.mapbox_id) {
+      errors.location = 'Por favor, selecione um endereço válido da lista';
     }
     
     if (formData.maxGuests <= 0) {
       errors.maxGuests = 'O número máximo de convidados deve ser maior que zero';
     }
     
-    // Validação da imagem (opcional)
     if (formData.image.type === 'url' && formData.image.url.trim() !== '') {
-      try {
-        new URL(formData.image.url);
-      } catch (e) {
-        errors.image = 'URL da imagem inválida';
-      }
+      try { new URL(formData.image.url); } catch (e) { errors.image = 'URL da imagem inválida'; }
     }
     
     setFormErrors(errors);
@@ -417,61 +467,6 @@ const EventCreate = () => {
     );
   }
   
-  // Componente de seção colapsável para mobile
-  const CollapsibleSection = ({ title, icon, children, sectionKey, defaultExpanded = false }) => {
-    const isExpanded = expandedSections[sectionKey];
-    
-    return (
-      <Paper 
-        sx={{ 
-          mb: 2,
-          borderRadius: 3,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-          border: '1px solid #e0e0e0',
-          overflow: 'hidden'
-        }}
-      >
-        {isMobile ? (
-          <>
-            <Box
-              onClick={() => handleSectionToggle(sectionKey)}
-              sx={{
-                p: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                bgcolor: alpha(theme.palette.primary.main, 0.02),
-                borderBottom: isExpanded ? `1px solid ${alpha(theme.palette.divider, 0.1)}` : 'none',
-                '&:hover': {
-                  bgcolor: alpha(theme.palette.primary.main, 0.05)
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {icon}
-                <Typography variant="h6" fontWeight={600}>
-                  {title}
-                </Typography>
-              </Box>
-              {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </Box>
-            <Collapse in={isExpanded}>
-              <Box sx={{ p: 3 }}>
-                {children}
-              </Box>
-            </Collapse>
-          </>
-        ) : (
-          <Box sx={{ p: 3 }}>
-            <FormSection title={title} icon={icon}>
-              {children}
-            </FormSection>
-          </Box>
-        )}
-      </Paper>
-    );
-  };
   
   return (
     <Box 
@@ -487,7 +482,7 @@ const EventCreate = () => {
       {isMobile && (
         <AppBar 
           position="fixed" 
-          sx={{ 
+          sx={{
             bgcolor: theme.palette.background.paper,
             color: theme.palette.text.primary,
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -516,7 +511,7 @@ const EventCreate = () => {
 
       <Container 
         maxWidth="md" 
-        sx={{ 
+        sx={{
           py: isMobile ? 2 : 4,
           mt: isMobile ? 8 : 0, // Margem para compensar AppBar em mobile
           px: isMobile ? 2 : 3,
@@ -552,7 +547,8 @@ const EventCreate = () => {
                 px: 2,
                 py: 1,
                 '&:hover': {
-                  transform: 'translateX(-4px)'
+                  transform: 'translateX(-4px)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                 }
               }}
             >
@@ -626,12 +622,19 @@ const EventCreate = () => {
               </LocalizationProvider>
             </Box>
             
-            <LocationSelector
-              value={formData.location}
+            {/* Campo de Localização com TextField padrão e funcionalidade Mapbox */}
+            <MapboxLocationField
+              accessToken={MAPBOX_ACCESS_TOKEN}
+              label="Localização do Evento"
+              placeholder="Digite o endereço do evento..."
+              value={formData.location.completo}
               onChange={handleLocationChange}
+              onLocationSelect={handleLocationSelect}
               error={!!formErrors.location}
-              helperText={formErrors.location}
+              helperText={formErrors.location || 'Digite pelo menos 3 caracteres para ver sugestões'}
+              isValid={!!formData.location.mapbox_id}
               required
+              fullWidth
             />
             
             <Box sx={{ 
@@ -871,7 +874,6 @@ const EventCreate = () => {
       />
     </Box>
   );
-};
+}
 
 export default EventCreate;
-

@@ -293,13 +293,14 @@ const Sidebar = ({ onMobileClose, openMobile }) => {
       <Box
         sx={{
           padding: 2,
+          mb: 6,
           borderRadius: 2,
           background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)}, ${alpha(theme.palette.secondary.main, 0.05)})`,
           boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
           border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
           <Avatar
             sx={{
               width: 40,

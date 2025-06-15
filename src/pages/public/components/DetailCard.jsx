@@ -12,7 +12,8 @@ const StyledDetailCard = styled(Paper)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
   border: '1px solid rgba(255, 255, 255, 0.2)',
   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-  minHeight: '180px', // Altura mínima aumentada para textos longos
+  // <-- ALTERAÇÃO 1: Definir a altura para preencher 100% do container pai
+  height: '100%',
   width: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -25,7 +26,7 @@ const StyledDetailCard = styled(Paper)(({ theme }) => ({
   },
 }));
 
-// Componente de ícone estilizado
+// Componente de ícone estilizado (sem alterações)
 const IconWrapper = styled(Box)(({ theme }) => ({
   width: 60,
   height: 60,
@@ -36,10 +37,10 @@ const IconWrapper = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
   boxShadow: `0 8px 16px ${theme.palette.primary.main}40`,
-  flexShrink: 0, // Impede que o ícone encolha
+  flexShrink: 0,
 }));
 
-// Variantes de animação para o card
+// Variantes de animação para o card (sem alterações)
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i = 1) => ({
@@ -52,24 +53,25 @@ const cardVariants = {
 // Componente de card de detalhes
 const DetailCard = ({ icon: Icon, title, value, theme, index }) => {
   return (
+    // <-- ALTERAÇÃO 2: A motion.div também precisa preencher 100% do seu container
     <motion.div
       variants={cardVariants}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
       custom={index}
-      style={{ flex: 1, minWidth: '200px' }}
+      style={{ width: '100%', height: '100%' }}
     >
       <StyledDetailCard>
         <IconWrapper>
-          <Icon sx={{ fontSize: 30, color: 'white' }} />
+          {<Icon sx={{ fontSize: 30, color: 'white' }} />}
         </IconWrapper>
         <Typography variant="h6" sx={{ 
           mb: 1, 
           fontWeight: 600,
           letterSpacing: 0.5,
           fontSize: '1rem',
-          flexShrink: 0 // Impede que o título encolha
+          flexShrink: 0 
         }}>
           {title}
         </Typography>
@@ -78,14 +80,14 @@ const DetailCard = ({ icon: Icon, title, value, theme, index }) => {
           fontWeight: 400,
           lineHeight: 1.4,
           fontSize: '0.875rem',
-          wordBreak: 'break-word', // Quebra palavras longas
-          hyphens: 'auto', // Adiciona hífens automáticos
+          wordBreak: 'break-word',
+          hyphens: 'auto',
           textAlign: 'center',
-          flex: 1, // Permite que o texto ocupe o espaço restante
+          flex: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '0 8px', // Padding lateral para evitar texto colado nas bordas
+          padding: '0 8px',
         }}>
           {value}
         </Typography>
@@ -95,4 +97,3 @@ const DetailCard = ({ icon: Icon, title, value, theme, index }) => {
 };
 
 export default DetailCard;
-

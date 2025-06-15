@@ -4,15 +4,11 @@ import { styled } from '@mui/material/styles';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import mapboxgl from 'mapbox-gl';
 
-// Componente estilizado para o container do mapa
-const MapContainer = styled(Box)(({ theme }) => ({
+const MapContainer = styled(Box)({
   width: '100%',
   height: '100%',
-  borderRadius: theme.shape.borderRadius,
-  overflow: 'hidden',
-}));
+});
 
-// Componente de mapa temático
 class ThemedMap extends React.Component {
   constructor(props) {
     super(props);
@@ -27,41 +23,25 @@ class ThemedMap extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    // Verificar se as propriedades relevantes mudaram
-    if (
-      prevProps.center !== this.props.center ||
-      prevProps.zoom !== this.props.zoom ||
-      prevProps.markerPosition !== this.props.markerPosition ||
-      prevProps.markerPopupText !== this.props.markerPopupText ||
-      prevProps.mapStyle !== this.props.mapStyle
-    ) {
-      // Se o mapa já existe, atualize-o
-      if (this.map) {
-        this.updateMap();
-      } else {
-        // Se o mapa não existe, inicialize-o
-        this.initializeMap();
-      }
+    if (this.map) {
+      this.updateMap();
+    } else {
+      this.initializeMap();
     }
   }
 
   componentWillUnmount() {
-    // Limpar o mapa quando o componente for desmontado
     if (this.map) {
       this.map.remove();
     }
   }
 
   initializeMap() {
-    const { center, zoom, markerPosition, markerPopupText, mapStyle } = this.props;
-
-    // Verificar se os dados necessários estão disponíveis
+    const { center, zoom, mapStyle } = this.props;
     if (!center || !this.mapContainer.current) return;
 
-    // Configurar o token de acesso do Mapbox (substitua por um token válido em produção)
     mapboxgl.accessToken = 'pk.eyJ1IjoiaXNtZW5keSIsImEiOiJjbWJsa2s1OWQxMmkwMmxwd2dwZnZsZWo1In0.TZRgfgztitfE4_RDo6IA6g';
-
-    // Criar o mapa
+    
     this.map = new mapboxgl.Map({
       container: this.mapContainer.current,
       style: mapStyle || 'mapbox://styles/mapbox/light-v11',
@@ -70,67 +50,140 @@ class ThemedMap extends React.Component {
       attributionControl: false,
     });
 
-    // Adicionar controles de navegação
     this.map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-
-    // Adicionar marcador se a posição for fornecida
-    if (markerPosition) {
-      this.addMarker(markerPosition, markerPopupText);
-    }
+    this.map.on('load', () => this.updateMap()); // Atualiza o mapa após o carregamento inicial
   }
 
   updateMap() {
-    const { center, zoom, markerPosition, markerPopupText, mapStyle } = this.props;
+    const { center, zoom, markerPosition, markerPopupText, rawAddressText } = this.props;
+    if (!this.map) return;
 
-    // Atualizar o centro e o zoom do mapa
-    if (this.map && center) {
-      this.map.setCenter(center);
-      this.map.setZoom(zoom || 15);
-      this.map.setStyle(mapStyle || 'mapbox://styles/mapbox/light-v11');
+    if (center) {
+      this.map.flyTo({ center, zoom: zoom || 15 });
     }
 
-    // Atualizar o marcador
+    // Limpa o marcador anterior para evitar duplicatas
+    if (this.marker) {
+      this.marker.remove();
+      this.marker = null;
+    }
+
     if (markerPosition) {
-      // Remover o marcador existente, se houver
-      if (this.marker) {
-        this.marker.remove();
-      }
-      // Adicionar o novo marcador
-      this.addMarker(markerPosition, markerPopupText);
+      this.addMarker(markerPosition, markerPopupText, rawAddressText);
     }
   }
 
-  addMarker(position, popupText) {
-    // Criar elemento personalizado para o marcador
-    const markerElement = document.createElement('div');
-    markerElement.className = 'custom-marker';
-    markerElement.style.width = '30px';
-    markerElement.style.height = '30px';
-    markerElement.style.borderRadius = '50%';
-    markerElement.style.backgroundColor = this.props.theme.palette.secondary.main;
-    markerElement.style.border = '3px solid white';
-    markerElement.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
-    markerElement.style.cursor = 'pointer';
+  // ================================================================
+  // <-- FUNÇÃO addMarker TOTALMENTE REESCRITA COM NOVOS RECURSOS -->
+  // ================================================================
+  addMarker(position, popupText, rawAddressText) {
+    if (!this.map || !position || !Array.isArray(position) || position.length !== 2) return;
 
-    // Criar o marcador
+    const { theme } = this.props;
+    const markerColor = theme?.palette?.secondary?.main || '#e91e63';
+    const textColor = theme?.palette?.text?.primary || 'black';
+    const buttonBgColor = theme?.palette?.primary?.main || '#6a1b9a';
+    const buttonTextColor = theme?.palette?.primary?.contrastText || 'white';
+    
+    // Codifica o endereço para ser usado em URLs
+    const encodedAddress = encodeURIComponent(rawAddressText);
+    
+    // Links para Google Maps e Waze
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    const wazeUrl = `https://www.waze.com/ul?q=${encodedAddress}`;
+    
+    // HTML e CSS para o novo popup interativo
+    const popupContentHTML = `
+      <style>
+        .custom-popup-content {
+          font-family: 'Roboto', sans-serif;
+          color: black;
+          max-width: 250px;
+          padding: 8px;
+        }
+        .popup-address {
+          font-weight: 500;
+          font-size: 1rem;
+          margin: 0 0 12px 0;
+          line-height: 1.4;
+        }
+        .popup-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .popup-button {
+          display: block;
+          width: 100%;
+          padding: 8px 12px;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          font-weight: 500;
+          text-align: center;
+          text-decoration: none;
+          cursor: pointer;
+          transition: background-color 0.2s, transform 0.1s;
+        }
+        .popup-button:hover {
+          opacity: 0.9;
+        }
+        .popup-button:active {
+          transform: scale(0.98);
+        }
+        .copy-btn {
+          background-color: #f0f0f0;
+          color: #333;
+          border: 1px solid #ddd;
+        }
+        .nav-btn {
+          background-color: ${buttonBgColor};
+          color: ${buttonTextColor};
+        }
+      </style>
+      <div class="custom-popup-content">
+        <div class="popup-address">${popupText}</div>
+        <div class="popup-actions">
+          <button
+            class="popup-button copy-btn"
+            onclick="
+              navigator.clipboard.writeText('${rawAddressText.replace(/'/g, "\\'")}');
+              this.innerText = 'Copiado!';
+              setTimeout(() => { this.innerText = 'Copiar Endereço'; }, 2000);
+            "
+          >
+            Copiar Endereço
+          </button>
+          <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="popup-button nav-btn">
+            Abrir no Google Maps
+          </a>
+          <a href="${wazeUrl}" target="_blank" rel="noopener noreferrer" class="popup-button nav-btn">
+            Abrir no Waze
+          </a>
+        </div>
+      </div>
+    `;
+
+    // Criação do popup
+    this.popup = new mapboxgl.Popup({ offset: 35, closeButton: false })
+      .setHTML(popupContentHTML);
+
+    // Criação do marcador personalizado
+    const markerElement = document.createElement('div');
+    markerElement.style.cssText = `
+      width: 30px; height: 30px; border-radius: 50%;
+      background-color: ${markerColor}; border: 3px solid white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25); cursor: pointer;
+    `;
+
+    // Adiciona marcador e popup ao mapa
     this.marker = new mapboxgl.Marker(markerElement)
       .setLngLat(position)
+      .setPopup(this.popup)
       .addTo(this.map);
-
-    // Adicionar popup se o texto for fornecido
-    if (popupText) {
-      this.popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
-        .setHTML(`<div style="padding: 10px; text-align: center;">${popupText}</div>`);
       
-      this.marker.setPopup(this.popup);
-      
-      // Mostrar o popup por padrão
-      setTimeout(() => {
-        if (this.marker && this.popup) {
-          this.marker.togglePopup();
-        }
-      }, 1000);
-    }
+    // Abre o popup por padrão
+    // this.marker.togglePopup();
   }
 
   render() {
@@ -139,4 +192,3 @@ class ThemedMap extends React.Component {
 }
 
 export default ThemedMap;
-

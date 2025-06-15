@@ -45,6 +45,8 @@ import HostMessage from './components/HostMessage';
 import ThemedMap from './components/ThemedMap';
 import ImpactfulConfirmationFeedback from './components/ImpactfulConfirmationFeedback';
 
+const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiaXNtZW5keSIsImEiOiJjbWJsa2s1OWQxMmkwMmxwd2dwZnZsZWo1In0.TZRgfgztitfE4_RDo6IA6g';
+
 // Configuração para usar tema dinâmico baseado nas cores do convite
 const USE_DYNAMIC_THEME = true;
 
@@ -70,94 +72,53 @@ const bounceAnimation = {
   },
 };
 
-// Função para geocodificação melhorada usando API do OpenStreetMap
-const geocodeLocation = async (location) => {
+const hexToRgb = (hex) => {
+  if (!hex || typeof hex !== 'string') return null;
+  // Remove o '#' do início
+  let shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+
+  let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+};
+
+
+const geocodeWithMapbox = async (location, accessToken) => {
+  if (!location || !accessToken) {
+    return [-51.9253, -14.2350]; // Coordenadas de fallback do Brasil
+  }
+
+  // URL para a API de Geocodificação do Mapbox
+  const searchUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(location)}.json?access_token=${accessToken}&country=BR&limit=1&types=address,place,poi`;
+  
+  console.log('Buscando coordenadas com Mapbox:', searchUrl);
+  
   try {
-    // Limpar e formatar o endereço
-    const cleanLocation = location.trim();
-    // Primeiro, tentar busca estruturada se possível
-    const parts = cleanLocation.split(',').map(part => part.trim());
-    
-    let searchUrl;
-    
-    if (parts.length >= 2) {
-
-      // Busca livre para endereços simples
-      searchUrl = `https://nominatim.openstreetmap.org/search?` +
-      `q=${encodeURIComponent(cleanLocation + ', Brazil')}&` +
-      `format=json&` +
-      `limit=1&` +
-      `addressdetails=1&` +
-      `countrycodes=br`;
-
-    } else {
-      // Busca estruturada para endereços com múltiplas partes
-      const city = parts[parts.length - 2]; // Penúltimo elemento (cidade)
-      const state = parts[parts.length - 1]; // Último elemento (estado)
-      searchUrl = `https://nominatim.openstreetmap.org/search?` +
-        `city=${encodeURIComponent(city)}&` +
-        `state=${encodeURIComponent(state)}&` +
-        `country=Brazil&` +
-        `format=json&` +
-        `limit=1&` +
-        `addressdetails=1`;
-    }
-    
-    console.log('Geocoding URL:', searchUrl);
-    
-    const response = await fetch(searchUrl, {
-      headers: {
-        'User-Agent': 'RSVP-App/1.0 (contact@example.com)' // User-Agent obrigatório
-      }
-    });
-    
+    const response = await fetch(searchUrl);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      console.error('Erro na resposta da API Mapbox:', response.statusText);
+      return [-51.9253, -14.2350];
     }
     
     const data = await response.json();
-    console.log('Geocoding response:', data);
+    console.log('Resposta da API Mapbox:', data);
     
-    if (data && data.length > 0) {
-      const result = data[0];
-      // Mapbox espera [longitude, latitude], não [latitude, longitude]
-      return [parseFloat(result.lon), parseFloat(result.lat)];
+    // Se encontrarmos resultados, retornamos as coordenadas do primeiro
+    if (data.features && data.features.length > 0) {
+      // Mapbox retorna [longitude, latitude], que é o formato correto para o mapa
+      return data.features[0].geometry.coordinates;
     }
     
-    // Se não encontrou, tentar busca mais ampla
-    const fallbackUrl = `https://nominatim.openstreetmap.org/search?` +
-      `q=${encodeURIComponent(cleanLocation)}&` +
-      `format=json&` +
-      `limit=1&` +
-      `countrycodes=br`;
-    
-    console.log('Fallback geocoding URL:', fallbackUrl);
-    
-    const fallbackResponse = await fetch(fallbackUrl, {
-      headers: {
-        'User-Agent': 'RSVP-App/1.0 (contact@example.com)'
-      }
-    });
-    
-    if (fallbackResponse.ok) {
-      const fallbackData = await fallbackResponse.json();
-      console.log('Fallback geocoding response:', fallbackData);
-      
-      if (fallbackData && fallbackData.length > 0) {
-        const result = fallbackData[0];
-        // Mapbox espera [longitude, latitude], não [latitude, longitude]
-        return [parseFloat(result.lon), parseFloat(result.lat)];
-      }
-    }
-    
-    // Fallback para coordenadas do Brasil se não encontrar nada
-    console.warn('Geocodificação falhou, usando coordenadas do Brasil');
-    return [-51.9253, -14.2350]; // [longitude, latitude] para o Brasil
+    console.warn('Mapbox não encontrou coordenadas para o endereço.');
+    return [-51.9253, -14.2350]; // Fallback
     
   } catch (error) {
-    console.error('Erro na geocodificação:', error);
-    // Fallback para coordenadas do Brasil em caso de erro
-    return [-51.9253, -14.2350]; // [longitude, latitude] para o Brasil
+    console.error('Erro ao fazer a requisição para o Mapbox:', error);
+    return [-51.9253, -14.2350]; // Fallback
   }
 };
 
@@ -214,15 +175,14 @@ const RsvpPage = () => {
       setMapMarkerText(`${publicInvite.event.title || 'Local do Evento'}<br/>${locationString}`);
 
       // Usar geocodificação real
-      geocodeLocation(locationString).then(coords => {
-        if (coords) {
-          setMapCenter(coords);
-          setMapMarkerPos(coords);
-          setMapZoom(16);
-        } else {
-          setMapCenter([-14.2350, -51.9253]);
-          setMapMarkerPos(null);
+      geocodeWithMapbox(locationString, MAPBOX_ACCESS_TOKEN).then(coords => {
+        setMapCenter(coords);
+        setMapMarkerPos(coords);
+        // Ajusta o zoom com base no sucesso da geocodificação
+        if (coords[0] === -51.9253) { // Coordenadas de fallback
           setMapZoom(4);
+        } else {
+          setMapZoom(16);
         }
       });
     }
@@ -313,8 +273,22 @@ const RsvpPage = () => {
   const formattedDate = eventDate ? eventDate.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Data a definir';
   const formattedTime = eventDate ? eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
 
-  // Estilo do mapa baseado no tema
-  const mapStyle = theme.palette.mode === 'dark' ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11";
+  let backgroundStyle = 'linear-gradient(135deg, rgba(106,27,154,0.95) 0%, rgba(233,30,99,0.85) 100%)'; // Fallback
+  
+  if (publicInvite) {
+    const primaryRgb = hexToRgb(publicInvite.bgColor || '#6a1b9a');
+    const accentRgb = hexToRgb(publicInvite.accentColor || '#e91e63');
+
+    if (primaryRgb && accentRgb) {
+      if (publicInvite.imageUrl) {
+        // Com imagem: gradiente mais transparente
+        backgroundStyle = `linear-gradient(135deg, rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.8) 0%, rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.7) 100%), url(${publicInvite.imageUrl})`;
+      } else {
+        // Sem imagem: gradiente mais opaco
+        backgroundStyle = `linear-gradient(135deg, rgba(${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}, 0.95) 0%, rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.85) 100%)`;
+      }
+    }
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -326,9 +300,7 @@ const RsvpPage = () => {
           position: 'relative', 
           overflowX: 'hidden', 
           minHeight: '100vh',
-          backgroundImage: publicInvite.imageUrl 
-            ? `linear-gradient(135deg, rgba(106,27,154,0.8) 0%, rgba(233,30,99,0.7) 100%), url(${publicInvite.imageUrl})`
-            : 'linear-gradient(135deg, rgba(106,27,154,0.95) 0%, rgba(233,30,99,0.85) 100%)',
+          backgroundImage: backgroundStyle,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundAttachment: 'fixed',
@@ -464,30 +436,43 @@ const RsvpPage = () => {
             <Box sx={{ 
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
-              gap: { xs: 4, md: 5 }, 
-              mb: { xs: 12, md: 18 } 
+              gap: { xs: 4, sm: 3 },
+              mb: { xs: 12, md: 18 },
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexWrap: 'wrap',
             }}>
-              <DetailCard 
-                icon={EventIcon} 
-                title="Data" 
-                value={formattedDate} 
-                theme={theme} 
-                index={3.1} 
-              />
-              <DetailCard 
-                icon={AccessTimeIcon} 
-                title="Horário" 
-                value={formattedTime || 'A definir'} 
-                theme={theme} 
-                index={3.2} 
-              />
-              <DetailCard 
-                icon={LocationOnIcon} 
-                title="Local" 
-                value={publicInvite.event?.location || 'A definir'} 
-                theme={theme} 
-                index={3.3} 
-              />
+
+              <Box sx={{ width: 260, height: 220 }}>
+                <DetailCard 
+                  icon={EventIcon} 
+                  title="Data" 
+                  value={formattedDate} 
+                  theme={theme} 
+                  index={3.1}
+                />
+              </Box>
+
+              <Box sx={{ width: 260, height: 220 }}>
+                <DetailCard 
+                  icon={AccessTimeIcon} 
+                  title="Horário" 
+                  value={formattedTime || 'A definir'} 
+                  theme={theme} 
+                  index={3.2}
+                />
+              </Box>
+
+              <Box sx={{ width: 260, height: 220 }}>
+                <DetailCard 
+                  icon={LocationOnIcon} 
+                  title="Local" 
+                  value={publicInvite.event?.location || 'A definir'} 
+                  theme={theme} 
+                  index={3.3}
+                />
+              </Box>
+
             </Box>
           </motion.div>
 
@@ -498,7 +483,7 @@ const RsvpPage = () => {
               <Box sx={{
                 height: { xs: 350, sm: 450, md: 500 },
                 mb: { xs: 12, md: 18 },
-                borderRadius: 0, // Removendo borda arredondada
+                borderRadius: 2,
                 overflow: 'hidden',
                 border: `1px solid ${theme.palette.divider}`,
                 boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
@@ -508,6 +493,7 @@ const RsvpPage = () => {
                   zoom={mapZoom}
                   markerPosition={mapMarkerPos}
                   markerPopupText={mapMarkerText}
+                  rawAddressText={publicInvite.event?.location || ''}
                   theme={theme}
                   mapStyle="mapbox://styles/mapbox/streets-v11"
                 />
@@ -680,4 +666,3 @@ const RsvpPage = () => {
 };
 
 export default RsvpPage;
-
