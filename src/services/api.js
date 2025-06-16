@@ -178,7 +178,7 @@ export const guestService = {
   
   // Vincular múltiplos convidados a um convite
   linkGuestsToInvite: async (inviteId, guestIds) => {
-    const response = await api.post(`/guest/link-invite`, { inviteId, guestIds });
+    const response = await api.post(`/invites/link-guests/${inviteId}`, { guestIds });
     return response.data;
   }
 };

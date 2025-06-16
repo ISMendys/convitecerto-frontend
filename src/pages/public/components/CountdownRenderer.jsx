@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Paper } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, darken } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 
 // Componente estilizado para os cards de contagem regressiva
@@ -38,7 +38,7 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
   if (completed) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography variant="h3" sx={{ color: theme.palette.primary.main }}>
+        <Typography variant="h3" sx={{ color: darken(theme.palette.primary.main, 0.3) }}>
           O evento está acontecendo agora!
         </Typography>
       </Box>
@@ -79,6 +79,7 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
           <Typography variant="body1" sx={{ 
             textTransform: 'uppercase', 
             letterSpacing: 1,
+            color: darken(theme.palette.primary.main, 0.3),
             fontWeight: 500,
             opacity: 0.8,
             fontSize: '0.875rem'
@@ -112,6 +113,7 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
           </motion.div>
           <Typography variant="body1" sx={{ 
             textTransform: 'uppercase', 
+            color: darken(theme.palette.primary.main, 0.3),
             letterSpacing: 1,
             fontWeight: 500,
             opacity: 0.8,
@@ -146,6 +148,7 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
           </motion.div>
           <Typography variant="body1" sx={{ 
             textTransform: 'uppercase', 
+            color: darken(theme.palette.primary.main, 0.3),
             letterSpacing: 1,
             fontWeight: 500,
             opacity: 0.8,
@@ -182,6 +185,7 @@ const CountdownRenderer = ({ days, hours, minutes, seconds, completed, theme }) 
             textTransform: 'uppercase', 
             letterSpacing: 1,
             fontWeight: 500,
+            color: darken(theme.palette.primary.main, 0.3),
             opacity: 0.8,
             fontSize: '0.875rem'
           }}>

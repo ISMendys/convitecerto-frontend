@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { lighten, darken } from '@mui/material/styles';
 import {
   Box,
   Container,
@@ -13,9 +14,6 @@ import {
   createTheme,
   Stack,
   Button,
-  Fade,
-  Zoom,
-  Grow,
   Avatar,
 } from '@mui/material';
 import {
@@ -292,18 +290,14 @@ const RsvpPage = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      {/* Container principal */}
+      {/* Container principal que agora só coordena o layout geral */}
       <Box 
         sx={{ 
-          bgcolor: 'background.default', 
+          bgcolor: 'background.default', // Fundo padrão para toda a página
           color: 'text.primary', 
           position: 'relative', 
           overflowX: 'hidden', 
           minHeight: '100vh',
-          backgroundImage: backgroundStyle,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
         }}
       >
         {/* Confetti para animação de confirmação */}
@@ -313,7 +307,7 @@ const RsvpPage = () => {
             numberOfPieces={200}
             confettiSource={{
               x: window.innerWidth / 2,
-              y: window.innerHeight * 0.8, // 80% da altura da tela (onde estão os botões)
+              y: window.innerHeight * 0.8,
               w: 10,
               h: 10
             }}
@@ -325,6 +319,11 @@ const RsvpPage = () => {
         {/* Seção Hero */}
         <Box
           sx={{
+            backgroundImage: backgroundStyle,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+            
             minHeight: '100vh',
             display: 'flex',
             flexDirection: 'column',
@@ -338,7 +337,7 @@ const RsvpPage = () => {
             px: 3,
           }}
         >
-          <motion.div variants={fadeInUp} initial="hidden" animate="visible" custom={1}>
+            <motion.div variants={fadeInUp} initial="hidden" animate="visible" custom={1}>
             <Typography variant="h1" sx={{ 
               mb: 2, 
               fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem' },
@@ -359,44 +358,25 @@ const RsvpPage = () => {
             </Typography>
           </motion.div>
 
-          {/* Descrição do evento */}
           {publicInvite.description && (
-            <motion.div variants={fadeInUp} initial="hidden" animate="visible" custom={2.5}>
-              <Typography variant="h6" sx={{ 
-                color: 'text.secondary', 
-                fontWeight: 300,
-                mb: 4,
-                maxWidth: 600,
-                mx: 'auto'
-              }}>
+             <motion.div variants={fadeInUp} initial="hidden" animate="visible" custom={2.5}>
+              <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 300, mb: 4, maxWidth: 600, mx: 'auto' }}>
                 {publicInvite.description}
               </Typography>
             </motion.div>
           )}
 
-          {/* Nome do convidado */}
           {publicInvite.guest?.name && (
             <motion.div variants={fadeInUp} initial="hidden" animate="visible" custom={3}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 6 }}>
-                <Avatar sx={{ bgcolor: 'primary.main', mr: 1 }}>
-                  <PersonIcon />
-                </Avatar>
-                <Typography variant="h5">
-                  Olá, {publicInvite.guest.name}!
-                </Typography>
+                <Avatar sx={{ bgcolor: 'primary.main', mr: 1 }}><PersonIcon /></Avatar>
+                <Typography variant="h5">Olá, {publicInvite.guest.name}!</Typography>
               </Box>
             </motion.div>
           )}
 
-          {/* Seta para rolar para baixo */}
           <motion.div
-            style={{
-              position: 'absolute',
-              bottom: 60,
-              left: '50%',
-              translateX: '-50%',
-              cursor: 'pointer',
-            }}
+            style={{ position: 'absolute', bottom: 60, left: '50%', translateX: '-50%', cursor: 'pointer' }}
             animate={bounceAnimation}
             onClick={scrollToConfirmation}
           >
@@ -405,242 +385,245 @@ const RsvpPage = () => {
         </Box>
 
         {/* Container de conteúdo */}
-        <Container maxWidth="md" sx={{ pt: { xs: 12, md: 20 }, pb: { xs: 12, md: 20 }, position: 'relative', zIndex: 1 }}>
-          
-          {/* Seção de contagem regressiva */}
-          {eventDate && eventDate > new Date() && (
-            <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={1}>
-              <Box sx={{ mb: { xs: 12, md: 18 } }}>
-                <Typography variant="h3" align="center" sx={{ mb: { xs: 6, md: 8 } }}>Contagem Regressiva</Typography>
-                <Countdown
-                  date={eventDate}
-                  renderer={(props) => <CountdownRenderer {...props} theme={theme} />}
-                />
-              </Box>
-            </motion.div>
-          )}
-
-          {/* Mensagem do anfitrião */}
-          {publicInvite.customText && (
-            <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={2}>
-              <Box sx={{ mb: { xs: 12, md: 18 }, display: 'flex', justifyContent: 'center' }}>
-                <Box sx={{ width: '100%', maxWidth: '750px' }}>
-                  <HostMessage message={publicInvite.customText} theme={theme} index={2} />
+        <Box sx={{ bgcolor: lighten(theme.palette.primary.main, 0.7), textColor: darken(theme.palette.primary.main, 0.3) }}>
+          <Container maxWidth="md" sx={{ pt: { xs: 12, md: 20 }, pb: { xs: 12, md: 20 }, position: 'relative', zIndex: 1 }}>
+            
+            {/* Seção de contagem regressiva */}
+            {eventDate && eventDate > new Date() && (
+              <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={1}>
+                <Box sx={{ mb: { xs: 12, md: 18 } }}>
+                  <Typography variant="h3" align="center" sx={{ mb: { xs: 6, md: 8, color: darken(theme.palette.primary.main, 0.3) } }}>Contagem Regressiva</Typography>
+                  <Countdown
+                    date={eventDate}
+                    renderer={(props) => <CountdownRenderer {...props} theme={theme} />}
+                  />
                 </Box>
-              </Box>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
 
-          {/* Seção de detalhes */}
-          <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={3}>
-            <Box sx={{ 
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: { xs: 4, sm: 3 },
-              mb: { xs: 12, md: 18 },
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-            }}>
+            {/* Mensagem do anfitrião */}
+            {publicInvite.customText && (
+              <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={2}>
+                <Box sx={{ mb: { xs: 12, md: 18 }, display: 'flex', justifyContent: 'center' }}>
+                  <Box sx={{ width: '100%', maxWidth: '750px' }}>
+                    <HostMessage message={publicInvite.customText} theme={theme} index={2} />
+                  </Box>
+                </Box>
+              </motion.div>
+            )}
 
-              <Box sx={{ width: 260, height: 220 }}>
-                <DetailCard 
-                  icon={EventIcon} 
-                  title="Data" 
-                  value={formattedDate} 
-                  theme={theme} 
-                  index={3.1}
-                />
-              </Box>
-
-              <Box sx={{ width: 260, height: 220 }}>
-                <DetailCard 
-                  icon={AccessTimeIcon} 
-                  title="Horário" 
-                  value={formattedTime || 'A definir'} 
-                  theme={theme} 
-                  index={3.2}
-                />
-              </Box>
-
-              <Box sx={{ width: 260, height: 220 }}>
-                <DetailCard 
-                  icon={LocationOnIcon} 
-                  title="Local" 
-                  value={publicInvite.event?.location || 'A definir'} 
-                  theme={theme} 
-                  index={3.3}
-                />
-              </Box>
-
-            </Box>
-          </motion.div>
-
-          {/* Seção do mapa */}
-          {publicInvite.event?.location && mapCenter && (
-            <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={4}>
-              <Typography variant="h3" align="center" sx={{ mb: { xs: 6, md: 8 } }}>Como Chegar</Typography>
-              <Box sx={{
-                height: { xs: 350, sm: 450, md: 500 },
+            {/* Seção de detalhes */}
+            <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={3}>
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 4, sm: 3 },
                 mb: { xs: 12, md: 18 },
-                borderRadius: 2,
-                overflow: 'hidden',
-                border: `1px solid ${theme.palette.divider}`,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexWrap: 'wrap',
               }}>
-                <ThemedMap
-                  center={mapCenter}
-                  zoom={mapZoom}
-                  markerPosition={mapMarkerPos}
-                  markerPopupText={mapMarkerText}
-                  rawAddressText={publicInvite.event?.location || ''}
-                  theme={theme}
-                  mapStyle="mapbox://styles/mapbox/streets-v11"
-                />
+
+                <Box sx={{ width: 260, height: 220 }}>
+                  <DetailCard 
+                    icon={EventIcon} 
+                    title="Data" 
+                    value={formattedDate} 
+                    theme={theme} 
+                    index={3.1}
+                  />
+                </Box>
+
+                <Box sx={{ width: 260, height: 220 }}>
+                  <DetailCard 
+                    icon={AccessTimeIcon} 
+                    title="Horário" 
+                    value={formattedTime || 'A definir'} 
+                    theme={theme} 
+                    index={3.2}
+                  />
+                </Box>
+
+                <Box sx={{ width: 260, height: 220 }}>
+                  <DetailCard 
+                    icon={LocationOnIcon} 
+                    title="Local" 
+                    value={publicInvite.event?.location || 'A definir'} 
+                    theme={theme} 
+                    index={3.3}
+                  />
+                </Box>
+
               </Box>
             </motion.div>
-          )}
 
-          {/* Seção de confirmação */}
-          <motion.div 
-            ref={confirmSectionRef}
-            variants={fadeInUp} 
-            initial="hidden" 
-            whileInView="visible" 
-            viewport={{ once: true, amount: 0.2 }} 
-            custom={5}
-          >
-            <Paper 
-              elevation={6}
-              sx={{ 
-                p: { xs: 4, sm: 6 }, 
-                textAlign: 'center',
-                borderRadius: '16px',
-                background: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-              }}
+            {/* Seção do mapa */}
+            {publicInvite.event?.location && mapCenter && (
+              <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} custom={4}>
+                <Typography variant="h3" align="center" sx={{ mb: { xs: 6, md: 8, color: darken(theme.palette.primary.main, 0.3) } }}>Como Chegar</Typography>
+                <Box sx={{
+                  height: { xs: 350, sm: 450, md: 500 },
+                  mb: { xs: 12, md: 18 },
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  border: `1px solid ${theme.palette.divider}`,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                }}>
+                  <ThemedMap
+                    center={mapCenter}
+                    zoom={mapZoom}
+                    markerPosition={mapMarkerPos}
+                    markerPopupText={mapMarkerText}
+                    rawAddressText={publicInvite.event?.location || ''}
+                    theme={theme}
+                    mapStyle="mapbox://styles/mapbox/streets-v11"
+                  />
+                </Box>
+              </motion.div>
+            )}
+
+            {/* Seção de confirmação */}
+            <motion.div 
+              ref={confirmSectionRef}
+              variants={fadeInUp} 
+              initial="hidden" 
+              whileInView="visible" 
+              viewport={{ once: true, amount: 0.2 }} 
+              custom={5}
             >
-              <Typography 
-                variant="h2" 
+              <Paper 
+                elevation={6}
                 sx={{ 
-                  mb: 3, 
-                  fontWeight: 700,
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase',
-                  fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.5rem' },
+                  p: { xs: 4, sm: 6 }, 
+                  textAlign: 'center',
+                  borderRadius: '16px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                 }}
               >
-                Confirme sua Presença
-              </Typography>
-              
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  mb: 5, 
-                  color: 'text.secondary', 
-                  maxWidth: 600, 
-                  mx: 'auto',
-                  fontSize: '1.1rem',
-                }}
-              >
-                Sua resposta é muito importante para nós! Por favor, confirme se poderemos contar com sua presença neste dia especial.
-              </Typography>
-              
-              {/* Status de confirmação */}
-              {confirmationStatus && (
-                <ImpactfulConfirmationFeedback status={confirmationStatus} theme={theme} />
-              )}
-              
-              <Stack 
-                direction={{ xs: 'column', sm: 'row' }} 
-                spacing={3} 
-                justifyContent="center"
-              >
-                {/* Botão de confirmação */}
-                <Button
-                  variant={confirmationStatus === 'confirmed' ? 'contained' : 'outlined'}
-                  color="success"
-                  size="large"
-                  startIcon={<CheckCircleIcon />}
-                  onClick={() => handleRsvp('confirmed')}
-                  disabled={rsvpLoading}
+                <Typography 
+                  variant="h2" 
                   sx={{ 
-                    minWidth: 220,
-                    py: 2,
-                    px: 4,
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
-                    borderRadius: '50px',
-                    background: confirmationStatus === 'confirmed' 
-                      ? 'linear-gradient(45deg, #4caf50 30%, #66bb6a 90%)'
-                      : 'transparent',
-                    border: '2px solid #4caf50',
-                    color: confirmationStatus === 'confirmed' ? '#ffffff' : '#4caf50',
-                    boxShadow: confirmationStatus === 'confirmed' 
-                      ? '0 8px 16px rgba(76, 175, 80, 0.3)' 
-                      : '0 4px 12px rgba(76, 175, 80, 0.2)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      boxShadow: '0 12px 20px rgba(76, 175, 80, 0.4)',
-                      background: confirmationStatus === 'confirmed' 
-                        ? 'linear-gradient(45deg, #388e3c 30%, #4caf50 90%)'
-                        : 'rgba(76, 175, 80, 0.1)',
-                    }
+                    mb: 3, 
+                    fontWeight: 700,
+                    color: darken(theme.palette.primary.main, 0.3),
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                    fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.5rem' },
                   }}
                 >
-                  {rsvpLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirmar Presença'}
-                </Button>
+                  Confirme sua Presença
+                </Typography>
                 
-                {/* Botão de recusa */}
-                <Button
-                  variant={confirmationStatus === 'declined' ? 'contained' : 'outlined'}
-                  color="error"
-                  size="large"
-                  startIcon={<CancelIcon />}
-                  onClick={() => handleRsvp('declined')}
-                  disabled={rsvpLoading}
+                <Typography 
+                  variant="body1" 
                   sx={{ 
-                    minWidth: 220,
-                    py: 2,
-                    px: 4,
+                    mb: 5, 
+                    color: 'text.secondary', 
+                    color: darken(theme.palette.primary.main, 0.3),
+                    maxWidth: 600, 
+                    mx: 'auto',
                     fontSize: '1.1rem',
-                    fontWeight: 600,
-                    borderRadius: '50px',
-                    background: confirmationStatus === 'declined' 
-                      ? 'linear-gradient(45deg, #f44336 30%, #ef5350 90%)'
-                      : 'transparent',
-                    border: '2px solid #f44336',
-                    color: confirmationStatus === 'declined' ? '#ffffff' : '#f44336',
-                    boxShadow: confirmationStatus === 'declined' 
-                      ? '0 8px 16px rgba(244, 67, 54, 0.3)' 
-                      : '0 4px 12px rgba(244, 67, 54, 0.2)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      boxShadow: '0 12px 20px rgba(244, 67, 54, 0.4)',
-                      background: confirmationStatus === 'declined' 
-                        ? 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)'
-                        : 'rgba(244, 67, 54, 0.1)',
-                    }
                   }}
                 >
-                  {rsvpLoading ? <CircularProgress size={24} color="inherit" /> : 'Não Poderei Comparecer'}
-                </Button>
-              </Stack>
-            </Paper>
-          </motion.div>
+                  Sua resposta é muito importante para nós! Por favor, confirme se poderemos contar com sua presença neste dia especial.
+                </Typography>
+                
+                {/* Status de confirmação */}
+                {confirmationStatus && (
+                  <ImpactfulConfirmationFeedback status={confirmationStatus} theme={theme} />
+                )}
+                
+                <Stack 
+                  direction={{ xs: 'column', sm: 'row' }} 
+                  spacing={3} 
+                  justifyContent="center"
+                >
+                  {/* Botão de confirmação */}
+                  <Button
+                    variant={confirmationStatus === 'confirmed' ? 'contained' : 'outlined'}
+                    color="success"
+                    size="large"
+                    startIcon={<CheckCircleIcon />}
+                    onClick={() => handleRsvp('confirmed')}
+                    disabled={rsvpLoading}
+                    sx={{ 
+                      minWidth: 220,
+                      py: 2,
+                      px: 4,
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      borderRadius: '50px',
+                      background: confirmationStatus === 'confirmed' 
+                        ? 'linear-gradient(45deg, #4caf50 30%, #66bb6a 90%)'
+                        : 'transparent',
+                      border: '2px solid #4caf50',
+                      color: confirmationStatus === 'confirmed' ? '#ffffff' : '#4caf50',
+                      boxShadow: confirmationStatus === 'confirmed' 
+                        ? '0 8px 16px rgba(76, 175, 80, 0.3)' 
+                        : '0 4px 12px rgba(76, 175, 80, 0.2)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-3px)',
+                        boxShadow: '0 12px 20px rgba(76, 175, 80, 0.4)',
+                        background: confirmationStatus === 'confirmed' 
+                          ? 'linear-gradient(45deg, #388e3c 30%, #4caf50 90%)'
+                          : 'rgba(76, 175, 80, 0.1)',
+                      }
+                    }}
+                  >
+                    {rsvpLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirmar Presença'}
+                  </Button>
+                  
+                  {/* Botão de recusa */}
+                  <Button
+                    variant={confirmationStatus === 'declined' ? 'contained' : 'outlined'}
+                    color="error"
+                    size="large"
+                    startIcon={<CancelIcon />}
+                    onClick={() => handleRsvp('declined')}
+                    disabled={rsvpLoading}
+                    sx={{ 
+                      minWidth: 220,
+                      py: 2,
+                      px: 4,
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      borderRadius: '50px',
+                      background: confirmationStatus === 'declined' 
+                        ? 'linear-gradient(45deg, #f44336 30%, #ef5350 90%)'
+                        : 'transparent',
+                      border: '2px solid #f44336',
+                      color: confirmationStatus === 'declined' ? '#ffffff' : '#f44336',
+                      boxShadow: confirmationStatus === 'declined' 
+                        ? '0 8px 16px rgba(244, 67, 54, 0.3)' 
+                        : '0 4px 12px rgba(244, 67, 54, 0.2)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-3px)',
+                        boxShadow: '0 12px 20px rgba(244, 67, 54, 0.4)',
+                        background: confirmationStatus === 'declined' 
+                          ? 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)'
+                          : 'rgba(244, 67, 54, 0.1)',
+                      }
+                    }}
+                  >
+                    {rsvpLoading ? <CircularProgress size={24} color="inherit" /> : 'Não Poderei Comparecer'}
+                  </Button>
+                </Stack>
+              </Paper>
+            </motion.div>
 
-        </Container>
-
+          </Container>
+        </Box>
         {/* Rodapé */}
         <Box 
           component="footer" 
           sx={{ 
             py: 4, 
             textAlign: 'center',
-            borderTop: '1px solid rgba(255,255,255,0.1)',
+            borderTop: `1px solid ${lighten(theme.palette.primary.main, 0.7)}`,
             mt: 8,
           }}
         >

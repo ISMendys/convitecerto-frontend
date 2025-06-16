@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Paper } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, darken } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 
 // Componente estilizado para o card de detalhes
@@ -12,7 +12,6 @@ const StyledDetailCard = styled(Paper)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
   border: '1px solid rgba(255, 255, 255, 0.2)',
   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-  // <-- ALTERAÇÃO 1: Definir a altura para preencher 100% do container pai
   height: '100%',
   width: '100%',
   display: 'flex',
@@ -71,6 +70,7 @@ const DetailCard = ({ icon: Icon, title, value, theme, index }) => {
           fontWeight: 600,
           letterSpacing: 0.5,
           fontSize: '1rem',
+          color: darken(theme.palette.primary.main, 0.3),
           flexShrink: 0 
         }}>
           {title}
@@ -85,6 +85,7 @@ const DetailCard = ({ icon: Icon, title, value, theme, index }) => {
           textAlign: 'center',
           flex: 1,
           display: 'flex',
+          color: darken(theme.palette.primary.main, 0.3),
           alignItems: 'center',
           justifyContent: 'center',
           padding: '0 8px',

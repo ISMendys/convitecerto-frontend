@@ -1,6 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { inviteService } from '../../services/api';
-import { fetchGuestPublic, updateGuest } from '../../store/actions/guestActions';
+import { fetchGuestPublic } from '../../store/actions/guestActions';
+import { guestService } from '../../services/api'
 
 // Ação assíncrona para buscar todos os convites de um evento
 export const fetchInvites = createAsyncThunk(
@@ -157,35 +158,20 @@ export const fetchTemplates = createAsyncThunk(
 // Nova ação assíncrona para vincular múltiplos convidados a um convite
 export const linkGuestsToInvite = createAsyncThunk(
   'invites/linkGuestsToInvite',
-  async ({ inviteId, guestIds }, { rejectWithValue, dispatch }) => {
+  async ({ inviteId, guestIds }, { rejectWithValue }) => {
     try {
-      const results = [];
+      const responseData = await guestService.linkGuestsToInvite(inviteId, guestIds);
       
-      // Atualizar cada convidado com o ID do convite
-      for (const guestId of guestIds) {
-        let guestData = {
-          inviteId: inviteId
-        };
-        const response = await dispatch(updateGuest({ id: guestId, ...guestData })).unwrap();
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Erro ao vincular convidado ${guestId}`);
-        }
-
-        const result = await response.json();
-        results.push(result);
-      }
-      
+      // Retorna os dados para o reducer
       return {
         inviteId,
         guestIds,
-        results
+        response: responseData
       };
+
     } catch (error) {
-      return rejectWithValue(
-        error.message || 'Erro ao vincular convidados ao convite'
-      );
+      const errorMessage = error.response?.data?.error || error.message || 'Ocorreu um erro desconhecido.';
+      return rejectWithValue(errorMessage);
     }
   }
 );

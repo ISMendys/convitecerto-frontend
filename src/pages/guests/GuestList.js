@@ -59,6 +59,7 @@ import { fetchGuests, deleteGuest, updateGuestStatus } from '../../store/actions
 import { fetchInvites, linkGuestsToInvite } from '../../store/actions/inviteActions';
 import { sendWhatsappBulk, sendWhatsappReminder } from '../../store/actions/whatsappActions';
 import GuestCard from '../../components/GuestCard';
+import { fetchEvent } from '../../store/actions/eventActions';
 
 import EventSelectorModal from '../../components/EventSelectorModal';
 
@@ -77,10 +78,10 @@ import LoadingIndicator from '../../components/LoadingIndicator';
 import GuestImport from './GuestImport';
 
 // Componentes mobile melhorados
-import MobileFilterDrawer from './MobileFilterDrawer';
-import MobileGuestCard from './MobileGuestCard';
-import MobileStatsGrid from './MobileStatsGrid';
-import MobileTabs from './MobileTabs';
+import MobileFilterDrawer from './componets/MobileFilterDrawer';
+import MobileGuestCard from './componets/MobileGuestCard';
+import MobileStatsGrid from './componets/MobileStatsGrid';
+import MobileTabs from './componets/MobileTabs';
 
 // Função para gerar cor baseada em string
 const stringToColor = (string) => {
@@ -99,7 +100,7 @@ const stringToColor = (string) => {
 };
 
 const GuestList = () => {
-  const { eventId } = useParams() || currentEventId;
+  const { eventId } = useParams();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -160,6 +161,7 @@ const GuestList = () => {
       setIsLoading(true);
       try {
         await Promise.all([
+          dispatch(fetchEvent(eventId || currentEventId || currentEvent?.id)),
           dispatch(fetchGuests(eventId || currentEventId || currentEvent?.id)),
           dispatch(fetchInvites(eventId || currentEventId || currentEvent?.id))
         ]);
@@ -171,7 +173,6 @@ const GuestList = () => {
   }, [dispatch, currentEventId]);
 
   const handleEventSelect = (selectedEventId, eventData) => {
-    console.log('Evento selecionado:', selectedEventId, eventData);
     setShowEventSelector(false);
     setCurrentEventId(selectedEventId);
     setCurrentEventData(eventData);
@@ -179,6 +180,7 @@ const GuestList = () => {
       setIsLoading(true);
       try {
         await Promise.all([
+          dispatch(fetchEvent(selectedEventId)),
           dispatch(fetchGuests(selectedEventId)),
           dispatch(fetchInvites(selectedEventId))
         ]);
@@ -209,6 +211,9 @@ const GuestList = () => {
       setSelectedGuests([]);
       setLinkInviteDialogOpen(false);
       dispatch(fetchGuests(eventId || currentEventId || currentEvent?.id));
+      setTimeout(() => {
+        setSnackbarOpen(false);
+      }, 2000);
     }
   }, [linkingSuccess, dispatch, eventId || currentEventId || currentEvent?.id]);
   
@@ -646,7 +651,7 @@ const GuestList = () => {
   const speedDialActions = [
     { 
       icon: <AddIcon />, 
-      name: 'Adicionar Convidado', 
+      name: 'Adicionar Convidadoasdasda', 
       action: () => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests/new`),
       color: theme.palette.success.main
     },

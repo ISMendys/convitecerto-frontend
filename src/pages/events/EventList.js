@@ -718,7 +718,7 @@ const EventList = () => {
                             size="small" 
                             onClick={(e) => { 
                               e.stopPropagation(); 
-                              setSelectedEvent(event); 
+                              setSelectedEvent(event.id); 
                               openDeleteDialog(); 
                             }} 
                             sx={{ 

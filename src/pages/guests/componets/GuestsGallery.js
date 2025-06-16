@@ -1,7 +1,7 @@
 // GuestsGallery.js
 import React from 'react';
 import { Box } from '@mui/material';
-import GuestCard from '../../components/GuestCard';
+import GuestCard from '../../../components/GuestCard';
 
 const GuestsGallery = ({ guests, onEdit, onMenuOpen, onSelect, selectedGuests }) => (
   <Box

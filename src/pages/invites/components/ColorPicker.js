@@ -46,9 +46,7 @@ const ColorPicker = ({
   useEffect(() => {
     setSelectedColor(value);
   }, [value]);
-  useEffect(() => {
-    console.log('Collapse visível?', showColorPicker);
-  }, [showColorPicker]);
+
   // Mostrar feedback visual quando cor muda
   useEffect(() => {
     if (selectedColor && selectedColor !== value) {

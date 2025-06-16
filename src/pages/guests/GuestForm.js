@@ -41,7 +41,7 @@ import {
   Image as ImageIcon,
   EventNote as EventNoteIcon
 } from '@mui/icons-material';
-import { createGuest, updateGuest, fetchGuest, deleteGuest, fetchGuestRsvpHistory } from '../../store/actions/guestActions';
+import { createGuest, updateGuest, fetchGuest, deleteGuest, fetchGuestRsvpHistory, fetchGuests } from '../../store/actions/guestActions';
 import { fetchInvites, fetchDefaultInvite } from '../../store/actions/inviteActions';
 import { clearCurrentGuest } from '../../store/slices/guestSlice';
 import ImageUploadFieldBase64 from '../../components/ImageUploadField';
@@ -51,6 +51,9 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import RsvpDetailsCard from '../../components/guests/RsvpDetailsCard';
 import InviteSelector from '../../components/guests/InviteSelector';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
+import EventSelectorModal from '../../components//EventSelectorModal';
+import { fetchEvent } from '../../store/actions/eventActions';
+
 
 const GuestForm = ({ eventPassedID }) => {
   const { eventId, guestId } = useParams();
@@ -77,9 +80,13 @@ const GuestForm = ({ eventPassedID }) => {
     inviteId: null
   });
 
+  const [showEventSelector, setShowEventSelector] = useState(false);
+  
   const [imageError, setImageError] = useState('');
   const [inviteError, setInviteError] = useState(false);
   const [autoLinkDialogOpen, setAutoLinkDialogOpen] = useState(false);
+
+  const [currentEventId, setCurrentEventId] = useState(eventId);
   
   const [messageLoading, setMessageLoading] = useState('Carregando dados...');
   const [isLoading, setIsLoading] = useState(false);
@@ -116,6 +123,27 @@ const GuestForm = ({ eventPassedID }) => {
     fetchData();
   }, [dispatch, guestId, eventId]);
   
+  useEffect(() => {
+    if (!eventId && !currentEventId && !currentEvent) {
+      setShowEventSelector(true);
+      return;
+    }
+    setShowEventSelector(false);
+    // const fetchData = async () => {
+    //   setIsLoading(true);
+    //   try {
+    //     await Promise.all([
+    //       dispatch(fetchGuests(eventId || currentEventId || currentEvent?.id)),
+    //       dispatch(fetchEvent(selectedEventId)),
+    //       dispatch(fetchInvites(eventId || currentEventId || currentEvent?.id))
+    //     ]);
+    //   } finally {
+    //     setIsLoading(false);
+    //   }
+    // };
+    // fetchData();
+  }, [dispatch, currentEventId]);
+
   // Preencher formulário com dados do convidado se estiver editando
   useEffect(() => {
     if (guestId && currentGuest) {
@@ -154,7 +182,25 @@ const GuestForm = ({ eventPassedID }) => {
       setAutoLinkDialogOpen(true);
     }
   }, [guestId, currentGuest, defaultInvite]);
-  
+
+  const handleEventSelect = (selectedEventId, eventData) => {
+    setShowEventSelector(false);
+    setCurrentEventId(selectedEventId);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          dispatch(fetchGuests(selectedEventId)),
+          dispatch(fetchEvent(selectedEventId)),
+          dispatch(fetchInvites(selectedEventId))
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  };
+
   const validateGuestForm = (formData) => {
     const errors = {};
   
@@ -252,11 +298,11 @@ const GuestForm = ({ eventPassedID }) => {
     // }
     
     try {
-
+      console.log(eventId , currentEvent?.id , eventPassedID,'TO AQUIIIIIIIIIIIIIIIIIIIIIIII')
       let guestData = {
         ...formData,
         imageUrl: imageData,
-        eventId: eventId || currentEvent?.id || eventPassedID,
+        eventId: eventId || currentEventId || currentEvent?.id || eventPassedID,
       };
       console.log(guestData, 'guestData')
       if (guestId) {
@@ -269,7 +315,7 @@ const GuestForm = ({ eventPassedID }) => {
       
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
-      navigate(`/events/${eventId || currentEvent?.id}/guests`);
+      navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests`);
     } catch (err) {
       const errorMessage = err?.message || err || 'Erro ao salvar convidado';
       setSnackbarMessage(errorMessage);
@@ -290,7 +336,7 @@ const GuestForm = ({ eventPassedID }) => {
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
 
-      navigate(`/events/${eventId || currentEvent?.id}/guests`);
+      navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests`);
 
     } catch (err) {
       setSnackbarMessage(err || 'Erro ao excluir convidado');
@@ -314,7 +360,7 @@ const GuestForm = ({ eventPassedID }) => {
   
   // Cancelar criação/edição
   const handleCancel = () => {
-    navigate(`/events/${eventId || currentEvent?.id}/guests`);
+    navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests`);
   };
   
   // Grupos disponíveis
@@ -357,6 +403,12 @@ const GuestForm = ({ eventPassedID }) => {
         justifyContent: 'center' // Centraliza todo o conteúdo horizontalmente
       }}
     >
+      <EventSelectorModal
+        open={showEventSelector}
+        onClose={() => setShowEventSelector(false)}
+        onSelectEvent={handleEventSelect}
+        apiEndpoint="/api/events" 
+      />
       <Container maxWidth="md" sx={{ py: 4 }}>
         {/* Header com botão voltar à esquerda e título à direita */}
         <Box sx={{ 
@@ -380,7 +432,7 @@ const GuestForm = ({ eventPassedID }) => {
             variant="outlined"
             color="primary"
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate(`/events/${eventId || currentEvent?.id}/guests`)}
+            onClick={() => navigate(`/events/${eventId || currentEventId || currentEvent?.id}/guests`)}
             sx={{ 
               borderRadius: 10,
               px: 2,

@@ -6,7 +6,7 @@ import {
   HelpOutline as HelpOutlineIcon,
   Cancel as CancelIcon
 } from '@mui/icons-material';
-import StatCard from '../../components/StatCard';
+import StatCard from '../../../components/StatCard';
 
 const MobileStatsGrid = ({ guests }) => {
   const confirmedCount = guests.filter(g => g.status === 'confirmed').length;

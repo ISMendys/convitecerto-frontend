@@ -1281,6 +1281,9 @@ const Dashboard = () => {
                     <Paper
                         key={guest.id}
                         sx={{
+                            width: '100%',
+                            maxWidth: '300px',
+                            mx: 'auto',
                             p: 2,
                             borderRadius: 3,
                             textAlign: 'center',

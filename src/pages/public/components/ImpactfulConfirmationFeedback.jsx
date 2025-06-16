@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import { CheckCircle as CheckCircleIcon, Cancel as CancelIcon, Celebration as CelebrationIcon } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { darken } from '@mui/material/styles';
 
 // Variantes de animação para o feedback
 const feedbackVariants = {
@@ -92,6 +93,7 @@ const ImpactfulConfirmationFeedback = ({ status, theme }) => {
           p: { xs: 4, sm: 6 }, 
           textAlign: 'center',
           borderRadius: '24px',
+          color: darken(theme.palette.primary.main, 0.3),
           background: config.bgGradient,
           backdropFilter: 'blur(20px)',
           border: `2px solid ${config.primaryColor}40`,
@@ -169,7 +171,7 @@ const ImpactfulConfirmationFeedback = ({ status, theme }) => {
             sx={{ 
               mb: 2, 
               fontWeight: 800,
-              color: config.primaryColor,
+              color: darken(theme.palette.primary.main, 0.3),
               fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.5rem' },
               textShadow: `0 2px 4px ${config.primaryColor}30`
             }}
@@ -182,7 +184,7 @@ const ImpactfulConfirmationFeedback = ({ status, theme }) => {
             sx={{ 
               mb: 3, 
               fontWeight: 500,
-              color: 'text.primary',
+              color: darken(theme.palette.primary.main, 0.3),
               fontSize: { xs: '1.1rem', sm: '1.3rem' },
               opacity: 0.9
             }}
@@ -193,7 +195,7 @@ const ImpactfulConfirmationFeedback = ({ status, theme }) => {
           <Typography 
             variant="body1" 
             sx={{ 
-              color: 'text.secondary',
+              color: darken(theme.palette.primary.main, 0.3),
               fontSize: '1.1rem',
               lineHeight: 1.6,
               maxWidth: 500,
