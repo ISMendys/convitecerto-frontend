@@ -151,17 +151,35 @@ const EventSelectorModal = ({ open, onClose, onSelectEvent, apiEndpoint = '/api/
                 </Typography>
               </Box>
             ) : (
-              <Grid container spacing={3}>
+<Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 3, 
+                  justifyContent: 'center',
+                }}
+              >
                 {filteredEvents.map((event) => (
-                  <Grid item xs={12} sm={6} md={4} key={event.id}>
+                  <Box
+                    key={event.id}
+                    sx={{
+                      flex: {
+                        xs: '1 1 100%',
+                        sm: '1 1 calc(50% - 16px)',
+                        md: '1 1 calc(33.333% - 16px)'
+                      },
+                      display: 'flex',
+                      justifyContent: 'center'
+                    }}
+                  >
                     <EventCard
                       event={event} 
                       onClick={handleEventSelect}
                       showActions={false}
                     />
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
             )}
           </>
         )}
