@@ -370,13 +370,18 @@ const GuestList = () => {
         }
         
         const rsvpUrl = `${window.location.origin}/rsvp/${guest?.id}`;
-        const finalMessage = `${messageText}\n\nResponda aqui:\n ${rsvpUrl}`;
+        const finalMessage = `${messageText}\n\nResponda aqui:`;
         
         const payload = {
           guestId: guest?.id,
           message: finalMessage
         };
-        return dispatch(sendWhatsappReminder(payload)).unwrap();
+        dispatch(sendWhatsappReminder(payload)).unwrap();
+        const payload2 = {
+          guestId: guest?.id,
+          message: rsvpUrl
+        };
+        return dispatch(sendWhatsappReminder(payload2)).unwrap();
       });
 
       const results = await Promise.allSettled(sendPromises);
